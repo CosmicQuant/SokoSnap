@@ -189,7 +189,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
     };
 
     return (
-        <div ref={containerRef} className="h-screen w-full snap-start relative flex flex-col bg-black overflow-hidden shrink-0">
+        <div ref={containerRef} className="h-full w-full snap-start relative flex flex-col bg-black overflow-hidden shrink-0">
             {/* Media Layer (Carousel) */}
             <div
                 ref={carouselRef}
