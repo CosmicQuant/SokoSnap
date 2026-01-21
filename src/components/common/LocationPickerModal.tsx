@@ -59,7 +59,7 @@ export const LocationPickerModal: React.FC<LocationPickerProps> = ({ isOpen, onC
                     {/* Google Map Implementation would go here */}
                     {isLoading ? (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                            <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
+                            <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin" />
                             <span className="text-white/50 text-xs font-medium uppercase tracking-widest">Loading Maps...</span>
                         </div>
                     ) : (
@@ -70,7 +70,7 @@ export const LocationPickerModal: React.FC<LocationPickerProps> = ({ isOpen, onC
                         }}>
                             {/* Center Pin Target */}
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform -mt-4 drop-shadow-2xl">
-                                <MapPin size={48} className="text-green-500 fill-green-500/20 animate-bounce" />
+                                <MapPin size={48} className="text-yellow-400 fill-yellow-400/20 animate-bounce" />
                                 <div className="w-4 h-1 bg-black/50 blur-sm rounded-full mx-auto mt-1" />
                             </div>
                         </div>
@@ -87,7 +87,7 @@ export const LocationPickerModal: React.FC<LocationPickerProps> = ({ isOpen, onC
                 {/* Bottom Sheet Actions */}
                 <div className="bg-[#1a1a1a] p-6 border-t border-white/5 space-y-4">
                     <div className="flex items-start gap-3">
-                        <MapPin className="text-green-500 mt-1 shrink-0" size={20} />
+                        <MapPin className="text-yellow-400 mt-1 shrink-0" size={20} />
                         <div>
                             <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-1">Inferred Location</p>
                             <p className="text-white font-medium">Bishan Plaza, Mpaka Road</p>
@@ -104,7 +104,7 @@ export const LocationPickerModal: React.FC<LocationPickerProps> = ({ isOpen, onC
                             });
                             onClose();
                         }}
-                        className="w-full bg-green-500 text-black py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-green-400 transition-colors"
+                        className="w-full bg-yellow-400 text-black py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-yellow-300 transition-colors"
                     >
                         Confirm Location
                     </button>

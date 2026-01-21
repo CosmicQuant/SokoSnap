@@ -231,7 +231,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                                 scrollToSlide(i);
                             }}
                             className={`rounded-full transition-all duration-300 shadow-sm cursor-pointer hover:scale-125 ${i === activeSlide
-                                ? 'w-4 h-1.5 bg-green-500'
+                                ? 'w-4 h-1.5 bg-yellow-400'
                                 : 'w-1.5 h-1.5 bg-white/40'
                                 }`}
                         />
@@ -260,7 +260,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                         onClick={handleShare}
                     />
                     <ActionBtn
-                        icon={<ShoppingBag size={28} className={`drop-shadow-lg transition-colors duration-300 ${isInCart ? 'text-green-500 fill-green-500/20' : 'text-white'}`} />}
+                        icon={<ShoppingBag size={28} className={`drop-shadow-lg transition-colors duration-300 ${isInCart ? 'text-yellow-400 fill-yellow-400/20' : 'text-white'}`} />}
                         onClick={(e) => {
                             e?.stopPropagation();
                             onAddToCart(product);
@@ -283,7 +283,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                             onView?.({ name: product.seller, handle: product.handle });
                         }}
                     >
-                        <div className="w-5 h-5 rounded-full border border-green-500/50 overflow-hidden shadow-lg">
+                        <div className="w-5 h-5 rounded-full border border-yellow-400/50 overflow-hidden shadow-lg">
                             <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${product.seller}`} alt="avatar" />
                         </div>
                         <span className="text-[10px] font-black text-white uppercase tracking-tight drop-shadow-md">{product.handle}</span>
@@ -306,7 +306,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
                         {/* Only show 'Read More' if text is likely to overflow (primitive check) or 'Show Less' if expanded */}
                         {(product.description.length > 80 || isExpanded) && (
-                            <span className="inline-block mt-1 text-green-500 text-[9px] font-black uppercase tracking-wider border-b border-green-500/30 group-hover/desc:border-green-500 transition-colors">
+                            <span className="inline-block mt-1 text-yellow-400 text-[9px] font-black uppercase tracking-wider border-b border-yellow-400/30 group-hover/desc:border-yellow-400 transition-colors">
                                 {isExpanded ? 'Show Less' : 'Read More'}
                             </span>
                         )}
@@ -327,14 +327,14 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                         {/* Phone Input */}
                         <div className="relative group">
                             <div className="relative">
-                                <Phone size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${errors.phone ? 'text-red-400' : 'text-white/60 group-focus-within:text-green-500'}`} />
+                                <Phone size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${errors.phone ? 'text-red-400' : 'text-white/60 group-focus-within:text-yellow-400'}`} />
                                 <input
                                     type="tel"
                                     placeholder="M-Pesa Number (e.g. 0712...)"
                                     autoFocus
                                     value={userData.phone}
                                     onChange={(e) => setUserData(prev => ({ ...prev, phone: e.target.value }))}
-                                    className={`w-full bg-white/5 backdrop-blur-md border rounded-xl py-2.5 pl-9 pr-3 text-xs font-bold text-white placeholder:text-white/30 outline-none transition-all ${errors.phone ? 'border-red-400/50 focus:border-red-500' : 'border-white/20 focus:border-green-500/50'
+                                    className={`w-full bg-white/5 backdrop-blur-md border rounded-xl py-2.5 pl-9 pr-3 text-xs font-bold text-white placeholder:text-white/30 outline-none transition-all ${errors.phone ? 'border-red-400/50 focus:border-red-500' : 'border-white/20 focus:border-yellow-400/50'
                                         }`}
                                 />
                             </div>
@@ -345,13 +345,13 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                         <div className="relative group">
                             <div className="flex gap-2">
                                 <div className="relative flex-1">
-                                    <MapPin size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${errors.location ? 'text-red-400' : 'text-white/60 group-focus-within:text-green-500'}`} />
+                                    <MapPin size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${errors.location ? 'text-red-400' : 'text-white/60 group-focus-within:text-yellow-400'}`} />
                                     <input
                                         type="text"
                                         placeholder="Location (Google Places)"
                                         value={userData.location}
                                         onChange={(e) => setUserData(prev => ({ ...prev, location: e.target.value }))}
-                                        className={`w-full bg-white/5 backdrop-blur-md border rounded-xl py-2.5 pl-9 pr-3 text-xs font-bold text-white placeholder:text-white/30 outline-none transition-all ${errors.location ? 'border-red-400/50 focus:border-red-500' : 'border-white/20 focus:border-green-500/50'
+                                        className={`w-full bg-white/5 backdrop-blur-md border rounded-xl py-2.5 pl-9 pr-3 text-xs font-bold text-white placeholder:text-white/30 outline-none transition-all ${errors.location ? 'border-red-400/50 focus:border-red-500' : 'border-white/20 focus:border-yellow-400/50'
                                             }`}
                                     />
                                 </div>
@@ -363,14 +363,14 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                                             });
                                         }
                                     }}
-                                    className="w-10 bg-white/5 backdrop-blur-md border border-white/20 rounded-xl flex items-center justify-center text-white/70 hover:text-green-400 hover:border-green-400/50 transition-colors"
+                                    className="w-10 bg-white/5 backdrop-blur-md border border-white/20 rounded-xl flex items-center justify-center text-white/70 hover:text-yellow-400 hover:border-yellow-400/50 transition-colors"
                                     title="Use Current Location"
                                 >
                                     <Crosshair size={18} />
                                 </button>
                                 <button
                                     onClick={() => setShowMap(true)}
-                                    className="w-10 bg-white/5 backdrop-blur-md border border-white/20 rounded-xl flex items-center justify-center text-white/70 hover:text-green-400 hover:border-green-400/50 transition-colors"
+                                    className="w-10 bg-white/5 backdrop-blur-md border border-white/20 rounded-xl flex items-center justify-center text-white/70 hover:text-yellow-400 hover:border-yellow-400/50 transition-colors"
                                     title="Pin on Map"
                                 >
                                     <Map size={18} />
@@ -399,7 +399,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                                 e.stopPropagation();
                                 setShowInputs(true);
                             }}
-                            className="absolute bottom-full mb-[-2px] inset-x-0 z-0 bg-green-500 border border-green-400 rounded-t-xl py-0.5 flex items-center justify-center cursor-pointer hover:bg-green-400 transition-colors"
+                            className="absolute bottom-full mb-[-2px] inset-x-0 z-0 bg-yellow-400 border border-yellow-300 rounded-t-xl py-0.5 flex items-center justify-center cursor-pointer hover:bg-yellow-300 transition-colors"
                         >
                             <span className="text-[10px] font-medium text-black tracking-tight flex items-center gap-1.5">
                                 <span>Using {userData.phone} • {userData.location}</span>
@@ -411,7 +411,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                     {/* THE GOLDEN GLASS BUTTON */}
                     <button
                         onClick={handleActionClick}
-                        className={`w-full border-y-[2px] border-x-[1px] border-green-500/60 text-white py-1.5 px-3 flex flex-col items-center gap-0.5 active:bg-green-500/10 transition-all shadow-[0_0_20px_rgba(234,179,8,0.1)] group hover:border-green-400 relative overflow-hidden z-10 bg-black/10 backdrop-blur-[2px] ${hasUserData && !showInputs ? 'rounded-b-2xl rounded-t-none' : 'rounded-2xl'
+                        className={`w-full border-y-[2px] border-x-[1px] border-yellow-400/60 text-white py-1.5 px-3 flex flex-col items-center gap-0.5 active:bg-yellow-400/10 transition-all shadow-[0_0_20px_rgba(234,179,8,0.1)] group hover:border-yellow-300 relative overflow-hidden z-10 bg-black/10 backdrop-blur-[2px] ${hasUserData && !showInputs ? 'rounded-b-2xl rounded-t-none' : 'rounded-2xl'
                             }`}
                     >
                         {/* Top Row: Action & Price */}
@@ -420,10 +420,10 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                             {/* LEFT: Logo Group */}
                             <div className="flex items-center gap-2 relative z-30 shrink-0">
                                 {isProcessing ? (
-                                    <Loader2 size={24} className="text-green-500 animate-spin" />
+                                    <Loader2 size={24} className="text-yellow-400 animate-spin" />
                                 ) : (
                                     <div className="h-10 w-16 flex items-center justify-start overflow-visible relative">
-                                        <div className="absolute inset-0 bg-green-500/20 blur-lg rounded-full animate-pulse opacity-50" />
+                                        <div className="absolute inset-0 bg-yellow-400/20 blur-lg rounded-full animate-pulse opacity-50" />
                                         <img src={mpesaLogo} className="h-[160%] w-auto object-contain object-left relative z-10" alt="M-Pesa" />
                                     </div>
                                 )}
@@ -432,13 +432,13 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                             {/* CENTER: CTA */}
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                                 {isProcessing ? (
-                                    <span className="text-[10px] font-black italic tracking-tighter uppercase leading-none text-green-500 animate-pulse">
+                                    <span className="text-[10px] font-black italic tracking-tighter uppercase leading-none text-yellow-400 animate-pulse">
                                         PROCESSING
                                     </span>
                                 ) : (
                                     <div className="flex flex-col items-center leading-none animate-pulse opacity-90">
                                         <span className="text-[7px] font-bold text-white/60 uppercase tracking-[0.2em]">TAP TO</span>
-                                        <span className="text-xs font-black text-green-400 italic uppercase tracking-tighter drop-shadow-sm scale-y-110">ORDER NOW</span>
+                                        <span className="text-xs font-black text-yellow-400 italic uppercase tracking-tighter drop-shadow-sm scale-y-110">ORDER NOW</span>
                                     </div>
                                 )}
                             </div>
@@ -447,13 +447,13 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                             <div className="relative z-30 ml-auto h-full flex items-center">
                                 <div className="bg-white/5 backdrop-blur-sm rounded-lg px-2 py-1 border border-white/10 flex flex-col items-end min-w-[70px]">
                                     <span className="text-sm font-black italic tracking-tighter block leading-none text-white drop-shadow-md">
-                                        <span className="text-green-500 text-[9px] mr-1">KES</span>
+                                        <span className="text-yellow-400 text-[9px] mr-1">KES</span>
                                         {product.price.toLocaleString()}
                                     </span>
 
                                     {/* Smart Delivery Quote Logic */}
                                     {deliveryQuote ? (
-                                        <span className="text-[7px] font-black text-green-400 uppercase tracking-wide mt-0.5 block animate-in fade-in">
+                                        <span className="text-[7px] font-black text-yellow-400 uppercase tracking-wide mt-0.5 block animate-in fade-in">
                                             + {deliveryQuote} Del.
                                         </span>
                                     ) : (
@@ -467,7 +467,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
                         {/* Bottom Row: Trust Signal (Compact) */}
                         <div className="w-full flex items-center justify-center gap-1.5 pt-1 mt-0.5 border-t border-white/5">
-                            <ShieldCheck size={10} className="text-green-400 shrink-0" />
+                            <ShieldCheck size={10} className="text-yellow-400 shrink-0" />
                             <span className="text-[7px] font-bold text-white/90 uppercase tracking-wide drop-shadow-md text-center leading-tight">
                                 Protected by TumaFast. Payment released only after you inspect & accept.
                             </span>

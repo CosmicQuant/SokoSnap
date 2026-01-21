@@ -20,14 +20,14 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ onContinue }) => {
 
     return (
         <div
-            className="fixed inset-0 z-[70] bg-green-600 flex flex-col items-center justify-center p-8 text-center text-white animate-in zoom-in-95 duration-500"
+            className="fixed inset-0 z-[70] bg-yellow-400 flex flex-col items-center justify-center p-8 text-center text-slate-900 animate-in zoom-in-95 duration-500"
             role="alertdialog"
             aria-labelledby="success-title"
             aria-describedby="success-description"
         >
             {/* Success Icon */}
-            <div className="w-20 h-20 bg-white/20 backdrop-blur-lg rounded-full flex items-center justify-center mb-6">
-                <Lock size={32} className="text-white" aria-hidden="true" />
+            <div className="w-20 h-20 bg-white/20 backdrop-blur-lg rounded-full flex items-center justify-center mb-6 shadow-xl shadow-yellow-500/20">
+                <Lock size={32} className="text-slate-900" aria-hidden="true" />
             </div>
 
             <h1 id="success-title" className="text-3xl font-bold mb-2">
@@ -35,7 +35,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ onContinue }) => {
             </h1>
             <p
                 id="success-description"
-                className="text-green-100 text-sm font-medium mb-12 max-w-[200px] leading-relaxed"
+                className="text-slate-900/80 text-sm font-medium mb-12 max-w-[200px] leading-relaxed"
             >
                 Your payment is safely held in Escrow ID #{escrowId}
             </p>
@@ -51,7 +51,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ onContinue }) => {
                     />
                     <div>
                         <p className="font-bold text-lg text-slate-900">{riderName}</p>
-                        <div className="flex items-center gap-1 text-green-600 text-[10px] font-bold uppercase tracking-widest bg-green-50 px-2 py-1 rounded-full w-fit mt-1">
+                        <div className="flex items-center gap-1 text-yellow-600 text-[10px] font-bold uppercase tracking-widest bg-yellow-50 px-2 py-1 rounded-full w-fit mt-1">
                             <UserCheck size={12} aria-hidden="true" /> Verified Agent
                         </div>
                     </div>
@@ -94,7 +94,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ onContinue }) => {
             {/* Return Link */}
             <button
                 onClick={onContinue}
-                className="mt-8 text-white/70 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-green-600 rounded-lg px-4 py-2"
+                className="mt-8 text-black/60 font-bold text-xs uppercase tracking-widest hover:text-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/50 focus-visible:ring-offset-2 focus-visible:ring-offset-yellow-400 rounded-lg px-4 py-2"
             >
                 Return to Marketplace
             </button>

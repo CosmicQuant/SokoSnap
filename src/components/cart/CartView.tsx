@@ -126,7 +126,7 @@ export const CartView: React.FC<CartViewProps> = ({ onBack, userData, setUserDat
                                 </div>
 
                                 <div className="flex items-end justify-between">
-                                    <p className="font-bold text-green-600">
+                                    <p className="font-bold text-yellow-500">
                                         {formatCurrency(item.product.price * item.quantity)}
                                     </p>
 
@@ -191,7 +191,7 @@ export const CartView: React.FC<CartViewProps> = ({ onBack, userData, setUserDat
                                             placeholder="M-Pesa Number (e.g. 0712...)"
                                             value={userData.phone}
                                             onChange={(e) => setUserData((prev: any) => ({ ...prev, phone: e.target.value }))}
-                                            className={`w-full pl-10 p-3 bg-white border rounded-xl text-sm outline-none transition-all ${errors.phone ? 'border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-100'
+                                            className={`w-full pl-10 p-3 bg-white border rounded-xl text-sm outline-none transition-all ${errors.phone ? 'border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100'
                                                 }`}
                                         />
                                     </div>
@@ -206,7 +206,7 @@ export const CartView: React.FC<CartViewProps> = ({ onBack, userData, setUserDat
                                             placeholder="Delivery Location (e.g. Westlands)"
                                             value={userData.location}
                                             onChange={(e) => setUserData((prev: any) => ({ ...prev, location: e.target.value }))}
-                                            className={`w-full pl-10 p-3 bg-white border rounded-xl text-sm outline-none transition-all ${errors.location ? 'border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-100'
+                                            className={`w-full pl-10 p-3 bg-white border rounded-xl text-sm outline-none transition-all ${errors.location ? 'border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100'
                                                 }`}
                                         />
                                     </div>
@@ -228,7 +228,7 @@ export const CartView: React.FC<CartViewProps> = ({ onBack, userData, setUserDat
                             </div>
                             <div className="flex justify-between text-base border-t border-slate-100 pt-2">
                                 <span className="font-bold text-slate-900">Total</span>
-                                <span className="font-bold text-green-600 text-lg">{formatCurrency(total)}</span>
+                                <span className="font-bold text-yellow-500 text-lg">{formatCurrency(total)}</span>
                             </div>
                         </div>
                     )}

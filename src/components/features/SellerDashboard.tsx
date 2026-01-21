@@ -88,7 +88,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         <h1 className="text-lg font-bold text-slate-900 leading-none">
                             Merchant Hub
                         </h1>
-                        <p className="text-[10px] font-bold text-green-600 uppercase tracking-wide mt-1">
+                        <p className="text-[10px] font-bold text-yellow-600 uppercase tracking-wide mt-1">
                             Verified Seller
                         </p>
                     </div>
@@ -127,7 +127,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                 <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">
                                     In Escrow (Pending)
                                 </p>
-                                <p className="text-lg font-bold text-green-400">
+                                <p className="text-lg font-bold text-yellow-400">
                                     {formatCurrency(MOCK_SELLER_STATS.pendingPayout)}
                                 </p>
                             </div>
@@ -180,7 +180,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         >
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="font-bold text-sm text-slate-900">Performance</h3>
-                                <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded-full text-[10px] font-bold">
+                                <div className="flex items-center gap-1 text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full text-[10px] font-bold">
                                     <TrendingUp size={12} aria-hidden="true" />
                                     +12.5%
                                 </div>
@@ -189,8 +189,8 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                 <AreaChart data={MOCK_CHART_DATA}>
                                     <defs>
                                         <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#22c55e" stopOpacity={0.1} />
-                                            <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                                            <stop offset="5%" stopColor="#eab308" stopOpacity={0.1} />
+                                            <stop offset="95%" stopColor="#eab308" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <Tooltip
@@ -208,7 +208,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                     <Area
                                         type="monotone"
                                         dataKey="sales"
-                                        stroke="#22c55e"
+                                        stroke="#eab308"
                                         strokeWidth={3}
                                         fillOpacity={1}
                                         fill="url(#colorSales)"
@@ -231,7 +231,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                         <div className="flex items-center gap-4">
                                             <div
                                                 className={`p-3 rounded-xl ${order.status === 'completed' || order.status === 'delivered'
-                                                    ? 'bg-green-50 text-green-600'
+                                                    ? 'bg-yellow-50 text-yellow-600'
                                                     : 'bg-blue-50 text-blue-600'
                                                     }`}
                                             >
@@ -252,7 +252,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                             </p>
                                             <span
                                                 className={`text-[9px] uppercase font-bold px-2 py-0.5 rounded-full ${order.status === 'completed' || order.status === 'delivered'
-                                                    ? 'bg-green-100 text-green-700'
+                                                    ? 'bg-yellow-100 text-yellow-700'
                                                     : 'bg-blue-100 text-blue-700'
                                                     }`}
                                             >
@@ -310,7 +310,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                         <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1">
                                             Escrowed
                                         </p>
-                                        <p className="font-bold text-green-600">
+                                        <p className="font-bold text-yellow-600">
                                             {formatCurrency(54000)}
                                         </p>
                                     </div>
