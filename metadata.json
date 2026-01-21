@@ -1,0 +1,8 @@
+{
+  "name": "SokoSnap by TumaFast",
+  "description": "The operating system for Kenyan social commerce. Features TikTok-style checkout feeds, seller revenue dashboards, and lead generation tools.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
