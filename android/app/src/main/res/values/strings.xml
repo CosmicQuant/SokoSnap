@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SokoSnap</string>
+    <string name="title_activity_main">SokoSnap</string>
+    <string name="package_name">com.sokosnap.app</string>
+    <string name="custom_url_scheme">com.sokosnap.app</string>
+</resources>

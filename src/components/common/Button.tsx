@@ -20,7 +20,7 @@ const variantStyles = {
     secondary: 'bg-slate-100 text-slate-700 hover:bg-slate-200',
     ghost: 'bg-transparent text-slate-600 hover:bg-slate-100',
     danger: 'bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-200',
-    success: 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-200',
+    success: 'bg-green-500 text-white hover:bg-green-600 shadow-lg shadow-green-200',
 };
 
 const sizeStyles = {

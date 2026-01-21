@@ -3,7 +3,8 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '../utils';
+import { screen } from '@testing-library/react';
+import { render } from '../utils';
 import { Button } from '../../components/common';
 
 describe('Button', () => {
@@ -15,7 +16,7 @@ describe('Button', () => {
     it('applies variant classes correctly', () => {
         render(<Button variant="success">Success</Button>);
         const button = screen.getByRole('button');
-        expect(button).toHaveClass('bg-emerald-500');
+        expect(button).toHaveClass('bg-green-500');
     });
 
     it('shows loading state', () => {

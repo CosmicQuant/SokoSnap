@@ -76,7 +76,7 @@ const RightSidebar: React.FC = () => (
         {/* Stars */}
         <div className="sidebar-stars">
             {[1, 2, 3, 4, 5].map((i) => (
-                <Star key={i} size={16} className="text-yellow-400 fill-yellow-400" />
+                <Star key={i} size={16} className="text-green-500 fill-green-500" />
             ))}
         </div>
         <p className="sidebar-trust-text">Trusted by thousands</p>

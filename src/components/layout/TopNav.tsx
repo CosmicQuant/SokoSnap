@@ -55,14 +55,14 @@ export const TopNav: React.FC<TopNavProps> = ({
                                 }`}
                         >
                             {/* Shop Icon */}
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center p-0.5 border ${activeTab === 'shop' ? 'border-yellow-500' : 'border-white/20'
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center p-0.5 border ${activeTab === 'shop' ? 'border-green-500' : 'border-white/20'
                                 }`}>
-                                <div className="w-full h-full rounded-full bg-gradient-to-tr from-yellow-400 to-yellow-600 flex items-center justify-center text-black font-bold text-[10px]">
+                                <div className="w-full h-full rounded-full bg-gradient-to-tr from-green-400 to-green-600 flex items-center justify-center text-black font-bold text-[10px]">
                                     {currentSeller.name.charAt(0)}
                                 </div>
                             </div>
                             {/* Shop Name */}
-                            <span className={`text-[8px] font-black uppercase tracking-wider ${activeTab === 'shop' ? 'text-yellow-400' : 'text-white'
+                            <span className={`text-[8px] font-black uppercase tracking-wider ${activeTab === 'shop' ? 'text-green-400' : 'text-white'
                                 }`}>
                                 {currentSeller.name.split(' ')[0]}
                             </span>
@@ -74,7 +74,7 @@ export const TopNav: React.FC<TopNavProps> = ({
                     <>
                         <button
                             onClick={() => setActiveTab('shop')}
-                            className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 drop-shadow-md p-2 ${activeTab === 'shop'
+                            className={`text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all duration-300 drop-shadow-md p-2 ${activeTab === 'shop'
                                 ? 'text-white scale-110'
                                 : 'text-white/40 hover:text-white/60'
                                 }`}
@@ -87,7 +87,7 @@ export const TopNav: React.FC<TopNavProps> = ({
 
                 <button
                     onClick={() => setActiveTab('foryou')}
-                    className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 drop-shadow-md p-2 ${activeTab === 'foryou'
+                    className={`text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all duration-300 drop-shadow-md p-2 ${activeTab === 'foryou'
                         ? 'text-white scale-110'
                         : 'text-white/40 hover:text-white/60'
                         } ${currentSeller ? 'mb-3' : ''}`} // Align with the pill if pill exists

@@ -100,7 +100,7 @@ export const ORDER_STATUS_CONFIG = {
     processing: { label: 'Processing', color: 'blue', icon: 'Loader' },
     escrow_held: { label: 'Escrow Held', color: 'purple', icon: 'Lock' },
     in_transit: { label: 'In Transit', color: 'orange', icon: 'Truck' },
-    delivered: { label: 'Delivered', color: 'emerald', icon: 'Package' },
+    delivered: { label: 'Delivered', color: 'green', icon: 'Package' },
     completed: { label: 'Completed', color: 'green', icon: 'CheckCircle' },
     cancelled: { label: 'Cancelled', color: 'red', icon: 'XCircle' },
     refunded: { label: 'Refunded', color: 'gray', icon: 'RefreshCw' },

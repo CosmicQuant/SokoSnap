@@ -67,11 +67,11 @@ export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({ onBack }) =>
                 <div className="flex border-t border-white/5">
                     <button
                         onClick={() => setActiveTab('ongoing')}
-                        className={`flex-1 py-3 text-xs font-black uppercase tracking-widest transition-colors relative ${activeTab === 'ongoing' ? 'text-yellow-500' : 'text-white/40 hover:text-white'
+                        className={`flex-1 py-3 text-xs font-black uppercase tracking-widest transition-colors relative ${activeTab === 'ongoing' ? 'text-green-500' : 'text-white/40 hover:text-white'
                             }`}
                     >
                         In Progress
-                        {activeTab === 'ongoing' && <div className="absolute bottom-0 inset-x-0 h-0.5 bg-yellow-500" />}
+                        {activeTab === 'ongoing' && <div className="absolute bottom-0 inset-x-0 h-0.5 bg-green-500" />}
                     </button>
                     <button
                         onClick={() => setActiveTab('completed')}
@@ -94,7 +94,7 @@ export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({ onBack }) =>
                                 <div
                                     key={order.id}
                                     onClick={() => setSelectedOrder(order)}
-                                    className="bg-white/5 border border-yellow-500/20 rounded-2xl p-4 relative overflow-hidden active:scale-98 transition-transform cursor-pointer"
+                                    className="bg-white/5 border border-green-500/20 rounded-2xl p-4 relative overflow-hidden active:scale-98 transition-transform cursor-pointer"
                                 >
                                     <div className="flex gap-4">
                                         <div className="w-16 h-16 bg-white/5 rounded-xl overflow-hidden shrink-0">
@@ -103,7 +103,7 @@ export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({ onBack }) =>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-start">
                                                 <h3 className="font-bold text-sm truncate pr-4">{order.items[0]?.name}</h3>
-                                                <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded font-bold uppercase tracking-wide whitespace-nowrap">
+                                                <span className="text-[10px] bg-green-500/20 text-green-500 px-2 py-0.5 rounded font-bold uppercase tracking-wide whitespace-nowrap">
                                                     {order.step}
                                                 </span>
                                             </div>
@@ -114,7 +114,7 @@ export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({ onBack }) =>
                                     {/* Progress Bar Mock */}
                                     <div className="mt-4 pt-4 border-t border-white/5 flex items-center gap-2">
                                         <div className="h-1 flex-1 bg-white/10 rounded-full overflow-hidden">
-                                            <div className="h-full w-[70%] bg-yellow-500 rounded-full" />
+                                            <div className="h-full w-[70%] bg-green-500 rounded-full" />
                                         </div>
                                         <span className="text-[9px] font-bold text-white/70">Arriving Soon</span>
                                     </div>
@@ -189,16 +189,16 @@ export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({ onBack }) =>
 
                             {/* Status Banner */}
                             <div className={`p-4 rounded-xl flex items-center gap-3 ${selectedOrder.status === 'ongoing'
-                                ? 'bg-yellow-500/10 border border-yellow-500/20'
+                                ? 'bg-green-500/10 border border-green-500/20'
                                 : 'bg-green-500/10 border border-green-500/20'
                                 }`}>
                                 {selectedOrder.status === 'ongoing' ? (
-                                    <Clock className="text-yellow-500" size={24} />
+                                    <Clock className="text-green-500" size={24} />
                                 ) : (
                                     <ShieldCheck className="text-green-500" size={24} />
                                 )}
                                 <div>
-                                    <p className={`text-sm font-bold uppercase tracking-wider ${selectedOrder.status === 'ongoing' ? 'text-yellow-500' : 'text-green-500'
+                                    <p className={`text-sm font-bold uppercase tracking-wider ${selectedOrder.status === 'ongoing' ? 'text-green-500' : 'text-green-500'
                                         }`}>
                                         {selectedOrder.status === 'ongoing' ? 'In Progress' : 'Order Completed'}
                                     </p>
@@ -244,7 +244,7 @@ export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({ onBack }) =>
                             {/* Action Button */}
                             {selectedOrder.status === 'ongoing' && (
                                 <div className="pt-2">
-                                    <button className="w-full py-4 bg-yellow-500 text-black font-black uppercase tracking-widest rounded-xl hover:bg-yellow-400 transition-colors shadow-lg shadow-yellow-500/20 flex items-center justify-center gap-2">
+                                    <button className="w-full py-4 bg-green-500 text-black font-black uppercase tracking-widest rounded-xl hover:bg-green-400 transition-colors shadow-lg shadow-green-500/20 flex items-center justify-center gap-2">
                                         <MapPin size={18} />
                                         Track Live
                                     </button>

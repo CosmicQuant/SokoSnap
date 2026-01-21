@@ -139,7 +139,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                         </div>
                     </div>
                     {/* Badge */}
-                    <div className="absolute -bottom-1 -right-1 bg-white text-black p-1 rounded-full shadow-lg border border-black group-hover:bg-yellow-500 transition-colors">
+                    <div className="absolute -bottom-1 -right-1 bg-white text-black p-1 rounded-full shadow-lg border border-black group-hover:bg-green-500 transition-colors">
                         <Camera size={12} />
                     </div>
                 </div>
@@ -171,12 +171,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                     <div className="flex items-center justify-between pl-1">
                         <h3 className="text-xs font-black uppercase tracking-widest text-white/30">Personal Details</h3>
                         {editSection === 'personal' ? (
-                            <button onClick={() => handleSave('personal')} className="text-[10px] font-bold text-yellow-500 uppercase">Save</button>
+                            <button onClick={() => handleSave('personal')} className="text-[10px] font-bold text-green-500 uppercase">Save</button>
                         ) : (
                             <button onClick={() => setEditSection('personal')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase transition-colors">Edit</button>
                         )}
                     </div>
-                    <div className={`bg-white/5 border ${editSection === 'personal' ? 'border-yellow-500/50' : 'border-white/5'} rounded-2xl overflow-hidden backdrop-blur-sm transition-colors`}>
+                    <div className={`bg-white/5 border ${editSection === 'personal' ? 'border-green-500/50' : 'border-white/5'} rounded-2xl overflow-hidden backdrop-blur-sm transition-colors`}>
                         <div className="p-4 flex items-center gap-4 border-b border-white/5">
                             <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
                                 <Phone size={14} className="text-blue-400" />
@@ -188,7 +188,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                                         type="tel"
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value)}
-                                        className="w-full bg-transparent border-b border-yellow-500 text-yellow-500 font-medium outline-none text-sm pt-1"
+                                        className="w-full bg-transparent border-b border-green-500 text-green-500 font-medium outline-none text-sm pt-1"
                                     />
                                 ) : (
                                     <p className="text-sm font-medium">{phone}</p>
@@ -203,12 +203,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                                 <p className="text-[10px] uppercase tracking-wider text-white/40 font-bold">Delivery Location</p>
                                 {editSection === 'personal' ? (
                                     <div className="relative">
-                                        <div className="flex items-center border-b border-yellow-500 pb-1">
+                                        <div className="flex items-center border-b border-green-500 pb-1">
                                             <input
                                                 type="text"
                                                 value={location}
                                                 onChange={handleLocationChange}
-                                                className="w-full bg-transparent text-yellow-500 font-medium outline-none text-sm placeholder-white/20"
+                                                className="w-full bg-transparent text-green-500 font-medium outline-none text-sm placeholder-white/20"
                                                 placeholder="Search location..."
                                             />
                                             {location && (
@@ -270,13 +270,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                     <div className="flex items-center justify-between pl-1">
                         <h3 className="text-xs font-black uppercase tracking-widest text-white/30">Payment & Wallet</h3>
                         {editSection === 'payment' ? (
-                            <button onClick={() => handleSave('payment')} className="text-[10px] font-bold text-yellow-500 uppercase">Save</button>
+                            <button onClick={() => handleSave('payment')} className="text-[10px] font-bold text-green-500 uppercase">Save</button>
                         ) : (
                             <button onClick={() => setEditSection('payment')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase transition-colors">Edit</button>
                         )}
                     </div>
 
-                    <div className={`bg-white/5 border ${editSection === 'payment' ? 'border-yellow-500/50' : 'border-white/5'} rounded-2xl overflow-hidden backdrop-blur-sm`}>
+                    <div className={`bg-white/5 border ${editSection === 'payment' ? 'border-green-500/50' : 'border-white/5'} rounded-2xl overflow-hidden backdrop-blur-sm`}>
                         <div className="p-4 flex items-center gap-4">
                             <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
                                 <CreditCard size={14} className="text-green-400" />
@@ -311,7 +311,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                         className="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors group"
                     >
                         <div className="flex items-center gap-3">
-                            <ShoppingBag size={18} className="text-white/60 group-hover:text-yellow-500 transition-colors" />
+                            <ShoppingBag size={18} className="text-white/60 group-hover:text-green-500 transition-colors" />
                             <span className="font-medium text-sm group-hover:text-white transition-colors">Order History</span>
                         </div>
                         <ChevronRight size={16} className="text-white/20 group-hover:text-white transition-colors" />

@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Mobile Tools (JDK)
+tools/
+
+# Build Types and Artifacts
+*.tsbuildinfo
+vite.config.d.ts
+vite.config.js
+

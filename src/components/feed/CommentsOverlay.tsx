@@ -74,7 +74,7 @@ export const CommentsOverlay: React.FC<CommentsOverlayProps> = ({ onClose }) => 
                     <button
                         onClick={handlePost}
                         disabled={!newComment.trim()}
-                        className="bg-yellow-500 text-black p-2.5 rounded-full hover:bg-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="bg-green-500 text-white p-2.5 rounded-full hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         <Send size={16} />
                     </button>

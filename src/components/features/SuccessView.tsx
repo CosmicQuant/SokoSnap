@@ -20,7 +20,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ onContinue }) => {
 
     return (
         <div
-            className="fixed inset-0 z-[70] bg-emerald-600 flex flex-col items-center justify-center p-8 text-center text-white animate-in zoom-in-95 duration-500"
+            className="fixed inset-0 z-[70] bg-green-600 flex flex-col items-center justify-center p-8 text-center text-white animate-in zoom-in-95 duration-500"
             role="alertdialog"
             aria-labelledby="success-title"
             aria-describedby="success-description"
@@ -35,7 +35,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ onContinue }) => {
             </h1>
             <p
                 id="success-description"
-                className="text-emerald-100 text-sm font-medium mb-12 max-w-[200px] leading-relaxed"
+                className="text-green-100 text-sm font-medium mb-12 max-w-[200px] leading-relaxed"
             >
                 Your payment is safely held in Escrow ID #{escrowId}
             </p>
@@ -51,7 +51,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ onContinue }) => {
                     />
                     <div>
                         <p className="font-bold text-lg text-slate-900">{riderName}</p>
-                        <div className="flex items-center gap-1 text-emerald-600 text-[10px] font-bold uppercase tracking-widest bg-emerald-50 px-2 py-1 rounded-full w-fit mt-1">
+                        <div className="flex items-center gap-1 text-green-600 text-[10px] font-bold uppercase tracking-widest bg-green-50 px-2 py-1 rounded-full w-fit mt-1">
                             <UserCheck size={12} aria-hidden="true" /> Verified Agent
                         </div>
                     </div>
@@ -94,7 +94,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ onContinue }) => {
             {/* Return Link */}
             <button
                 onClick={onContinue}
-                className="mt-8 text-white/70 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-600 rounded-lg px-4 py-2"
+                className="mt-8 text-white/70 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-green-600 rounded-lg px-4 py-2"
             >
                 Return to Marketplace
             </button>

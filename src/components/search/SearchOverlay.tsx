@@ -49,7 +49,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({
                             </div>
                             <div className="p-3">
                                 <p className="text-white font-bold text-xs truncate">{p.name}</p>
-                                <p className="text-yellow-500 text-[10px] font-black">KES {p.price.toLocaleString()}</p>
+                                <p className="text-green-500 text-[10px] font-black">KES {p.price.toLocaleString()}</p>
                             </div>
                         </div>
                     ))}
