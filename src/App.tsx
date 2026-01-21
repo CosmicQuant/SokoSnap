@@ -1,12 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { generateMockSecureOTP } from './utils/validation';
+import { useCartStore } from './store';
 import { FeedItem } from '@components/feed/FeedItem';
 import { TopNav } from './components/layout/TopNav';
 import { CartView } from './components/cart/CartView';
 import { ProfileView } from './components/profile/ProfileView';
+import { SellerProfileView } from './components/profile/SellerProfileView';
 import { SearchOverlay } from './components/search/SearchOverlay';
 import { SuccessView } from './components/common/SuccessView';
+
+import { OrderHistoryView } from './components/profile/OrderHistoryView';
 
 // Unified Data Structure
 const PRODUCTS = [
@@ -18,6 +22,11 @@ const PRODUCTS = [
         name: 'Air Jordan 1 "Uni Blue"',
         price: 4500,
         media: 'https://assets.mixkit.co/videos/preview/mixkit-fashion-model-showing-sneakers-34537-large.mp4',
+        slides: [
+            { type: 'video', url: 'https://assets.mixkit.co/videos/preview/mixkit-fashion-model-showing-sneakers-34537-large.mp4' },
+            { type: 'image', url: 'https://images.unsplash.com/photo-1628253747716-0c4f5c90fdda?auto=format&fit=crop&q=80&w=1080' },
+            { type: 'image', url: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=80&w=1080' }
+        ],
         description: "Premium quality. Best sellers in Nairobi.",
         likes: '12.4k'
     },
@@ -29,6 +38,10 @@ const PRODUCTS = [
         name: 'iPhone 15 Pro Max',
         price: 155000,
         media: 'https://images.unsplash.com/photo-1696446701796-da61225697cc?auto=format&fit=crop&q=80&w=1080',
+        slides: [
+            { type: 'image', url: 'https://images.unsplash.com/photo-1696446701796-da61225697cc?auto=format&fit=crop&q=80&w=1080' },
+            { type: 'image', url: 'https://images.unsplash.com/photo-1695048180494-1b32e043324d?auto=format&fit=crop&q=80&w=1080' }
+        ],
         description: "Brand new, Titanium Blue. Escrow protected.",
         likes: '8.2k'
     },
@@ -42,13 +55,51 @@ const PRODUCTS = [
         media: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&q=80&w=1080',
         description: "Authentic leather. Comes with dust bag.",
         likes: '5.1k'
+    },
+    {
+        id: 4,
+        type: 'video',
+        seller: 'Nanny Banana',
+        handle: '@nano_banana',
+        name: 'Summer Flora Dress',
+        price: 3200,
+        media: 'https://assets.mixkit.co/videos/preview/mixkit-woman-turning-in-slow-motion-with-a-floral-dress-39327-large.mp4',
+        slides: [
+            { type: 'video', url: 'https://assets.mixkit.co/videos/preview/mixkit-woman-turning-in-slow-motion-with-a-floral-dress-39327-large.mp4' },
+            { type: 'image', url: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&q=80&w=1080' }
+        ],
+        description: "Lightweight summer vibes. Available in all sizes.",
+        likes: '15.6k'
+    },
+    {
+        id: 5,
+        type: 'video',
+        seller: 'Nanny Banana',
+        handle: '@nano_banana',
+        name: 'Chic Beige Blazer',
+        price: 5500,
+        media: 'https://assets.mixkit.co/videos/preview/mixkit-young-woman-posing-with-a-blazer-34539-large.mp4',
+        description: "Perfect for the office or a casual brunch.",
+        likes: '9.3k'
+    },
+    {
+        id: 6,
+        type: 'image',
+        seller: 'Nanny Banana',
+        handle: '@nano_banana',
+        name: 'Velvet Evening Gown',
+        price: 8900,
+        media: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&q=80&w=1080',
+        description: "Stunning velvet texture. Create an impression.",
+        likes: '11.8k'
     }
 ];
 
 const App = () => {
     // Navigation State
     const [activeTab, setActiveTab] = useState('shop');
-    const [view, setView] = useState<'feed' | 'success' | 'cart' | 'profile'>('feed');
+    const [view, setView] = useState<'feed' | 'success' | 'cart' | 'profile' | 'seller-profile' | 'order-history'>('feed');
+    const [currentSeller, setCurrentSeller] = useState<{ name: string, handle: string } | undefined>(undefined);
 
     // Feature State
     const [showTrustModal, setShowTrustModal] = useState(false);
@@ -56,7 +107,7 @@ const App = () => {
     const [searchQuery, setSearchQuery] = useState('');
 
     // Data State
-    const [cart, setCart] = useState<any[]>([]);
+    const { items: cartItems, addItem: addToCart, clearCart } = useCartStore();
     const [userData, setUserData] = useState({
         phone: '',
         location: '',
@@ -79,13 +130,7 @@ const App = () => {
 
     // Actions
     const handleAddToCart = (product: any) => {
-        if (!cart.find(item => item.id === product.id)) {
-            setCart([...cart, product]);
-        }
-    };
-
-    const removeFromCart = (productId: number) => {
-        setCart(cart.filter(item => item.id !== productId));
+        addToCart(product, 1);
     };
 
     const handleCheckout = async () => {
@@ -96,7 +141,7 @@ const App = () => {
         setOtp(code);
 
         setIsProcessing(false);
-        setCart([]);
+        clearCart();
         setView('success');
     };
 
@@ -127,11 +172,7 @@ const App = () => {
     if (view === 'cart') {
         return (
             <CartView
-                cart={cart}
                 onBack={() => setView('feed')}
-                onRemove={removeFromCart}
-                onCheckout={handleCheckout}
-                isProcessing={isProcessing}
             />
         );
     }
@@ -139,8 +180,16 @@ const App = () => {
     if (view === 'profile') {
         return (
             <ProfileView
-                userData={userData}
                 onBack={() => setView('feed')}
+                onOrderHistory={() => setView('order-history')}
+            />
+        );
+    }
+
+    if (view === 'order-history') {
+        return (
+            <OrderHistoryView
+                onBack={() => setView('profile')}
             />
         );
     }
@@ -154,6 +203,23 @@ const App = () => {
         );
     }
 
+    if (view === 'seller-profile' && currentSeller) {
+        return (
+            <SellerProfileView
+                seller={currentSeller}
+                onBack={() => {
+                    setView('feed');
+                    setCurrentSeller(undefined);
+                }}
+                products={PRODUCTS.filter(p => p.seller === currentSeller.name)}
+                onSelectPost={() => {
+                    setActiveTab('shop');
+                    setView('feed');
+                }}
+            />
+        );
+    }
+
     // Default: Feed View
     return (
         <div className="h-screen w-full bg-black relative flex flex-col overflow-hidden select-none">
@@ -161,41 +227,48 @@ const App = () => {
             <TopNav
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
-                cartCount={cart.length}
+                cartCount={cartItems.length}
                 onProfileClick={() => setView('profile')}
+                onBack={currentSeller ? () => {
+                    setView('seller-profile');
+                    // We keep currentSeller as is, so we return to their profile info
+                } : undefined}
                 onSearchClick={() => setShowSearch(true)}
                 onCartClick={() => setView('cart')}
+                currentSeller={currentSeller}
             />
 
             {/* Feed List */}
             <div className="flex-1 overflow-y-scroll snap-y snap-mandatory hide-scrollbar">
-                {activeTab === 'shop' && PRODUCTS[0] ? (
-                    <FeedItem
-                        key={PRODUCTS[0].id}
-                        product={PRODUCTS[0]}
-                        cart={cart}
-                        onAddToCart={handleAddToCart}
-                        userData={userData}
-                        setUserData={setUserData}
-                        onCheckout={handleCheckout}
-                        isProcessing={isProcessing}
-                        deliveryQuote={deliveryQuote}
-                    />
-                ) : (
-                    PRODUCTS.map(p => (
+                {/* 
+                    Feed Logic:
+                    1. If activeTab is 'shop' AND we have a currentSeller, we only show products from that seller.
+                    2. If activeTab is 'foryou', we show everything (mixed).
+                */}
+                {PRODUCTS
+                    .filter(p => {
+                        if (activeTab === 'shop' && currentSeller) {
+                            return p.seller === currentSeller.name;
+                        }
+                        return true;
+                    })
+                    .map(p => (
                         <FeedItem
                             key={p.id}
                             product={p}
-                            cart={cart}
+                            cart={cartItems}
                             onAddToCart={handleAddToCart}
                             userData={userData}
                             setUserData={setUserData}
                             onCheckout={handleCheckout}
                             isProcessing={isProcessing}
                             deliveryQuote={deliveryQuote}
+                            onView={(seller) => {
+                                setCurrentSeller(seller);
+                                setView('seller-profile');
+                            }}
                         />
-                    ))
-                )}
+                    ))}
             </div>
 
             {/* Trust/Info Modal */}

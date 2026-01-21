@@ -12,6 +12,7 @@ export type UserType = 'guest' | 'verified_buyer' | 'verified_merchant';
 export interface User {
     id: string;
     name: string;
+    handle?: string;
     phone: string;
     email?: string;
     type: UserType;

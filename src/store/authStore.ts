@@ -25,6 +25,7 @@ interface AuthState {
     openAuthModal: (mode: 'login' | 'register') => void;
     closeAuthModal: () => void;
     setLoading: (loading: boolean) => void;
+    updateUser: (updates: Partial<User>) => void;
 }
 
 interface RegisterData {
@@ -97,6 +98,13 @@ export const useAuthStore = create<AuthState>()(
                         isAuthModalOpen: false,
                         authMode: null,
                     });
+                },
+
+                updateUser: (updates) => {
+                    const currentUser = get().user;
+                    if (currentUser) {
+                        set({ user: { ...currentUser, ...updates } });
+                    }
                 },
 
                 // Register action
