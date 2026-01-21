@@ -42,15 +42,21 @@ const ActionBtn: React.FC<{
     onClick?: () => void;
     isActive?: boolean;
     ariaLabel: string;
-}> = ({ icon, label, onClick, isActive = false, ariaLabel }) => (
+    count?: number;
+}> = ({ icon, label, onClick, isActive = false, ariaLabel, count }) => (
     <div className="feed-action-btn">
         <button
             onClick={onClick}
             aria-label={ariaLabel}
             aria-pressed={isActive}
-            className={isActive ? 'active' : ''}
+            className={`relative ${isActive ? 'active' : ''}`}
         >
             {icon}
+            {count !== undefined && count > 0 && (
+                <div key={count} className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-red-600 border-2 border-black rounded-full flex items-center justify-center px-1 animate-pulse-once">
+                    <span className="text-[10px] font-bold text-white leading-none">{count}</span>
+                </div>
+            )}
         </button>
         {label && <span>{label}</span>}
     </div>
@@ -151,10 +157,11 @@ const FeedItem: React.FC<{
                     ariaLabel={`Comments, ${product.comments}`}
                 />
                 <ActionBtn
-                    icon={inCart ? <ShoppingCart size={24} className="text-yellow-500 fill-yellow-500" /> : <ShoppingCart size={24} />}
-                    label={inCart ? itemQuantity.toString() : 'Cart'}
+                    icon={<ShoppingCart size={24} className={inCart ? "text-white" : ""} />}
+                    label="Cart"
                     onClick={handleAddToCart}
                     isActive={inCart}
+                    count={itemQuantity}
                     ariaLabel={inCart ? `In cart: ${itemQuantity}` : 'Add to cart'}
                 />
                 <ActionBtn

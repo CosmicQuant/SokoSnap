@@ -32,6 +32,7 @@ export default {
                 'slide-right': 'slideRight 0.3s ease-out',
                 'zoom-in': 'zoomIn 0.3s ease-out',
                 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                'pulse-once': 'pulseOnce 0.3s ease-in-out',
             },
             keyframes: {
                 fadeIn: {
@@ -57,6 +58,10 @@ export default {
                 zoomIn: {
                     '0%': { transform: 'scale(0.95)', opacity: '0' },
                     '100%': { transform: 'scale(1)', opacity: '1' },
+                },
+                pulseOnce: {
+                    '0%, 100%': { transform: 'scale(1)' },
+                    '50%': { transform: 'scale(1.3)' },
                 },
             },
             screens: {
