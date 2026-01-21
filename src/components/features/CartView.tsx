@@ -6,7 +6,7 @@
 import React from 'react';
 import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
 import { useCartStore, useUIStore } from '../../store';
-import { Button, CartItemSkeleton } from '../common';
+import { Button } from '../common';
 import { formatCurrency } from '../../utils/formatters';
 import { APP_CONFIG } from '../../utils/constants';
 

@@ -21,7 +21,9 @@ export function useIntersectionObserver<T extends HTMLElement>(
         if (!element) return;
 
         const observer = new IntersectionObserver(([entry]) => {
-            setIsIntersecting(entry.isIntersecting);
+            if (entry) {
+                setIsIntersecting(entry.isIntersecting);
+            }
         }, {
             threshold: 0.5,
             ...options,

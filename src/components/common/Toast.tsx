@@ -3,7 +3,7 @@
  * Notification system for success/error/info messages
  */
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
 import { useToast, useUIStore } from '../../store';
 

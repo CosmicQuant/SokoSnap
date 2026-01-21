@@ -3,7 +3,7 @@
  * Accessible modal/dialog with focus trap and keyboard handling
  */
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { X } from 'lucide-react';
 import FocusTrap from 'focus-trap-react';
 import { useScrollLock, useKeyPress } from '../../hooks';

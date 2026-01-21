@@ -1,5 +1,5 @@
-import React from 'react';
-import { ChevronLeft, CheckCircle, Clock } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 
 interface OrderHistoryViewProps {
@@ -41,83 +41,110 @@ const MOCK_ORDERS = [
 ];
 
 export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({ onBack }) => {
+    const [activeTab, setActiveTab] = useState<'ongoing' | 'completed'>('ongoing');
+
     return (
         <div className="min-h-screen w-full bg-black text-white animate-in slide-in-from-right duration-300 relative">
             {/* Header */}
-            <div className="sticky top-0 inset-x-0 p-4 bg-black/80 backdrop-blur-md border-b border-white/5 flex items-center gap-4 z-50">
-                <button
-                    onClick={onBack}
-                    className="p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors"
-                >
-                    <ChevronLeft size={24} />
-                </button>
-                <h1 className="text-xl font-bold italic uppercase tracking-wider">Order History</h1>
+            <div className="sticky top-0 inset-x-0 bg-black/80 backdrop-blur-md border-b border-white/5 z-50">
+                <div className="p-4 flex items-center gap-4">
+                    <button
+                        onClick={onBack}
+                        className="p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors"
+                    >
+                        <ChevronLeft size={24} />
+                    </button>
+                    <h1 className="text-xl font-bold italic uppercase tracking-wider">Order History</h1>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex border-t border-white/5">
+                    <button
+                        onClick={() => setActiveTab('ongoing')}
+                        className={`flex-1 py-3 text-xs font-black uppercase tracking-widest transition-colors relative ${activeTab === 'ongoing' ? 'text-yellow-500' : 'text-white/40 hover:text-white'
+                            }`}
+                    >
+                        In Progress
+                        {activeTab === 'ongoing' && <div className="absolute bottom-0 inset-x-0 h-0.5 bg-yellow-500" />}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('completed')}
+                        className={`flex-1 py-3 text-xs font-black uppercase tracking-widest transition-colors relative ${activeTab === 'completed' ? 'text-green-500' : 'text-white/40 hover:text-white'
+                            }`}
+                    >
+                        Completed
+                        {activeTab === 'completed' && <div className="absolute bottom-0 inset-x-0 h-0.5 bg-green-500" />}
+                    </button>
+                </div>
             </div>
 
-            <div className="p-4 space-y-8 pb-32">
+            <div className="p-4 safe-area-bottom">
 
                 {/* Ongoing Section */}
-                <section>
-                    <h2 className="text-xs font-black uppercase tracking-widest text-yellow-500 mb-4 flex items-center gap-2">
-                        <Clock size={14} /> In Progress
-                    </h2>
-                    <div className="space-y-4">
-                        {MOCK_ORDERS.filter(o => o.status === 'ongoing').map(order => (
-                            <div key={order.id} className="bg-white/5 border border-yellow-500/20 rounded-2xl p-4 relative overflow-hidden">
-                                <div className="flex gap-4">
-                                    <div className="w-16 h-16 bg-white/5 rounded-xl overflow-hidden shrink-0">
-                                        <img src={order.items[0]?.media} className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex justify-between items-start">
-                                            <h3 className="font-bold text-sm truncate pr-4">{order.items[0]?.name}</h3>
-                                            <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded font-bold uppercase tracking-wide whitespace-nowrap">
-                                                {order.step}
-                                            </span>
+                {activeTab === 'ongoing' && (
+                    <section className="animate-in fade-in zoom-in-95 duration-200">
+                        <div className="space-y-4">
+                            {MOCK_ORDERS.filter(o => o.status === 'ongoing').map(order => (
+                                <div key={order.id} className="bg-white/5 border border-yellow-500/20 rounded-2xl p-4 relative overflow-hidden">
+                                    <div className="flex gap-4">
+                                        <div className="w-16 h-16 bg-white/5 rounded-xl overflow-hidden shrink-0">
+                                            <img src={order.items[0]?.media} className="w-full h-full object-cover" />
                                         </div>
-                                        <p className="text-[10px] text-white/50 mt-1">Order #{order.id}</p>
-                                        <p className="text-sm font-black mt-2">{formatCurrency(order.total)}</p>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-start">
+                                                <h3 className="font-bold text-sm truncate pr-4">{order.items[0]?.name}</h3>
+                                                <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded font-bold uppercase tracking-wide whitespace-nowrap">
+                                                    {order.step}
+                                                </span>
+                                            </div>
+                                            <p className="text-[10px] text-white/50 mt-1">Order #{order.id}</p>
+                                            <p className="text-sm font-black mt-2">{formatCurrency(order.total)}</p>
+                                        </div>
+                                    </div>
+                                    {/* Progress Bar Mock */}
+                                    <div className="mt-4 pt-4 border-t border-white/5 flex items-center gap-2">
+                                        <div className="h-1 flex-1 bg-white/10 rounded-full overflow-hidden">
+                                            <div className="h-full w-[70%] bg-yellow-500 rounded-full" />
+                                        </div>
+                                        <span className="text-[9px] font-bold text-white/70">Arriving Soon</span>
                                     </div>
                                 </div>
-                                {/* Progress Bar Mock */}
-                                <div className="mt-4 pt-4 border-t border-white/5 flex items-center gap-2">
-                                    <div className="h-1 flex-1 bg-white/10 rounded-full overflow-hidden">
-                                        <div className="h-full w-[70%] bg-yellow-500 rounded-full" />
-                                    </div>
-                                    <span className="text-[9px] font-bold text-white/70">Arriving Soon</span>
+                            ))}
+                            {MOCK_ORDERS.filter(o => o.status === 'ongoing').length === 0 && (
+                                <div className="text-center py-10 text-white/30 text-xs font-medium">
+                                    No active orders
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
+                            )}
+                        </div>
+                    </section>
+                )}
 
                 {/* Delivered Section */}
-                <section>
-                    <h2 className="text-xs font-black uppercase tracking-widest text-green-500 mb-4 flex items-center gap-2">
-                        <CheckCircle size={14} /> Completed
-                    </h2>
-                    <div className="space-y-4">
-                        {MOCK_ORDERS.filter(o => o.status === 'delivered').map(order => (
-                            <div key={order.id} className="bg-white/5 border border-white/5 rounded-2xl p-4 opacity-80 hover:opacity-100 transition-opacity">
-                                <div className="flex gap-4">
-                                    <div className="w-16 h-16 bg-white/5 rounded-xl overflow-hidden shrink-0 grayscale">
-                                        <img src={order.items[0]?.media} className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex justify-between items-start">
-                                            <h3 className="font-bold text-sm truncate pr-4 text-white/80">{order.items[0]?.name}</h3>
-                                            <span className="text-[10px] bg-green-500/10 text-green-500 px-2 py-0.5 rounded font-bold uppercase tracking-wide whitespace-nowrap">
-                                                DELIVERED
-                                            </span>
+                {activeTab === 'completed' && (
+                    <section className="animate-in fade-in zoom-in-95 duration-200">
+                        <div className="space-y-4">
+                            {MOCK_ORDERS.filter(o => o.status === 'delivered').map(order => (
+                                <div key={order.id} className="bg-white/5 border border-white/5 rounded-2xl p-4 opacity-80 hover:opacity-100 transition-opacity">
+                                    <div className="flex gap-4">
+                                        <div className="w-16 h-16 bg-white/5 rounded-xl overflow-hidden shrink-0 grayscale">
+                                            <img src={order.items[0]?.media} className="w-full h-full object-cover" />
                                         </div>
-                                        <p className="text-[10px] text-white/40 mt-1">{order.date}</p>
-                                        <p className="text-sm font-bold text-white/60 mt-2">{formatCurrency(order.total)}</p>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-start">
+                                                <h3 className="font-bold text-sm truncate pr-4 text-white/80">{order.items[0]?.name}</h3>
+                                                <span className="text-[10px] bg-green-500/10 text-green-500 px-2 py-0.5 rounded font-bold uppercase tracking-wide whitespace-nowrap">
+                                                    DELIVERED
+                                                </span>
+                                            </div>
+                                            <p className="text-[10px] text-white/40 mt-1">{order.date}</p>
+                                            <p className="text-sm font-bold text-white/60 mt-2">{formatCurrency(order.total)}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
+                            ))}
+                        </div>
+                    </section>
+                )}
             </div>
         </div>
     );

@@ -15,7 +15,7 @@ import {
     ArrowLeft,
 } from 'lucide-react';
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
-import { Button, Input, Modal, ModalFooter, ChartSkeleton, OrderSkeleton, SkeletonList } from '../common';
+import { Button, Input, Modal, ModalFooter } from '../common';
 import { formatCurrency } from '../../utils/formatters';
 import { smartLinkSchema, getErrorMessages } from '../../utils/validators';
 import { MOCK_SELLER_STATS, MOCK_ORDERS, MOCK_CHART_DATA } from '../../utils/constants';
@@ -151,8 +151,8 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         aria-selected={activeTab === 'overview'}
                         onClick={() => setActiveTab('overview')}
                         className={`flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all ${activeTab === 'overview'
-                                ? 'bg-slate-100 text-slate-900 shadow-sm'
-                                : 'text-slate-400 hover:text-slate-600'
+                            ? 'bg-slate-100 text-slate-900 shadow-sm'
+                            : 'text-slate-400 hover:text-slate-600'
                             }`}
                     >
                         Analytics
@@ -162,8 +162,8 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         aria-selected={activeTab === 'links'}
                         onClick={() => setActiveTab('links')}
                         className={`flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all ${activeTab === 'links'
-                                ? 'bg-slate-100 text-slate-900 shadow-sm'
-                                : 'text-slate-400 hover:text-slate-600'
+                            ? 'bg-slate-100 text-slate-900 shadow-sm'
+                            : 'text-slate-400 hover:text-slate-600'
                             }`}
                     >
                         Smart Links
@@ -231,8 +231,8 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                         <div className="flex items-center gap-4">
                                             <div
                                                 className={`p-3 rounded-xl ${order.status === 'completed' || order.status === 'delivered'
-                                                        ? 'bg-emerald-50 text-emerald-600'
-                                                        : 'bg-blue-50 text-blue-600'
+                                                    ? 'bg-emerald-50 text-emerald-600'
+                                                    : 'bg-blue-50 text-blue-600'
                                                     }`}
                                             >
                                                 <Package size={20} aria-hidden="true" />
@@ -252,8 +252,8 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                             </p>
                                             <span
                                                 className={`text-[9px] uppercase font-bold px-2 py-0.5 rounded-full ${order.status === 'completed' || order.status === 'delivered'
-                                                        ? 'bg-emerald-100 text-emerald-700'
-                                                        : 'bg-blue-100 text-blue-700'
+                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                    : 'bg-blue-100 text-blue-700'
                                                     }`}
                                             >
                                                 {order.status.replace('_', ' ')}

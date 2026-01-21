@@ -22,10 +22,7 @@ export default defineConfig(({ mode }) => {
 
     // Plugins
     plugins: [
-      react({
-        // Enable React Refresh for fast HMR
-        fastRefresh: true,
-      }),
+      react(),
     ],
 
     // Path aliases matching tsconfig.json
