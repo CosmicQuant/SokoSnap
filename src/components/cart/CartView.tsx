@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, Phone, MapPin, X, AlertCircle } from 'lucide-react';
-import { useCartStore, useUIStore } from '../../store';
+import { useCartStore } from '../../store';
 import { Button } from '../common';
 import { formatCurrency } from '../../utils/formatters';
 import { APP_CONFIG } from '../../utils/constants';
