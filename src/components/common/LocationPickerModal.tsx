@@ -108,6 +108,7 @@ export const LocationPickerModal: React.FC<LocationPickerProps> = ({ isOpen, onC
                     >
                         Confirm Location
                     </button>
+                    <div className="h-[env(safe-area-inset-bottom)] w-full" />
                 </div>
             </div>
         </div>

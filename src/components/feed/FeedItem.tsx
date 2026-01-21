@@ -142,7 +142,8 @@ export const FeedItem: React.FC<FeedItemProps> = ({
         }
     };
 
-    const isInCart = cart.some(i => i.id === product.id);
+    const isInCart = cart.some(i => i.product.id === product.id);
+    const cartItemQuantity = cart.find(i => i.product.id === product.id)?.quantity || 0;
     const hasUserData = userData.phone && userData.location;
 
     // Carousel Logic
@@ -220,7 +221,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
             </div>
 
             {/* Smart Dots Indicator */}
-            {slides.length > 1 && (
+            {slides.length > 1 && !showInputs && (
                 <div className="absolute bottom-48 left-0 right-0 z-50 flex justify-center gap-1.5 fade-in pointer-events-auto">
                     {slides.map((_: any, i: number) => (
                         <button
@@ -243,28 +244,32 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
 
             {/* Action Sidebar */}
-            <div className="absolute right-4 bottom-40 z-40 flex flex-col items-center gap-6">
-                <ActionBtn
-                    icon={<Heart size={28} className={`drop-shadow-lg transition-colors ${isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`} />}
-                    label={isLiked ? `${likesCount}` : product.likes}
-                    onClick={handleLike}
-                />
-                <ActionBtn
-                    icon={<MessageCircle size={28} className="drop-shadow-lg" />}
-                    onClick={() => setShowComments(true)}
-                />
-                <ActionBtn
-                    icon={<Share2 size={28} className="drop-shadow-lg" />}
-                    onClick={handleShare}
-                />
-                <ActionBtn
-                    icon={<ShoppingBag size={28} className={`drop-shadow-lg transition-colors duration-300 ${isInCart ? 'text-yellow-500 fill-yellow-500/20' : 'text-white'}`} />}
-                    onClick={(e) => {
-                        e?.stopPropagation();
-                        onAddToCart(product);
-                    }}
-                />
-            </div>
+            {!showMap && (
+                <div className="absolute right-4 bottom-40 z-40 flex flex-col items-center gap-6 animate-in fade-in duration-300">
+                    <ActionBtn
+                        icon={<Heart size={28} className={`drop-shadow-lg transition-colors ${isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`} />}
+                        label={isLiked ? `${likesCount}` : product.likes}
+                        onClick={handleLike}
+                    />
+                    <ActionBtn
+                        icon={<MessageCircle size={28} className="drop-shadow-lg" />}
+                        onClick={() => setShowComments(true)}
+                    />
+                    <ActionBtn
+                        icon={<Share2 size={28} className="drop-shadow-lg" />}
+                        onClick={handleShare}
+                    />
+                    <ActionBtn
+                        icon={<ShoppingBag size={28} className={`drop-shadow-lg transition-colors duration-300 ${isInCart ? 'text-green-500 fill-green-500/20' : 'text-white'}`} />}
+                        onClick={(e) => {
+                            e?.stopPropagation();
+                            onAddToCart(product);
+                        }}
+                        count={cartItemQuantity}
+                        className={isInCart ? "bg-white/20 rounded-full" : ""}
+                    />
+                </div>
+            )}
 
             {/* Bottom Information Stack */}
             <div className="relative z-30 mt-auto p-6 pb-6 space-y-6 max-w-[85%]">

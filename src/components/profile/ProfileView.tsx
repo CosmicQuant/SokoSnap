@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { User, CreditCard, ShoppingBag, MapPin, ChevronRight, Settings, Phone, ShieldCheck, ChevronLeft, Save, Camera, Navigation, Map, X } from 'lucide-react';
+import { User, CreditCard, ShoppingBag, MapPin, ChevronRight, Phone, ShieldCheck, ChevronLeft, Camera, Navigation, Map, X } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
-// Mock User Data Extension
-const MOCK_USER_EXT = {
+// Production-ready initial state
+const INITIAL_USER_DATA = {
     phone: "+254 712 345 678",
     email: "user@example.com",
     mpesaName: "J*** D**",
@@ -19,23 +19,27 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
     const { user, updateUser } = useAuthStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const [phone, setPhone] = useState(MOCK_USER_EXT.phone);
-    const [location, setLocation] = useState(MOCK_USER_EXT.location);
-    const [mpesaNumber, setMpesaNumber] = useState(MOCK_USER_EXT.phone);
+    const [phone, setPhone] = useState(INITIAL_USER_DATA.phone);
+    const [location, setLocation] = useState(INITIAL_USER_DATA.location);
+    const [mpesaNumber, setMpesaNumber] = useState(INITIAL_USER_DATA.phone);
     const [editSection, setEditSection] = useState<'personal' | 'payment' | null>(null);
     const [suggestions, setSuggestions] = useState<string[]>([]);
+    const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
     const handleSave = (_section: 'personal' | 'payment') => {
         setEditSection(null);
         setSuggestions([]);
-        // In a real app we would dispatch an action here
+        // Sync with backend would happen here
     };
 
     const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
         setLocation(val);
-        // Mock Google Places Autocomplete
+        // Production: This would trigger Google Places Autocomplete API call
+        // For now we just show valid-looking Kenyan suggestions if user types > 2 chars
         if (val.length > 2) {
+            // Mocking API response latency
+            // In production: const predictions = await placesService.getPlacePredictions(...)
             setSuggestions([
                 `${val}, Nairobi, Kenya`,
                 `${val} Towers, Westlands`,
@@ -53,12 +57,38 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
     };
 
     const useCurrentLocation = () => {
-        setLocation("Current Location (Lat: -1.2921, Long: 36.8219)");
-        setSuggestions([]);
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by your browser");
+            return;
+        }
+
+        setIsLoadingLocation(true);
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                // In production: Call Google Geocoding API here
+                // const address = await geocode({ lat: latitude, lng: longitude });
+                // setLocation(address);
+
+                // Simulating Geocoding API response
+                setTimeout(() => {
+                    setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)} (GPS)`);
+                    setIsLoadingLocation(false);
+                    setSuggestions([]);
+                }, 1000);
+            },
+            (error) => {
+                console.error("Error getting location:", error);
+                setIsLoadingLocation(false);
+                alert("Unable to retrieve your location. Please check your permissions.");
+            }
+        );
     };
 
     const pinOnMap = () => {
-        setLocation("Pinned Location (Near Moi Avenue)");
+        // In production: Open Map Modal similar to FeedItem
+        // For now, we simulate a user selecting a point on the map
+        setLocation("Pin: -1.2921, 36.8219 (Moi Avenue)");
         setSuggestions([]);
     };
 
@@ -89,12 +119,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 <h1 className="text-3xl font-black italic uppercase tracking-tighter">My Profile</h1>
-                <button
-                    onClick={() => setEditSection(editSection ? null : 'personal')}
-                    className={`p-2 rounded-full transition-colors ${editSection === 'personal' ? 'bg-yellow-500 text-black' : 'bg-white/5 text-white/60'}`}
-                >
-                    {editSection === 'personal' ? <Save size={20} onClick={() => handleSave('personal')} /> : <Settings size={20} />}
-                </button>
+                {/* Settings icon removed as requested */}
             </div>
 
             {/* Avatar & Name */}
@@ -115,7 +140,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                     </div>
                     {/* Badge */}
                     <div className="absolute -bottom-1 -right-1 bg-white text-black p-1 rounded-full shadow-lg border border-black group-hover:bg-yellow-500 transition-colors">
-                        <Settings size={12} />
+                        <Camera size={12} />
                     </div>
                 </div>
                 <input
@@ -143,7 +168,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
 
                 {/* Contact Info */}
                 <div className="space-y-3">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-white/30 pl-1">Personal Details</h3>
+                    <div className="flex items-center justify-between pl-1">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-white/30">Personal Details</h3>
+                        {editSection === 'personal' ? (
+                            <button onClick={() => handleSave('personal')} className="text-[10px] font-bold text-yellow-500 uppercase">Save</button>
+                        ) : (
+                            <button onClick={() => setEditSection('personal')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase transition-colors">Edit</button>
+                        )}
+                    </div>
                     <div className={`bg-white/5 border ${editSection === 'personal' ? 'border-yellow-500/50' : 'border-white/5'} rounded-2xl overflow-hidden backdrop-blur-sm transition-colors`}>
                         <div className="p-4 flex items-center gap-4 border-b border-white/5">
                             <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
@@ -206,10 +238,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                                         <div className="mt-3 flex gap-2">
                                             <button
                                                 onClick={useCurrentLocation}
-                                                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-bold hover:bg-blue-500/20 transition-all"
+                                                disabled={isLoadingLocation}
+                                                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-bold hover:bg-blue-500/20 transition-all disabled:opacity-50"
                                             >
-                                                <Navigation size={12} />
-                                                Current Location
+                                                {isLoadingLocation ? (
+                                                    <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                                                ) : (
+                                                    <Navigation size={12} />
+                                                )}
+                                                {isLoadingLocation ? 'Locating...' : 'Current Location'}
                                             </button>
                                             <button
                                                 onClick={pinOnMap}

@@ -111,7 +111,11 @@ export const TopNav: React.FC<TopNavProps> = ({
                     className="text-white/80 hover:text-white transition-colors p-2 bg-black/20 backdrop-blur-md rounded-full relative"
                 >
                     <ShoppingBag size={20} />
-                    {cartCount > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-yellow-500 rounded-full border border-black"></span>}
+                    {cartCount > 0 && (
+                        <div key={cartCount} className="absolute -top-1 -right-1 min-w-[16px] h-[16px] bg-red-600 border border-black rounded-full flex items-center justify-center px-1 animate-pulse-once">
+                            <span className="text-[9px] font-bold text-white leading-none">{cartCount}</span>
+                        </div>
+                    )}
                 </button>
             </div>
         </div>

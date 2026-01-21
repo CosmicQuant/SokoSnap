@@ -108,6 +108,7 @@ const App = () => {
 
     // Data State
     const { items: cartItems, addItem: addToCart, clearCart } = useCartStore();
+    const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
     const [userData, setUserData] = useState({
         phone: '',
         location: '',
@@ -173,6 +174,9 @@ const App = () => {
         return (
             <CartView
                 onBack={() => setView('feed')}
+                userData={userData}
+                setUserData={setUserData}
+                onCheckout={handleCheckout}
             />
         );
     }
@@ -227,7 +231,7 @@ const App = () => {
             <TopNav
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
-                cartCount={cartItems.length}
+                cartCount={cartCount}
                 onProfileClick={() => setView('profile')}
                 onBack={currentSeller ? () => {
                     setView('seller-profile');
