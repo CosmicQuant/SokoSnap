@@ -222,7 +222,7 @@ const App = () => {
 
     // Default: Feed View
     return (
-        <div className="h-screen w-full bg-black relative flex flex-col overflow-hidden select-none">
+        <div className="h-[100dvh] w-full bg-black relative flex flex-col overflow-hidden select-none">
 
             <TopNav
                 activeTab={activeTab}

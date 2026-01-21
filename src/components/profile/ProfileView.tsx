@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { User, CreditCard, ShoppingBag, MapPin, ChevronRight, Settings, Phone, ShieldCheck, ChevronLeft, Save, Camera } from 'lucide-react';
+import { User, CreditCard, ShoppingBag, MapPin, ChevronRight, Settings, Phone, ShieldCheck, ChevronLeft, Save, Camera, Navigation, Map, X } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
 // Mock User Data Extension
@@ -23,10 +23,43 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
     const [location, setLocation] = useState(MOCK_USER_EXT.location);
     const [mpesaNumber, setMpesaNumber] = useState(MOCK_USER_EXT.phone);
     const [editSection, setEditSection] = useState<'personal' | 'payment' | null>(null);
+    const [suggestions, setSuggestions] = useState<string[]>([]);
 
     const handleSave = (_section: 'personal' | 'payment') => {
         setEditSection(null);
+        setSuggestions([]);
         // In a real app we would dispatch an action here
+    };
+
+    const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setLocation(val);
+        // Mock Google Places Autocomplete
+        if (val.length > 2) {
+            setSuggestions([
+                `${val}, Nairobi, Kenya`,
+                `${val} Towers, Westlands`,
+                `${val} Road, Kilimani`,
+                `${val} Avenue, CBD`
+            ]);
+        } else {
+            setSuggestions([]);
+        }
+    };
+
+    const selectSuggestion = (s: string) => {
+        setLocation(s);
+        setSuggestions([]);
+    };
+
+    const useCurrentLocation = () => {
+        setLocation("Current Location (Lat: -1.2921, Long: 36.8219)");
+        setSuggestions([]);
+    };
+
+    const pinOnMap = () => {
+        setLocation("Pinned Location (Near Moi Avenue)");
+        setSuggestions([]);
     };
 
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,12 +170,56 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                             <div className="flex-1">
                                 <p className="text-[10px] uppercase tracking-wider text-white/40 font-bold">Delivery Location</p>
                                 {editSection === 'personal' ? (
-                                    <input
-                                        type="text"
-                                        value={location}
-                                        onChange={(e) => setLocation(e.target.value)}
-                                        className="w-full bg-transparent border-b border-yellow-500 text-yellow-500 font-medium outline-none text-sm pt-1"
-                                    />
+                                    <div className="relative">
+                                        <div className="flex items-center border-b border-yellow-500 pb-1">
+                                            <input
+                                                type="text"
+                                                value={location}
+                                                onChange={handleLocationChange}
+                                                className="w-full bg-transparent text-yellow-500 font-medium outline-none text-sm placeholder-white/20"
+                                                placeholder="Search location..."
+                                            />
+                                            {location && (
+                                                <button onClick={() => { setLocation(''); setSuggestions([]); }}>
+                                                    <X size={14} className="text-white/40 hover:text-white" />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Suggestions */}
+                                        {suggestions.length > 0 && (
+                                            <div className="absolute top-full left-0 right-0 mt-2 bg-[#1A1A1A] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+                                                {suggestions.map((s, i) => (
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => selectSuggestion(s)}
+                                                        className="w-full text-left px-4 py-3 hover:bg-white/5 border-b border-white/5 last:border-0 flex items-center gap-3 transition-colors"
+                                                    >
+                                                        <MapPin size={14} className="text-white/40" />
+                                                        <span className="text-sm text-gray-300">{s}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Quick Actions */}
+                                        <div className="mt-3 flex gap-2">
+                                            <button
+                                                onClick={useCurrentLocation}
+                                                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-bold hover:bg-blue-500/20 transition-all"
+                                            >
+                                                <Navigation size={12} />
+                                                Current Location
+                                            </button>
+                                            <button
+                                                onClick={pinOnMap}
+                                                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-bold hover:bg-purple-500/20 transition-all"
+                                            >
+                                                <Map size={12} />
+                                                Pin on Map
+                                            </button>
+                                        </div>
+                                    </div>
                                 ) : (
                                     <p className="text-sm font-medium">{location}</p>
                                 )}

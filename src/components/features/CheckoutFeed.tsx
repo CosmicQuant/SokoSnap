@@ -63,16 +63,15 @@ const FeedItem: React.FC<{
     product: Product;
     onBuyNow: (product: Product) => void;
 }> = ({ product, onBuyNow }) => {
-    const { addItem, isInCart } = useCartStore();
-    const inCart = isInCart(product.id);
+    const { addItem, getItemQuantity } = useCartStore(); // Use getItemQuantity selector
+    const itemQuantity = getItemQuantity ? getItemQuantity(product.id) : 0; // Guard clause if selector doesn't exist yet
+    const inCart = itemQuantity > 0;
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
 
     const handleAddToCart = () => {
-        if (!inCart) {
-            addItem(product);
-        }
+        addItem(product);
     };
 
     return (
@@ -152,11 +151,11 @@ const FeedItem: React.FC<{
                     ariaLabel={`Comments, ${product.comments}`}
                 />
                 <ActionBtn
-                    icon={inCart ? <CheckCircle2 size={24} /> : <ShoppingCart size={24} />}
-                    label={inCart ? 'Added' : 'Cart'}
+                    icon={inCart ? <ShoppingCart size={24} className="text-yellow-500 fill-yellow-500" /> : <ShoppingCart size={24} />}
+                    label={inCart ? itemQuantity.toString() : 'Cart'}
                     onClick={handleAddToCart}
                     isActive={inCart}
-                    ariaLabel={inCart ? 'In cart' : 'Add to cart'}
+                    ariaLabel={inCart ? `In cart: ${itemQuantity}` : 'Add to cart'}
                 />
                 <ActionBtn
                     icon={<Share2 size={22} />}

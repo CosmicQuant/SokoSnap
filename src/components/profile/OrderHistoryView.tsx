@@ -78,7 +78,7 @@ export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({ onBack }) =>
                 </div>
             </div>
 
-            <div className="p-4 safe-area-bottom">
+            <div className="p-4 pb-[calc(2rem+env(safe-area-inset-bottom))]">
 
                 {/* Ongoing Section */}
                 {activeTab === 'ongoing' && (

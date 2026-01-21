@@ -3,9 +3,9 @@
  * Shopping cart with items display and checkout initiation
  */
 
-import React from 'react';
-import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
-import { useCartStore, useUIStore } from '../../store';
+import React, { useState } from 'react';
+import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, AlertCircle } from 'lucide-react';
+import { useCartStore, useUIStore, useAuthStore } from '../../store';
 import { Button } from '../common';
 import { formatCurrency } from '../../utils/formatters';
 import { APP_CONFIG } from '../../utils/constants';
@@ -16,7 +16,9 @@ interface CartViewProps {
 
 export const CartView: React.FC<CartViewProps> = ({ onBack }) => {
     const { items, removeItem, updateQuantity, clearCart } = useCartStore();
+    const { user } = useAuthStore();
     const navigateTo = useUIStore((state) => state.navigateTo);
+    const [missingInfoError, setMissingInfoError] = useState<string | null>(null);
 
     const subtotal = items.reduce(
         (sum, item) => sum + item.product.price * item.quantity,
@@ -26,6 +28,26 @@ export const CartView: React.FC<CartViewProps> = ({ onBack }) => {
     const total = subtotal + deliveryFee;
 
     const handleCheckout = () => {
+        // Validate user information
+        // We check against the mock user or the stored user object
+        // Assuming validation logic checks if phone/location are present
+        const hasPhone = user?.phone && user.phone.length > 5;
+        // const hasLocation = user?.location && user.location.length > 3; // Location might be part of user object or separate
+
+        if (!user) {
+            // If no user is logged in, perhaps prompt logic (though app seems to default to Guest)
+            setMissingInfoError("Please log in to checkout.");
+            navigateTo('profile'); // Send them to profile to login? Or open auth modal.
+            return;
+        }
+
+        // Simplistic validation: if phone is "default" or missing
+        if (!hasPhone) {
+            setMissingInfoError("Please add your Phone Number and Delivery Location in your Profile before checking out.");
+            setTimeout(() => navigateTo('profile'), 2000);
+            return;
+        }
+
         // For now, we'll just show success since we don't have a full checkout flow
         navigateTo('success');
         clearCart();
@@ -145,7 +167,7 @@ export const CartView: React.FC<CartViewProps> = ({ onBack }) => {
 
             {/* Checkout Footer */}
             {items.length > 0 && (
-                <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 space-y-4 shadow-lg">
+                <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-4 shadow-lg">
                     {/* Summary */}
                     <div className="space-y-2">
                         <div className="flex justify-between text-sm">
@@ -169,13 +191,19 @@ export const CartView: React.FC<CartViewProps> = ({ onBack }) => {
                     </div>
 
                     {/* Checkout Button */}
+                    {missingInfoError && (
+                        <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-start gap-2 animate-in fade-in slide-in-from-bottom-2">
+                            <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                            <p>{missingInfoError}</p>
+                        </div>
+                    )}
                     <Button
                         onClick={handleCheckout}
                         variant="success"
                         size="lg"
                         fullWidth
                     >
-                        Proceed to Checkout
+                        Secure Checkout
                     </Button>
                 </footer>
             )}
