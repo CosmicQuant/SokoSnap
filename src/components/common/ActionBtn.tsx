@@ -18,14 +18,14 @@ export const ActionBtn: React.FC<ActionBtnProps> = ({ icon, label, onClick, onRe
             className="flex items-center justify-center text-white active:scale-90 transition p-2 hover:bg-white/10 rounded-full relative"
         >
             {icon}
-            
+
             {/* ADD HINT: Plus badge when item not in cart */}
             {showAddHint && (count === undefined || count === 0) && (
                 <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center shadow-md border border-black/20 animate-pulse">
                     <Plus size={10} className="text-black" strokeWidth={3} />
                 </div>
             )}
-            
+
             {/* Quantity badge when in cart */}
             {count !== undefined && count > 0 && (
                 <div key={count} className="absolute -top-1 -right-1 min-w-[16px] h-[16px] bg-red-600 border border-black rounded-full flex items-center justify-center px-1 animate-pulse-once z-10">
