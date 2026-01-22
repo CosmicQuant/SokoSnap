@@ -351,6 +351,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                                 }
                             } : undefined}
                             count={cartItemQuantity}
+                            showAddHint={!isInCart}
                             className={isInCart ? "bg-white/20 rounded-full" : ""}
                         />
                     </div>
