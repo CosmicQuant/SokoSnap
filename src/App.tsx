@@ -30,7 +30,8 @@ const PRODUCTS = [
             { type: 'image', url: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=80&w=1080' }
         ],
         description: "Premium quality. Best sellers in Nairobi.",
-        likes: '12.4k'
+        likes: '12.4k',
+        allowCOD: true
     },
     {
         id: 2,
@@ -45,7 +46,8 @@ const PRODUCTS = [
             { type: 'image', url: 'https://images.unsplash.com/photo-1695048180494-1b32e043324d?auto=format&fit=crop&q=80&w=1080' }
         ],
         description: "Brand new, Titanium Blue. Escrow protected.",
-        likes: '8.2k'
+        likes: '8.2k',
+        allowCOD: true
     },
     {
         id: 3,
@@ -56,7 +58,8 @@ const PRODUCTS = [
         price: 12500,
         media: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&q=80&w=1080',
         description: "Authentic leather. Comes with dust bag.",
-        likes: '5.1k'
+        likes: '5.1k',
+        allowCOD: true
     },
     {
         id: 4,
@@ -71,7 +74,8 @@ const PRODUCTS = [
             { type: 'image', url: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&q=80&w=1080' }
         ],
         description: "Lightweight summer vibes. Available in all sizes.",
-        likes: '15.6k'
+        likes: '15.6k',
+        allowCOD: true
     },
     {
         id: 5,
@@ -82,7 +86,8 @@ const PRODUCTS = [
         price: 5500,
         media: 'https://assets.mixkit.co/videos/preview/mixkit-young-woman-posing-with-a-blazer-34539-large.mp4',
         description: "Perfect for the office or a casual brunch.",
-        likes: '9.3k'
+        likes: '9.3k',
+        allowCOD: true
     },
     {
         id: 6,
@@ -93,7 +98,8 @@ const PRODUCTS = [
         price: 8900,
         media: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&q=80&w=1080',
         description: "Stunning velvet texture. Create an impression.",
-        likes: '11.8k'
+        likes: '11.8k',
+        allowCOD: true
     }
 ];
 

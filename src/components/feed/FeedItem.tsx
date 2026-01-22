@@ -55,6 +55,9 @@ export const FeedItem: React.FC<FeedItemProps> = ({
     // Payment method state
     const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'cod'>('mpesa');
 
+    // Keyboard active state for positioning
+    const [isKeyboardActive, setIsKeyboardActive] = useState(false);
+
     // Feature States (Local)
     const [isLiked, setIsLiked] = useState(false);
     const [likesCount, setLikesCount] = useState<number>(parseInt(product.likes?.replace('k', '000') || '0'));
@@ -265,8 +268,13 @@ export const FeedItem: React.FC<FeedItemProps> = ({
             {showComments && <CommentsOverlay onClose={() => setShowComments(false)} />}
 
 
-            {/* Action Sidebar */}
-            <div className="absolute right-4 bottom-[calc(10rem+env(safe-area-inset-bottom))] z-40 flex flex-col items-center gap-6 animate-in fade-in duration-300">
+            {/* Action Sidebar - Hide when keyboard is active, move up when drawer is open */}
+            <div className={`absolute right-4 z-40 flex flex-col items-center gap-6 transition-all duration-200 ${isKeyboardActive
+                    ? 'opacity-0 pointer-events-none'
+                    : showBottomSheet
+                        ? 'bottom-[calc(17rem+env(safe-area-inset-bottom))]'
+                        : 'bottom-[calc(10rem+env(safe-area-inset-bottom))]'
+                } animate-in fade-in duration-300`}>
                 <ActionBtn
                     icon={<Heart size={28} className={`drop-shadow-lg transition-colors ${isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`} />}
                     label={isLiked ? `${likesCount}` : product.likes}
@@ -374,6 +382,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                             allowCOD={product.allowCOD ?? false}
                             paymentMethod={paymentMethod}
                             setPaymentMethod={setPaymentMethod}
+                            onKeyboardActive={setIsKeyboardActive}
                         />
 
                         {/* EDITABLE USER DATA HINT (Full-width Tab) */}

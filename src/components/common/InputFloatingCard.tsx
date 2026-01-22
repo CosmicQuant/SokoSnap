@@ -1,6 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Phone, MapPin, X, Crosshair, Map, Banknote } from 'lucide-react';
 import { LocationPickerModal } from './LocationPickerModal';
+import { Keyboard } from '@capacitor/keyboard';
+import { Capacitor } from '@capacitor/core';
 import mpesaLogo from '../../assets/41.png';
 
 interface InputFloatingCardProps {
@@ -11,6 +13,7 @@ interface InputFloatingCardProps {
     allowCOD?: boolean; // Whether seller allows Cash on Delivery
     paymentMethod?: 'mpesa' | 'cod';
     setPaymentMethod?: (method: 'mpesa' | 'cod') => void;
+    onKeyboardActive?: (active: boolean) => void; // Notify parent when keyboard is active
 }
 
 export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
@@ -20,10 +23,15 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
     setUserData,
     allowCOD = false,
     paymentMethod = 'mpesa',
-    setPaymentMethod
+    setPaymentMethod,
+    onKeyboardActive
 }) => {
     const [showMap, setShowMap] = useState(false);
+    const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
     const phoneInputRef = useRef<HTMLInputElement>(null);
+    const locationInputRef = useRef<HTMLInputElement>(null);
+    const drawerRef = useRef<HTMLDivElement>(null);
 
     // Auto-focus phone input when card opens
     useEffect(() => {
@@ -32,14 +40,68 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
         }
     }, [isOpen]);
 
+    // Handle keyboard detection using Capacitor Keyboard plugin on native
+    useEffect(() => {
+        if (!isOpen) return;
+
+        let showListener: any;
+        let hideListener: any;
+
+        const setupKeyboardListeners = async () => {
+            if (Capacitor.isNativePlatform()) {
+                // Use Capacitor Keyboard plugin for native platforms
+                showListener = await Keyboard.addListener('keyboardWillShow', (info) => {
+                    setIsKeyboardOpen(true);
+                    setKeyboardHeight(info.keyboardHeight);
+                    onKeyboardActive?.(true);
+                });
+
+                hideListener = await Keyboard.addListener('keyboardWillHide', () => {
+                    setIsKeyboardOpen(false);
+                    setKeyboardHeight(0);
+                    onKeyboardActive?.(false);
+                });
+            }
+        };
+
+        setupKeyboardListeners();
+
+        // Fallback: Use visualViewport API for web
+        const handleResize = () => {
+            if (!Capacitor.isNativePlatform() && window.visualViewport) {
+                const kbHeight = window.innerHeight - window.visualViewport.height;
+                const keyboardVisible = kbHeight > 150;
+                setIsKeyboardOpen(keyboardVisible);
+                setKeyboardHeight(kbHeight);
+                onKeyboardActive?.(keyboardVisible);
+            }
+        };
+
+        window.visualViewport?.addEventListener('resize', handleResize);
+
+        return () => {
+            showListener?.remove?.();
+            hideListener?.remove?.();
+            window.visualViewport?.removeEventListener('resize', handleResize);
+            onKeyboardActive?.(false);
+        };
+    }, [isOpen, onKeyboardActive]);
+
     if (!isOpen) return null;
 
     const isCOD = paymentMethod === 'cod';
 
     return (
         <>
-            {/* ULTRA-THIN INPUT DRAWER - Above all icons, sits directly on button */}
-            <div className="absolute bottom-full left-0 right-0 mb-0 z-[200] animate-in slide-in-from-bottom duration-150">
+            {/* ULTRA-THIN INPUT DRAWER - Fixed at bottom when keyboard open, absolute otherwise */}
+            <div
+                ref={drawerRef}
+                className={`${isKeyboardOpen
+                    ? 'fixed left-0 right-0 z-[9999]'
+                    : 'absolute bottom-full left-0 right-0 mb-0 z-[200]'
+                    } animate-in slide-in-from-bottom duration-150 transition-all`}
+                style={isKeyboardOpen ? { bottom: keyboardHeight } : undefined}
+            >
                 {/* Solid thin card */}
                 <div className="bg-neutral-900 border border-white/20 rounded-t-xl shadow-lg overflow-hidden">
 
@@ -59,7 +121,7 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                     </div>
 
                     {/* Ultra-compact inputs - minimal padding */}
-                    <div className="px-2 py-1.5 space-y-1">
+                    <div className="px-2 py-1.5 space-y-1 pb-[env(safe-area-inset-bottom)]">
 
                         {/* Row 1: Phone Input + COD Toggle (if allowed) */}
                         <div className="flex gap-1.5">
@@ -75,7 +137,7 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                                     className="w-full h-[32px] bg-white/10 border border-white/15 rounded-lg py-1.5 pl-7 pr-2 text-[11px] font-bold text-white placeholder:text-white/30 outline-none focus:border-yellow-400/50 transition-all"
                                 />
                             </div>
-                            {/* Cash on Delivery Button - Always visible, enabled if seller allows, disabled if not */}
+                            {/* Cash on Delivery Button - Emerald green when active */}
                             {setPaymentMethod && (
                                 <button
                                     onClick={() => allowCOD && setPaymentMethod(isCOD ? 'mpesa' : 'cod')}
@@ -84,11 +146,11 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                                         ? 'bg-white/5 border-white/10 text-white/20 cursor-not-allowed opacity-50'
                                         : isCOD
                                             ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 border-emerald-400/50 text-white shadow-sm shadow-emerald-500/30 active:scale-95'
-                                            : 'bg-white/5 border-white/20 text-white/50 hover:text-white hover:border-white/30 active:scale-95'
+                                            : 'bg-white/5 border-emerald-500/30 text-emerald-400/80 hover:text-emerald-400 hover:border-emerald-400/50 active:scale-95'
                                         }`}
                                     title={allowCOD ? "Cash on Delivery" : "Seller doesn't accept Cash on Delivery"}
                                 >
-                                    <Banknote size={12} className={isCOD && allowCOD ? 'text-white' : ''} />
+                                    <Banknote size={12} className={isCOD && allowCOD ? 'text-white' : 'text-emerald-500'} />
                                     <span>{isCOD && allowCOD ? 'Cash on Delivery ✓' : 'Cash on Delivery'}</span>
                                 </button>
                             )}
@@ -99,6 +161,7 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                             <div className="flex-1 relative">
                                 <MapPin size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-yellow-400/70" />
                                 <input
+                                    ref={locationInputRef}
                                     type="text"
                                     placeholder="Delivery Location"
                                     value={userData.location}
