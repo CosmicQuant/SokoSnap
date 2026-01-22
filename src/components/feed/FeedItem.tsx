@@ -9,7 +9,7 @@ import {
     ShieldCheck,
 } from 'lucide-react';
 import { ActionBtn } from '../common/ActionBtn';
-import { InputBottomSheet } from '../common/InputBottomSheet';
+import { InputFloatingCard } from '../common/InputFloatingCard';
 import { CommentsOverlay } from './CommentsOverlay';
 import { Share } from '@capacitor/share';
 import { Capacitor } from '@capacitor/core';
@@ -455,8 +455,8 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                 </div>
             </div>
 
-            {/* INPUT BOTTOM SHEET - Isolated from main layout, keyboard-proof */}
-            <InputBottomSheet
+            {/* COMPACT FLOATING INPUT CARD - Product stays visible, keyboard-proof */}
+            <InputFloatingCard
                 isOpen={showBottomSheet}
                 onClose={() => setShowBottomSheet(false)}
                 userData={userData}
