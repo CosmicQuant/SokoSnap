@@ -30,7 +30,7 @@ export const CommentsOverlay: React.FC<CommentsOverlayProps> = ({ onClose }) => 
             <div className="absolute inset-0 pointer-events-auto" onClick={onClose} />
 
             <div
-                className="bg-black/80 backdrop-blur-md rounded-t-3xl h-[60vh] w-full flex flex-col overflow-hidden pointer-events-auto relative z-10"
+                className="bg-black/80 backdrop-blur-md rounded-t-3xl h-[60vh] w-full flex flex-col overflow-hidden pointer-events-auto relative z-10 pb-[env(safe-area-inset-bottom)]"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}

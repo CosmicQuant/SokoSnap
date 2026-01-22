@@ -12,6 +12,8 @@ import { SuccessView } from './components/common/SuccessView';
 
 import { OrderHistoryView } from './components/profile/OrderHistoryView';
 
+import { App as CapacitorApp } from '@capacitor/app';
+
 // Unified Data Structure
 const PRODUCTS = [
     {
@@ -106,9 +108,30 @@ const App = () => {
     const [showSearch, setShowSearch] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
+    // Hardware Back Button Handling
+    useEffect(() => {
+        const backListener = CapacitorApp.addListener('backButton', () => {
+            if (showSearch) {
+                setShowSearch(false);
+            } else if (view !== 'feed') {
+                // Return to feed from any other view
+                setView('feed');
+                setCurrentSeller(undefined);
+            } else {
+                // Determine exit behavior: could minimize or exit
+                CapacitorApp.exitApp();
+            }
+        });
+
+        return () => {
+            backListener.then((h: any) => h.remove());
+        };
+    }, [view, showSearch]);
+
     // Data State
-    const { items: cartItems, addItem: addToCart, clearCart } = useCartStore();
+    const { items: cartItems, addItem: addToCart, clearCart, updateQuantity, removeItem } = useCartStore();
     const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+    const cartTotal = cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
     const [userData, setUserData] = useState({
         phone: '',
         location: '',
@@ -132,6 +155,18 @@ const App = () => {
     // Actions
     const handleAddToCart = (product: any) => {
         addToCart(product, 1);
+    };
+
+    const handleRemoveFromCart = (product: any) => {
+        // Decrease quantity by 1, or remove if 0 (handled by store)
+        const currentItem = cartItems.find(i => i.product.id === product.id);
+        if (currentItem) {
+            if (currentItem.quantity > 1) {
+                updateQuantity(product.id, currentItem.quantity - 1);
+            } else {
+                removeItem(product.id);
+            }
+        }
     };
 
     const handleCheckout = async () => {
@@ -232,6 +267,7 @@ const App = () => {
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 cartCount={cartCount}
+                cartTotal={cartTotal}
                 onProfileClick={() => setView('profile')}
                 onBack={currentSeller ? () => {
                     setView('seller-profile');
@@ -262,6 +298,7 @@ const App = () => {
                             product={p}
                             cart={cartItems}
                             onAddToCart={handleAddToCart}
+                            onRemoveFromCart={handleRemoveFromCart}
                             userData={userData}
                             setUserData={setUserData}
                             onCheckout={handleCheckout}

@@ -17,7 +17,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({
     onResultClick
 }) => {
     return (
-        <div className="fixed inset-0 bg-black/95 z-[60] flex flex-col animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/95 z-[60] flex flex-col animate-in fade-in duration-200 pt-[env(safe-area-inset-top)]">
             <div className="p-4 flex items-center gap-4 border-b border-white/10">
                 <button onClick={onClose} className="text-white/60 hover:text-white" aria-label="Close Search">
                     <ChevronLeft size={24} />

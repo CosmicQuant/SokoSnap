@@ -1,14 +1,16 @@
 import React from 'react';
+import { X } from 'lucide-react';
 
 interface ActionBtnProps {
     icon: React.ReactNode;
     label?: string | number;
     onClick?: (e: React.MouseEvent) => void;
+    onRemoveClick?: (e: React.MouseEvent) => void;
     className?: string;
     count?: number;
 }
 
-export const ActionBtn: React.FC<ActionBtnProps> = ({ icon, label, onClick, className, count }) => (
+export const ActionBtn: React.FC<ActionBtnProps> = ({ icon, label, onClick, onRemoveClick, className, count }) => (
     <div className={`flex flex-col items-center gap-1 group relative ${className || ''}`}>
         <button
             onClick={onClick}
@@ -18,6 +20,21 @@ export const ActionBtn: React.FC<ActionBtnProps> = ({ icon, label, onClick, clas
             {count !== undefined && count > 0 && (
                 <div key={count} className="absolute -top-1 -right-1 min-w-[16px] h-[16px] bg-red-600 border border-black rounded-full flex items-center justify-center px-1 animate-pulse-once z-10">
                     <span className="text-[9px] font-bold text-white leading-none">{count}</span>
+                </div>
+            )}
+
+            {/* Remove / Decrement Badge Overlay */}
+            {count !== undefined && count > 0 && onRemoveClick && (
+                <div
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveClick(e);
+                    }}
+                    className="absolute -bottom-3 -right-3 w-6 h-6 bg-transparent flex items-center justify-center z-20 active:scale-90"
+                >
+                    <div className="w-4 h-4 rounded-full bg-white border border-red-500 flex items-center justify-center shadow-sm">
+                        <X size={10} className="text-red-500 font-bold" />
+                    </div>
                 </div>
             )}
         </button>

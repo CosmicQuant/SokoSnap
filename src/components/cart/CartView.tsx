@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, Phone, MapPin, X, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, Phone, MapPin, X, AlertCircle, Map, Crosshair } from 'lucide-react';
 import { useCartStore } from '../../store';
 import { Button } from '../common';
+import { LocationPickerModal } from '../common/LocationPickerModal';
 import { formatCurrency } from '../../utils/formatters';
 import { APP_CONFIG } from '../../utils/constants';
 import { validateLocation, validatePhone } from '../../utils/validation';
@@ -18,6 +19,7 @@ export const CartView: React.FC<CartViewProps> = ({ onBack, userData, setUserDat
     const { items, removeItem, updateQuantity, clearCart } = useCartStore();
 
     const [showInputs, setShowInputs] = useState(false);
+    const [showMap, setShowMap] = useState(false);
     const [errors, setErrors] = useState<{ phone?: string; location?: string }>({});
 
     const subtotal = items.reduce(
@@ -199,22 +201,54 @@ export const CartView: React.FC<CartViewProps> = ({ onBack, userData, setUserDat
                                 </div>
 
                                 <div className="space-y-1">
-                                    <div className="relative">
-                                        <MapPin size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${errors.location ? 'text-red-500' : 'text-slate-400'}`} />
-                                        <input
-                                            type="text"
-                                            placeholder="Delivery Location (e.g. Westlands)"
-                                            value={userData.location}
-                                            onChange={(e) => setUserData((prev: any) => ({ ...prev, location: e.target.value }))}
-                                            className={`w-full pl-10 p-3 bg-white border rounded-xl text-sm outline-none transition-all ${errors.location ? 'border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100'
-                                                }`}
-                                        />
+                                    <div className="relative flex items-center gap-2">
+                                        <div className="relative flex-1">
+                                            <MapPin size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${errors.location ? 'text-red-500' : 'text-slate-400'}`} />
+                                            <input
+                                                type="text"
+                                                placeholder="Delivery Location (Google Places)"
+                                                value={userData.location}
+                                                onChange={(e) => setUserData((prev: any) => ({ ...prev, location: e.target.value }))}
+                                                className={`w-full pl-9 py-3 pr-3 bg-white border rounded-xl text-sm outline-none transition-all ${errors.location ? 'border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100'
+                                                    }`}
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                if (navigator.geolocation) {
+                                                    navigator.geolocation.getCurrentPosition((pos) => {
+                                                        setUserData((prev: any) => ({ ...prev, location: `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)} (GPS)` }));
+                                                    });
+                                                }
+                                            }}
+                                            className="w-10 h-10 shrink-0 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-yellow-600 hover:border-yellow-400 transition-colors"
+                                            title="Use Current Location"
+                                        >
+                                            <Crosshair size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setShowMap(true)}
+                                            className="w-10 h-10 shrink-0 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-yellow-600 hover:border-yellow-400 transition-colors"
+                                            title="Pin on Map"
+                                        >
+                                            <Map size={18} />
+                                        </button>
                                     </div>
                                     {errors.location && <span className="text-xs text-red-500 font-medium ml-1">{errors.location}</span>}
                                 </div>
                             </div>
                         </div>
                     )}
+
+                    {/* Location Picker Modal (Lazy Loaded or always rendered) */}
+                    <LocationPickerModal
+                        isOpen={showMap}
+                        onClose={() => setShowMap(false)}
+                        onSelectLocation={(loc) => {
+                            setUserData((prev: any) => ({ ...prev, location: loc.address }));
+                            setShowMap(false);
+                        }}
+                    />
 
                     {!showInputs && (
                         <div className="space-y-2">

@@ -5,6 +5,7 @@ interface TopNavProps {
     activeTab: string;
     setActiveTab: (tab: string) => void;
     cartCount: number;
+    cartTotal?: number;
     onProfileClick: () => void;
     onSearchClick: () => void;
     onCartClick: () => void;
@@ -16,6 +17,7 @@ export const TopNav: React.FC<TopNavProps> = ({
     activeTab,
     setActiveTab,
     cartCount,
+    cartTotal,
     onProfileClick,
     onSearchClick,
     onCartClick,
@@ -105,18 +107,30 @@ export const TopNav: React.FC<TopNavProps> = ({
                 >
                     <Search size={20} />
                 </button>
-                <button
-                    onClick={onCartClick}
-                    aria-label="View Cart"
-                    className="text-white/80 hover:text-white transition-colors p-2 bg-black/20 backdrop-blur-md rounded-full relative"
-                >
-                    <ShoppingBag size={20} />
-                    {cartCount > 0 && (
-                        <div key={cartCount} className="absolute -top-1 -right-1 min-w-[16px] h-[16px] bg-red-600 border border-black rounded-full flex items-center justify-center px-1 animate-pulse-once">
-                            <span className="text-[9px] font-bold text-white leading-none">{cartCount}</span>
+                {/* Cart Action + Total (Grouped but visually separated) */}
+                <div className="relative flex flex-col items-center">
+                    <button
+                        onClick={onCartClick}
+                        aria-label="View Cart"
+                        className="flex items-center justify-center text-white/80 hover:text-white transition-colors p-2 bg-black/20 backdrop-blur-md rounded-full relative"
+                    >
+                        <ShoppingBag size={20} />
+                        {cartCount > 0 && (
+                            <div key={cartCount} className="absolute -top-1 -right-1 min-w-[16px] h-[16px] bg-red-600 border border-black rounded-full flex items-center justify-center px-1 animate-pulse-once">
+                                <span className="text-[9px] font-bold text-white leading-none">{cartCount}</span>
+                            </div>
+                        )}
+                    </button>
+
+                    {/* Total Amount - Absolute positioned below to prevent layout shift */}
+                    {cartTotal !== undefined && cartTotal > 0 && (
+                        <div className="absolute top-full mt-1 flex justify-center w-max pointer-events-none">
+                            <span className="text-[9px] font-black text-white bg-black/40 backdrop-blur-md px-1.5 py-0.5 rounded-full leading-none tracking-tight shadow-sm">
+                                KES {cartTotal.toLocaleString()}
+                            </span>
                         </div>
                     )}
-                </button>
+                </div>
             </div>
         </div>
     );
