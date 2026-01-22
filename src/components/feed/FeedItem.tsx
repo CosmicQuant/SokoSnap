@@ -5,18 +5,12 @@ import {
     ShoppingBag,
     Share2,
     CheckCircle2,
-    Phone,
-    MapPin,
     Loader2,
-    X,
     ShieldCheck,
-    Map,
-    Crosshair
 } from 'lucide-react';
 import { ActionBtn } from '../common/ActionBtn';
-import { validateLocation, validatePhone } from '../../utils/validation';
+import { InputBottomSheet } from '../common/InputBottomSheet';
 import { CommentsOverlay } from './CommentsOverlay';
-import { LocationPickerModal } from '../common/LocationPickerModal';
 import { Share } from '@capacitor/share';
 import { Capacitor } from '@capacitor/core';
 import mpesaLogo from '../../assets/41.png';
@@ -55,37 +49,14 @@ export const FeedItem: React.FC<FeedItemProps> = ({
     const [startX, setStartX] = useState(0);
     const [scrollLeft, setScrollLeft] = useState(0);
 
-    const [showInputs, setShowInputs] = useState(false);
-    const [showMap, setShowMap] = useState(false);
-    const [errors, setErrors] = useState<{ phone?: string; location?: string }>({});
+    // Bottom Sheet state (replaces inline inputs)
+    const [showBottomSheet, setShowBottomSheet] = useState(false);
 
     // Feature States (Local)
     const [isLiked, setIsLiked] = useState(false);
     const [likesCount, setLikesCount] = useState<number>(parseInt(product.likes?.replace('k', '000') || '0'));
     const [showComments, setShowComments] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
-
-    // KEYBOARD-PROOF: Capture stable viewport height on mount (ignores keyboard resize)
-    const [stableViewportHeight, setStableViewportHeight] = useState<number | null>(null);
-
-    useEffect(() => {
-        // Capture the FULL viewport height once on mount (before any keyboard appears)
-        if (stableViewportHeight === null) {
-            setStableViewportHeight(window.innerHeight);
-        }
-
-        // Only update on orientation change (width change), never on height change (keyboard)
-        let lastWidth = window.innerWidth;
-        const handleResize = () => {
-            if (window.innerWidth !== lastWidth) {
-                lastWidth = window.innerWidth;
-                setStableViewportHeight(window.innerHeight);
-            }
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, [stableViewportHeight]);
 
     // Performance: IntersectionObserver for autoplay
     useEffect(() => {
@@ -114,35 +85,20 @@ export const FeedItem: React.FC<FeedItemProps> = ({
     }, []);
 
     const handleActionClick = () => {
-        // Clear previous errors
-        setErrors({});
-
-        // 1. If fields are not visible and data is missing, show them
-        if ((!userData.phone || !userData.location) && !showInputs) {
-            setShowInputs(true);
+        // If user data is missing, open the Bottom Sheet for input
+        if (!userData.phone || !userData.location) {
+            setShowBottomSheet(true);
             return;
         }
 
-        // 2. Validate if inputs are shown or if we differ from empty
-        // If inputs are now visible (or user thinks they are done), validate
+        // If user data exists, proceed directly to checkout
+        onCheckout();
+    };
 
-        // Validate Phone
-        const phoneRes = validatePhone(userData.phone);
-        if (!phoneRes.isValid) {
-            setErrors(prev => ({ ...prev, phone: phoneRes.error }));
-            setShowInputs(true); // Ensure inputs are visible to show error
-            return;
-        }
-
-        // Validate Location
-        const locRes = validateLocation(userData.location);
-        if (!locRes.isValid) {
-            setErrors(prev => ({ ...prev, location: locRes.error }));
-            setShowInputs(true);
-            return;
-        }
-
-        // 3. If all valid, checkout
+    const handleBottomSheetConfirm = () => {
+        // Bottom Sheet handles validation internally
+        // This is called only when validation passes
+        setShowBottomSheet(false);
         onCheckout();
     };
 
@@ -235,25 +191,20 @@ export const FeedItem: React.FC<FeedItemProps> = ({
         carouselRef.current.scrollLeft = scrollLeft - walk;
     };
 
-    // Calculate stable height style for media layer
-    const mediaHeightStyle = stableViewportHeight ? { height: `${stableViewportHeight}px` } : { height: '100%' };
-
     return (
         <div
             ref={containerRef}
-            className="w-full snap-start snap-always relative flex flex-col bg-black overflow-hidden shrink-0"
-            style={{ height: stableViewportHeight ? `${stableViewportHeight}px` : '100dvh' }}
+            className="h-[100dvh] w-full snap-start snap-always relative flex flex-col bg-black overflow-hidden shrink-0"
         >
             {/* 
-              Media Layer - KEYBOARD-PROOF:
-              - Uses stable pixel height captured on mount (ignores keyboard resize)
+              Media Layer:
               - position: absolute keeps it contained within each FeedItem
-              - The blurred background + contained foreground handles any aspect ratio
+              - The blurred background (for images) + contained foreground handles any aspect ratio
+              - Keyboard interaction is now isolated in the Bottom Sheet overlay
             */}
             <div
                 ref={carouselRef}
-                style={mediaHeightStyle}
-                className={`absolute top-0 left-0 w-full z-0 flex overflow-x-auto snap-x snap-mandatory hide-scrollbar ${isDragging ? 'cursor-grabbing snap-none' : 'cursor-grab'} bg-black`}
+                className={`absolute inset-0 w-full h-full z-0 flex overflow-x-auto snap-x snap-mandatory hide-scrollbar ${isDragging ? 'cursor-grabbing snap-none' : 'cursor-grab'} bg-black`}
                 onScroll={handleScroll}
                 onMouseDown={handleMouseDown}
                 onMouseLeave={handleMouseLeave}
@@ -319,50 +270,46 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
 
             {/* Action Sidebar */}
-            {
-                !showMap && (
-                    <div className="absolute right-4 bottom-[calc(10rem+env(safe-area-inset-bottom))] z-40 flex flex-col items-center gap-6 animate-in fade-in duration-300">
-                        <ActionBtn
-                            icon={<Heart size={28} className={`drop-shadow-lg transition-colors ${isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`} />}
-                            label={isLiked ? `${likesCount}` : product.likes}
-                            onClick={handleLike}
-                        />
-                        <ActionBtn
-                            icon={<MessageCircle size={28} className="drop-shadow-lg" />}
-                            onClick={() => setShowComments(true)}
-                        />
-                        <ActionBtn
-                            icon={<Share2 size={28} className="drop-shadow-lg" />}
-                            onClick={handleShare}
-                        />
-                        <ActionBtn
-                            icon={<ShoppingBag size={28} className={`drop-shadow-lg transition-colors duration-300 ${isInCart ? 'text-yellow-400 fill-yellow-400/20' : 'text-white'}`} />}
-                            onClick={(e) => {
-                                e?.stopPropagation();
-                                onAddToCart(product);
-                            }}
-                            onRemoveClick={isInCart ? (e) => {
-                                e.stopPropagation(); // Make sure to use 'e' or just rename it if not needed, but stopProp is good here too
-                                if (onRemoveFromCart) {
-                                    onRemoveFromCart(product);
-                                } else {
-                                    // Fallback logic if needed, or update App.tsx next
-                                    onAddToCart({ ...product, quantity: -1 }); // Example hack if store supports it
-                                }
-                            } : undefined}
-                            count={cartItemQuantity}
-                            showAddHint={!isInCart}
-                            className={isInCart ? "bg-white/20 rounded-full" : ""}
-                        />
-                    </div>
-                )
-            }
+            <div className="absolute right-4 bottom-[calc(10rem+env(safe-area-inset-bottom))] z-40 flex flex-col items-center gap-6 animate-in fade-in duration-300">
+                <ActionBtn
+                    icon={<Heart size={28} className={`drop-shadow-lg transition-colors ${isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`} />}
+                    label={isLiked ? `${likesCount}` : product.likes}
+                    onClick={handleLike}
+                />
+                <ActionBtn
+                    icon={<MessageCircle size={28} className="drop-shadow-lg" />}
+                    onClick={() => setShowComments(true)}
+                />
+                <ActionBtn
+                    icon={<Share2 size={28} className="drop-shadow-lg" />}
+                    onClick={handleShare}
+                />
+                <ActionBtn
+                    icon={<ShoppingBag size={28} className={`drop-shadow-lg transition-colors duration-300 ${isInCart ? 'text-yellow-400 fill-yellow-400/20' : 'text-white'}`} />}
+                    onClick={(e) => {
+                        e?.stopPropagation();
+                        onAddToCart(product);
+                    }}
+                    onRemoveClick={isInCart ? (e) => {
+                        e.stopPropagation(); // Make sure to use 'e' or just rename it if not needed, but stopProp is good here too
+                        if (onRemoveFromCart) {
+                            onRemoveFromCart(product);
+                        } else {
+                            // Fallback logic if needed, or update App.tsx next
+                            onAddToCart({ ...product, quantity: -1 }); // Example hack if store supports it
+                        }
+                    } : undefined}
+                    count={cartItemQuantity}
+                    showAddHint={!isInCart}
+                    className={isInCart ? "bg-white/20 rounded-full" : ""}
+                />
+            </div>
 
             {/* Bottom Information Stack */}
             <div className="relative z-30 mt-auto w-full pb-[env(safe-area-inset-bottom)]">
 
                 {/* Smart Dots Indicator */}
-                {slides.length > 1 && !showInputs && (
+                {slides.length > 1 && !showBottomSheet && (
                     <div className="w-full flex justify-center gap-1.5 mb-4 px-6 pointer-events-auto">
                         {slides.map((_: any, i: number) => (
                             <button
@@ -420,91 +367,14 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                         </div>
                     </div>
 
-                    {/* SMART INPUT TRAY - With Margin To Prevent Overlap */}
-                    {showInputs && (
-                        <div className="animate-in slide-in-from-bottom duration-300 space-y-3 pb-2 relative mt-4">
-                            {/* Close/Collapse Button */}
-                            <button
-                                onClick={() => setShowInputs(false)}
-                                className="absolute -top-8 right-0 text-white/50 hover:text-white bg-black/20 rounded-full p-1"
-                            >
-                                <X size={16} />
-                            </button>
-
-                            {/* Phone Input */}
-                            <div className="relative group">
-                                <div className="relative">
-                                    <Phone size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${errors.phone ? 'text-red-400' : 'text-white/60 group-focus-within:text-yellow-400'}`} />
-                                    <input
-                                        type="tel"
-                                        placeholder="M-Pesa Number (e.g. 0712...)"
-                                        autoFocus
-                                        value={userData.phone}
-                                        onChange={(e) => setUserData(prev => ({ ...prev, phone: e.target.value }))}
-                                        className={`w-full bg-white/5 backdrop-blur-md border rounded-xl py-2.5 pl-9 pr-3 text-xs font-bold text-white placeholder:text-white/30 outline-none transition-all ${errors.phone ? 'border-red-400/50 focus:border-red-500' : 'border-white/20 focus:border-yellow-400/50'
-                                            }`}
-                                    />
-                                </div>
-                                {errors.phone && <span className="text-[9px] text-red-400 font-bold ml-1">{errors.phone}</span>}
-                            </div>
-
-                            {/* Location Input with NEW Controls */}
-                            <div className="relative group">
-                                <div className="flex gap-2">
-                                    <div className="relative flex-1">
-                                        <MapPin size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${errors.location ? 'text-red-400' : 'text-white/60 group-focus-within:text-yellow-400'}`} />
-                                        <input
-                                            type="text"
-                                            placeholder="Location (Google Places)"
-                                            value={userData.location}
-                                            onChange={(e) => setUserData(prev => ({ ...prev, location: e.target.value }))}
-                                            className={`w-full bg-white/5 backdrop-blur-md border rounded-xl py-2.5 pl-9 pr-3 text-xs font-bold text-white placeholder:text-white/30 outline-none transition-all ${errors.location ? 'border-red-400/50 focus:border-red-500' : 'border-white/20 focus:border-yellow-400/50'
-                                                }`}
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={() => {
-                                            if (navigator.geolocation) {
-                                                navigator.geolocation.getCurrentPosition((pos) => {
-                                                    setUserData(prev => ({ ...prev, location: `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)} (GPS)` }));
-                                                });
-                                            }
-                                        }}
-                                        className="w-10 bg-white/5 backdrop-blur-md border border-white/20 rounded-xl flex items-center justify-center text-white/70 hover:text-yellow-400 hover:border-yellow-400/50 transition-colors"
-                                        title="Use Current Location"
-                                    >
-                                        <Crosshair size={18} />
-                                    </button>
-                                    <button
-                                        onClick={() => setShowMap(true)}
-                                        className="w-10 bg-white/5 backdrop-blur-md border border-white/20 rounded-xl flex items-center justify-center text-white/70 hover:text-yellow-400 hover:border-yellow-400/50 transition-colors"
-                                        title="Pin on Map"
-                                    >
-                                        <Map size={18} />
-                                    </button>
-                                </div>
-                                {errors.location && <span className="text-[9px] text-red-400 font-bold ml-1">{errors.location}</span>}
-                            </div>
-
-                        </div>
-                    )}
-
-                    <LocationPickerModal
-                        isOpen={showMap}
-                        onClose={() => setShowMap(false)}
-                        onSelectLocation={(loc) => {
-                            setUserData(prev => ({ ...prev, location: loc.address }));
-                            setShowMap(false);
-                        }}
-                    />
-
-                    <div className={`relative w-[120%] group/btn ${hasUserData && !showInputs ? 'mt-8' : ''}`}>
+                    {/* ACTION BUTTON - Opens Bottom Sheet if data missing */}
+                    <div className={`relative w-[120%] group/btn ${hasUserData ? 'mt-8' : ''}`}>
                         {/* EDITABLE USER DATA HINT (Full-width Tab) */}
-                        {hasUserData && !showInputs && (
+                        {hasUserData && (
                             <div
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setShowInputs(true);
+                                    setShowBottomSheet(true);
                                 }}
                                 className="absolute bottom-full mb-[-2px] inset-x-0 z-0 bg-yellow-400 border border-yellow-300 rounded-t-xl py-0.5 flex items-center justify-center cursor-pointer hover:bg-yellow-300 transition-colors"
                             >
@@ -518,7 +388,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                         {/* THE GOLDEN GLASS BUTTON */}
                         <button
                             onClick={handleActionClick}
-                            className={`w-full border-y-[2px] border-x-[1px] border-yellow-400/60 text-white py-1.5 px-3 flex flex-col items-center gap-0.5 active:bg-yellow-400/10 transition-all shadow-[0_0_20px_rgba(234,179,8,0.1)] group hover:border-yellow-300 relative overflow-hidden z-10 bg-black/10 backdrop-blur-[2px] ${hasUserData && !showInputs ? 'rounded-b-2xl rounded-t-none' : 'rounded-2xl'
+                            className={`w-full border-y-[2px] border-x-[1px] border-yellow-400/60 text-white py-1.5 px-3 flex flex-col items-center gap-0.5 active:bg-yellow-400/10 transition-all shadow-[0_0_20px_rgba(234,179,8,0.1)] group hover:border-yellow-300 relative overflow-hidden z-10 bg-black/10 backdrop-blur-[2px] ${hasUserData ? 'rounded-b-2xl rounded-t-none' : 'rounded-2xl'
                                 }`}
                         >
                             {/* Top Row: Action & Price */}
@@ -584,6 +454,18 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
                 </div>
             </div>
+
+            {/* INPUT BOTTOM SHEET - Isolated from main layout, keyboard-proof */}
+            <InputBottomSheet
+                isOpen={showBottomSheet}
+                onClose={() => setShowBottomSheet(false)}
+                userData={userData}
+                setUserData={setUserData}
+                onConfirm={handleBottomSheetConfirm}
+                isProcessing={isProcessing}
+                productPrice={product.price}
+                deliveryQuote={deliveryQuote}
+            />
         </div>
     );
 };
