@@ -54,6 +54,7 @@ export interface Product {
     stock?: number;
     category?: string;
     tags?: string[];
+    allowCOD?: boolean; // Allow Cash on Delivery
 }
 
 export interface ProductFilters {

@@ -22,7 +22,7 @@ export const LocationPickerModal: React.FC<LocationPickerProps> = ({ isOpen, onC
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center pointer-events-auto">
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center pointer-events-auto">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"

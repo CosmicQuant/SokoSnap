@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Phone, MapPin, X, Crosshair, Loader2, Map } from 'lucide-react';
-import { validateLocation, validatePhone } from '../../utils/validation';
+import { Phone, MapPin, X, Crosshair, Map, Banknote } from 'lucide-react';
 import { LocationPickerModal } from './LocationPickerModal';
 import mpesaLogo from '../../assets/41.png';
 
@@ -9,10 +8,9 @@ interface InputFloatingCardProps {
     onClose: () => void;
     userData: { phone: string; location: string };
     setUserData: React.Dispatch<React.SetStateAction<{ phone: string; location: string; name: string }>>;
-    onConfirm: () => void;
-    isProcessing: boolean;
-    productPrice: number;
-    deliveryQuote: number | null;
+    allowCOD?: boolean; // Whether seller allows Cash on Delivery
+    paymentMethod?: 'mpesa' | 'cod';
+    setPaymentMethod?: (method: 'mpesa' | 'cod') => void;
 }
 
 export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
@@ -20,12 +18,10 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
     onClose,
     userData,
     setUserData,
-    onConfirm,
-    isProcessing,
-    productPrice,
-    deliveryQuote
+    allowCOD = false,
+    paymentMethod = 'mpesa',
+    setPaymentMethod
 }) => {
-    const [errors, setErrors] = useState<{ phone?: string; location?: string }>({});
     const [showMap, setShowMap] = useState(false);
     const phoneInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,144 +32,106 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
         }
     }, [isOpen]);
 
-    const handleConfirm = () => {
-        const newErrors: { phone?: string; location?: string } = {};
-
-        const phoneValidation = validatePhone(userData.phone);
-        if (!phoneValidation.isValid) {
-            newErrors.phone = phoneValidation.error;
-        }
-
-        const locationValidation = validateLocation(userData.location);
-        if (!locationValidation.isValid) {
-            newErrors.location = locationValidation.error;
-        }
-
-        setErrors(newErrors);
-
-        if (Object.keys(newErrors).length === 0) {
-            onConfirm();
-        }
-    };
-
     if (!isOpen) return null;
 
-    const total = productPrice + (deliveryQuote || 0);
+    const isCOD = paymentMethod === 'cod';
 
     return (
         <>
-            {/* COMPACT FLOATING CARD - Ultra-transparent glass effect */}
-            <div
-                className="fixed bottom-0 left-0 right-0 z-[100] animate-in slide-in-from-bottom duration-300"
-                style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-            >
-                {/* Glass Card Container - Maximum transparency while keeping readability */}
-                <div className="mx-3 mb-3 bg-black/40 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl shadow-black/30 overflow-hidden relative">
+            {/* ULTRA-THIN INPUT DRAWER - Above all icons, sits directly on button */}
+            <div className="absolute bottom-full left-0 right-0 mb-0 z-[200] animate-in slide-in-from-bottom duration-150">
+                {/* Solid thin card */}
+                <div className="bg-neutral-900 border border-white/20 rounded-t-xl shadow-lg overflow-hidden">
 
-                    {/* Header Row: Title + Close Button */}
-                    <div className="flex items-center justify-between px-4 pt-3 pb-1">
-                        <div className="flex items-center gap-2">
-                            <img src={mpesaLogo} className="h-8 object-contain" alt="M-Pesa" />
-                            <span className="text-[10px] text-white/60 font-bold uppercase tracking-wider">Secure Checkout</span>
-                        </div>
+                    {/* Compact Header: Close + Logo + Title - all in one thin line */}
+                    <div className="flex items-center justify-between px-2 py-1 border-b border-white/10 bg-white/5">
                         <button
                             onClick={onClose}
-                            className="text-white/40 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors"
+                            className="text-white/50 hover:text-white p-0.5 rounded transition-colors"
                         >
-                            <X size={18} />
+                            <X size={14} />
                         </button>
+                        <div className="flex items-center gap-1.5">
+                            <img src={mpesaLogo} className="h-5 object-contain" alt="M-Pesa" />
+                            <span className="text-[8px] text-white/60 font-bold uppercase tracking-wider">Secure Checkout</span>
+                        </div>
+                        <div className="w-5" /> {/* Spacer for centering */}
                     </div>
 
-                    {/* Compact Content */}
-                    <div className="px-4 pb-4 pt-2 space-y-3">
+                    {/* Ultra-compact inputs - minimal padding */}
+                    <div className="px-2 py-1.5 space-y-1">
 
-                        {/* Two Inputs Side by Side */}
-                        <div className="flex gap-2">
-                            {/* Phone Input - Compact */}
+                        {/* Row 1: Phone Input + COD Toggle (if allowed) */}
+                        <div className="flex gap-1.5">
                             <div className="flex-1 relative">
-                                <Phone size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 ${errors.phone ? 'text-red-400' : 'text-yellow-400/70'}`} />
+                                <Phone size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-yellow-400/70" />
                                 <input
                                     ref={phoneInputRef}
                                     type="tel"
                                     inputMode="numeric"
-                                    placeholder="M-Pesa (0712...)"
+                                    placeholder={isCOD ? "Phone for delivery" : "M-Pesa Number (0712...)"}
                                     value={userData.phone}
                                     onChange={(e) => setUserData(prev => ({ ...prev, phone: e.target.value }))}
-                                    className={`w-full bg-white/5 border rounded-xl py-2.5 pl-9 pr-3 text-sm font-bold text-white placeholder:text-white/40 outline-none transition-all ${errors.phone ? 'border-red-500/50' : 'border-white/10 focus:border-yellow-400/50'
-                                        }`}
+                                    className="w-full h-[32px] bg-white/10 border border-white/15 rounded-lg py-1.5 pl-7 pr-2 text-[11px] font-bold text-white placeholder:text-white/30 outline-none focus:border-yellow-400/50 transition-all"
                                 />
-                                {errors.phone && (
-                                    <span className="absolute -bottom-4 left-0 text-[9px] text-red-400 font-bold">{errors.phone}</span>
-                                )}
                             </div>
-
-                            {/* Location Input - Compact with GPS + Map buttons */}
-                            <div className="flex-1 flex gap-1.5">
-                                <div className="flex-1 relative">
-                                    <MapPin size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 ${errors.location ? 'text-red-400' : 'text-yellow-400/70'}`} />
-                                    <input
-                                        type="text"
-                                        placeholder="Location"
-                                        value={userData.location}
-                                        onChange={(e) => setUserData(prev => ({ ...prev, location: e.target.value }))}
-                                        className={`w-full bg-white/5 border rounded-xl py-2.5 pl-9 pr-3 text-sm font-bold text-white placeholder:text-white/40 outline-none transition-all ${errors.location ? 'border-red-500/50' : 'border-white/10 focus:border-yellow-400/50'
-                                            }`}
-                                    />
-                                    {errors.location && (
-                                        <span className="absolute -bottom-4 left-0 text-[9px] text-red-400 font-bold truncate max-w-full">{errors.location}</span>
-                                    )}
-                                </div>
-                                {/* GPS Button */}
+                            {/* Cash on Delivery Button - Always visible, enabled if seller allows, disabled if not */}
+                            {setPaymentMethod && (
                                 <button
-                                    onClick={() => {
-                                        if (navigator.geolocation) {
-                                            navigator.geolocation.getCurrentPosition((pos) => {
-                                                setUserData(prev => ({
-                                                    ...prev,
-                                                    location: `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`
-                                                }));
-                                            });
-                                        }
-                                    }}
-                                    className="w-9 shrink-0 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-white/50 hover:text-yellow-400 hover:border-yellow-400/30 active:scale-95 transition-all"
-                                    title="Use GPS"
+                                    onClick={() => allowCOD && setPaymentMethod(isCOD ? 'mpesa' : 'cod')}
+                                    disabled={!allowCOD}
+                                    className={`shrink-0 h-[32px] px-2 rounded-lg flex items-center gap-1 text-[8px] font-bold tracking-wide border transition-all whitespace-nowrap ${!allowCOD
+                                        ? 'bg-white/5 border-white/10 text-white/20 cursor-not-allowed opacity-50'
+                                        : isCOD
+                                            ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 border-emerald-400/50 text-white shadow-sm shadow-emerald-500/30 active:scale-95'
+                                            : 'bg-white/5 border-white/20 text-white/50 hover:text-white hover:border-white/30 active:scale-95'
+                                        }`}
+                                    title={allowCOD ? "Cash on Delivery" : "Seller doesn't accept Cash on Delivery"}
                                 >
-                                    <Crosshair size={15} />
+                                    <Banknote size={12} className={isCOD && allowCOD ? 'text-white' : ''} />
+                                    <span>{isCOD && allowCOD ? 'Cash on Delivery ✓' : 'Cash on Delivery'}</span>
                                 </button>
-                                {/* Map Pin Button */}
-                                <button
-                                    onClick={() => setShowMap(true)}
-                                    className="w-9 shrink-0 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-white/50 hover:text-yellow-400 hover:border-yellow-400/30 active:scale-95 transition-all"
-                                    title="Pin on Map"
-                                >
-                                    <Map size={15} />
-                                </button>
-                            </div>
+                            )}
                         </div>
 
-                        {/* Order Button - Full Width, Prominent */}
-                        <button
-                            onClick={handleConfirm}
-                            disabled={isProcessing}
-                            className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-black py-3.5 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform disabled:opacity-50 shadow-lg shadow-yellow-400/20"
-                        >
-                            {isProcessing ? (
-                                <>
-                                    <Loader2 size={20} className="animate-spin" />
-                                    <span className="text-sm uppercase tracking-wide">Processing...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <span className="text-base uppercase tracking-wide font-black">
-                                        Order Now
-                                    </span>
-                                    <span className="text-base font-black">•</span>
-                                    <span className="text-base font-black">
-                                        KES {total.toLocaleString()}
-                                    </span>
-                                </>
-                            )}
-                        </button>
+                        {/* Row 2: Location Input + GPS + Map */}
+                        <div className="flex gap-1.5">
+                            <div className="flex-1 relative">
+                                <MapPin size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-yellow-400/70" />
+                                <input
+                                    type="text"
+                                    placeholder="Delivery Location"
+                                    value={userData.location}
+                                    onChange={(e) => setUserData(prev => ({ ...prev, location: e.target.value }))}
+                                    className="w-full h-[32px] bg-white/10 border border-white/15 rounded-lg py-1.5 pl-7 pr-2 text-[11px] font-bold text-white placeholder:text-white/30 outline-none focus:border-yellow-400/50 transition-all"
+                                />
+                            </div>
+                            {/* GPS Button */}
+                            <button
+                                onClick={() => {
+                                    if (navigator.geolocation) {
+                                        navigator.geolocation.getCurrentPosition((pos) => {
+                                            setUserData(prev => ({
+                                                ...prev,
+                                                location: `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`
+                                            }));
+                                        });
+                                    }
+                                }}
+                                className="w-[32px] h-[32px] shrink-0 bg-white/5 border border-white/15 rounded-lg flex items-center justify-center text-white/40 hover:text-yellow-400 active:scale-95 transition-all"
+                                title="Use GPS"
+                            >
+                                <Crosshair size={14} />
+                            </button>
+                            {/* Map Button */}
+                            <button
+                                onClick={() => setShowMap(true)}
+                                className="w-[32px] h-[32px] shrink-0 bg-white/5 border border-white/15 rounded-lg flex items-center justify-center text-white/40 hover:text-yellow-400 active:scale-95 transition-all"
+                                title="Pin on Map"
+                            >
+                                <Map size={14} />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

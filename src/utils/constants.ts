@@ -128,6 +128,7 @@ export const MOCK_PRODUCTS: Product[] = [
         comments: '420',
         isHighValue: false,
         category: 'fashion',
+        allowCOD: true,
     },
     {
         id: 'prod_2',
@@ -164,6 +165,7 @@ export const MOCK_PRODUCTS: Product[] = [
         comments: '234',
         isHighValue: true,
         category: 'fashion',
+        allowCOD: true,
     },
     {
         id: 'prod_4',

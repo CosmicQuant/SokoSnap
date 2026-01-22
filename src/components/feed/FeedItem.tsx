@@ -52,6 +52,9 @@ export const FeedItem: React.FC<FeedItemProps> = ({
     // Bottom Sheet state (replaces inline inputs)
     const [showBottomSheet, setShowBottomSheet] = useState(false);
 
+    // Payment method state
+    const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'cod'>('mpesa');
+
     // Feature States (Local)
     const [isLiked, setIsLiked] = useState(false);
     const [likesCount, setLikesCount] = useState<number>(parseInt(product.likes?.replace('k', '000') || '0'));
@@ -92,13 +95,6 @@ export const FeedItem: React.FC<FeedItemProps> = ({
         }
 
         // If user data exists, proceed directly to checkout
-        onCheckout();
-    };
-
-    const handleBottomSheetConfirm = () => {
-        // Bottom Sheet handles validation internally
-        // This is called only when validation passes
-        setShowBottomSheet(false);
         onCheckout();
     };
 
@@ -369,8 +365,19 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
                     {/* ACTION BUTTON - Opens Bottom Sheet if data missing */}
                     <div className={`relative w-[120%] group/btn ${hasUserData ? 'mt-8' : ''}`}>
+                        {/* INPUT DRAWER - Shows above button when open */}
+                        <InputFloatingCard
+                            isOpen={showBottomSheet}
+                            onClose={() => setShowBottomSheet(false)}
+                            userData={userData}
+                            setUserData={setUserData}
+                            allowCOD={product.allowCOD ?? false}
+                            paymentMethod={paymentMethod}
+                            setPaymentMethod={setPaymentMethod}
+                        />
+
                         {/* EDITABLE USER DATA HINT (Full-width Tab) */}
-                        {hasUserData && (
+                        {hasUserData && !showBottomSheet && (
                             <div
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -454,18 +461,6 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
                 </div>
             </div>
-
-            {/* COMPACT FLOATING INPUT CARD - Product stays visible, keyboard-proof */}
-            <InputFloatingCard
-                isOpen={showBottomSheet}
-                onClose={() => setShowBottomSheet(false)}
-                userData={userData}
-                setUserData={setUserData}
-                onConfirm={handleBottomSheetConfirm}
-                isProcessing={isProcessing}
-                productPrice={product.price}
-                deliveryQuote={deliveryQuote}
-            />
         </div>
     );
 };
