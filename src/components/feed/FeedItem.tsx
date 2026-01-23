@@ -75,6 +75,10 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                         // onView?.({ name: product.seller, handle: product.handle });
                     } else {
                         videoRef.current?.pause();
+                        // Close drawer and keyboard when user scrolls away
+                        if (showBottomSheet) {
+                            setShowBottomSheet(false);
+                        }
                     }
                 });
             },
@@ -88,7 +92,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
         return () => {
             if (containerRef.current) observer.unobserve(containerRef.current);
         };
-    }, []);
+    }, [showBottomSheet]);
 
     const handleActionClick = () => {
         // If user data is missing, open the Bottom Sheet for input
@@ -270,10 +274,10 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
             {/* Action Sidebar - Hide when keyboard is active, move up when drawer is open */}
             <div className={`absolute right-4 z-40 flex flex-col items-center gap-6 transition-all duration-200 ${isKeyboardActive
-                    ? 'opacity-0 pointer-events-none'
-                    : showBottomSheet
-                        ? 'bottom-[calc(17rem+env(safe-area-inset-bottom))]'
-                        : 'bottom-[calc(10rem+env(safe-area-inset-bottom))]'
+                ? 'opacity-0 pointer-events-none'
+                : showBottomSheet
+                    ? 'bottom-[calc(17rem+env(safe-area-inset-bottom))]'
+                    : 'bottom-[calc(10rem+env(safe-area-inset-bottom))]'
                 } animate-in fade-in duration-300`}>
                 <ActionBtn
                     icon={<Heart size={28} className={`drop-shadow-lg transition-colors ${isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`} />}

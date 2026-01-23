@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Phone, MapPin, X, Crosshair, Map, Banknote } from 'lucide-react';
 import { LocationPickerModal } from './LocationPickerModal';
 import { Keyboard } from '@capacitor/keyboard';
@@ -33,12 +33,36 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
     const locationInputRef = useRef<HTMLInputElement>(null);
     const drawerRef = useRef<HTMLDivElement>(null);
 
-    // Auto-focus phone input when card opens
+    // Auto-focus phone input when card opens, hide keyboard when it closes
     useEffect(() => {
         if (isOpen && phoneInputRef.current) {
             setTimeout(() => phoneInputRef.current?.focus(), 150);
+        } else if (!isOpen) {
+            // Hide keyboard when drawer closes
+            if (Capacitor.isNativePlatform()) {
+                Keyboard.hide().catch(() => { });
+            }
+            // Also blur any focused inputs
+            if (document.activeElement instanceof HTMLElement) {
+                document.activeElement.blur();
+            }
         }
     }, [isOpen]);
+
+    // Prevent drawer from being dragged/scrolled when keyboard is open
+    const preventTouchMove = useCallback((e: TouchEvent) => {
+        if (isKeyboardOpen && drawerRef.current?.contains(e.target as Node)) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    }, [isKeyboardOpen]);
+
+    useEffect(() => {
+        if (isKeyboardOpen) {
+            document.addEventListener('touchmove', preventTouchMove, { passive: false });
+            return () => document.removeEventListener('touchmove', preventTouchMove);
+        }
+    }, [isKeyboardOpen, preventTouchMove]);
 
     // Handle keyboard detection using Capacitor Keyboard plugin on native
     useEffect(() => {
@@ -46,6 +70,7 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
 
         let showListener: any;
         let hideListener: any;
+        let animationFrameId: number;
 
         const setupKeyboardListeners = async () => {
             if (Capacitor.isNativePlatform()) {
@@ -66,23 +91,69 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
 
         setupKeyboardListeners();
 
-        // Fallback: Use visualViewport API for web
-        const handleResize = () => {
-            if (!Capacitor.isNativePlatform() && window.visualViewport) {
-                const kbHeight = window.innerHeight - window.visualViewport.height;
-                const keyboardVisible = kbHeight > 150;
-                setIsKeyboardOpen(keyboardVisible);
-                setKeyboardHeight(kbHeight);
-                onKeyboardActive?.(keyboardVisible);
+        // Continuous polling for keyboard height changes (handles keyboard type switching)
+        const pollViewportHeight = () => {
+            if (window.visualViewport) {
+                const viewportHeight = window.visualViewport.height;
+                const viewportTop = window.visualViewport.offsetTop;
+                const windowHeight = window.innerHeight;
+
+                // Calculate keyboard height accounting for viewport offset
+                const kbHeight = Math.max(0, windowHeight - viewportHeight - viewportTop);
+
+                // Keyboard is visible if there's significant viewport reduction
+                const keyboardVisible = kbHeight > 50;
+
+                if (keyboardVisible) {
+                    setIsKeyboardOpen(true);
+                    setKeyboardHeight(kbHeight);
+                    onKeyboardActive?.(true);
+                } else {
+                    setIsKeyboardOpen(false);
+                    setKeyboardHeight(0);
+                    onKeyboardActive?.(false);
+                }
+            }
+
+            // Continue polling while drawer is open
+            if (isOpen) {
+                animationFrameId = requestAnimationFrame(pollViewportHeight);
             }
         };
 
-        window.visualViewport?.addEventListener('resize', handleResize);
+        // Start polling
+        animationFrameId = requestAnimationFrame(pollViewportHeight);
+
+        // Also listen to viewport events for immediate response
+        const handleViewportChange = () => {
+            // Trigger immediate recalculation
+            if (window.visualViewport) {
+                const viewportHeight = window.visualViewport.height;
+                const viewportTop = window.visualViewport.offsetTop;
+                const windowHeight = window.innerHeight;
+                const kbHeight = Math.max(0, windowHeight - viewportHeight - viewportTop);
+
+                if (kbHeight > 50) {
+                    setIsKeyboardOpen(true);
+                    setKeyboardHeight(kbHeight);
+                    onKeyboardActive?.(true);
+                } else {
+                    setIsKeyboardOpen(false);
+                    setKeyboardHeight(0);
+                    onKeyboardActive?.(false);
+                }
+            }
+        };
+
+        window.visualViewport?.addEventListener('resize', handleViewportChange);
+        window.visualViewport?.addEventListener('scroll', handleViewportChange);
 
         return () => {
             showListener?.remove?.();
             hideListener?.remove?.();
-            window.visualViewport?.removeEventListener('resize', handleResize);
+            cancelAnimationFrame(animationFrameId);
+            window.visualViewport?.removeEventListener('resize', handleViewportChange);
+            window.visualViewport?.removeEventListener('scroll', handleViewportChange);
             onKeyboardActive?.(false);
         };
     }, [isOpen, onKeyboardActive]);
@@ -90,6 +161,10 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
     if (!isOpen) return null;
 
     const isCOD = paymentMethod === 'cod';
+
+    // Calculate the bottom position - simply use keyboard height
+    // The polling/event handlers already account for viewport offsets
+    const bottomPosition = isKeyboardOpen ? keyboardHeight : undefined;
 
     return (
         <>
@@ -99,11 +174,17 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                 className={`${isKeyboardOpen
                     ? 'fixed left-0 right-0 z-[9999]'
                     : 'absolute bottom-full left-0 right-0 mb-0 z-[200]'
-                    } animate-in slide-in-from-bottom duration-150 transition-all`}
-                style={isKeyboardOpen ? { bottom: keyboardHeight } : undefined}
+                    } animate-in slide-in-from-bottom duration-150`}
+                style={isKeyboardOpen ? {
+                    bottom: bottomPosition,
+                    transition: 'bottom 0.05s ease-out'
+                } : undefined}
             >
-                {/* Solid thin card */}
-                <div className="bg-neutral-900 border border-white/20 rounded-t-xl shadow-lg overflow-hidden">
+                {/* Solid thin card - prevent any touch scrolling */}
+                <div
+                    className="bg-neutral-900 border border-white/20 rounded-t-xl shadow-lg overflow-hidden"
+                    style={{ touchAction: isKeyboardOpen ? 'none' : 'auto' }}
+                >
 
                     {/* Compact Header: Close + Logo + Title - all in one thin line */}
                     <div className="flex items-center justify-between px-2 py-1 border-b border-white/10 bg-white/5">
@@ -120,8 +201,8 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                         <div className="w-5" /> {/* Spacer for centering */}
                     </div>
 
-                    {/* Ultra-compact inputs - minimal padding */}
-                    <div className="px-2 py-1.5 space-y-1 pb-[env(safe-area-inset-bottom)]">
+                    {/* Ultra-compact inputs - minimal padding, no safe-area when keyboard open */}
+                    <div className={`px-2 py-1.5 space-y-1 ${isKeyboardOpen ? 'pb-1' : 'pb-[env(safe-area-inset-bottom)]'}`}>
 
                         {/* Row 1: Phone Input + COD Toggle (if allowed) */}
                         <div className="flex gap-1.5">
