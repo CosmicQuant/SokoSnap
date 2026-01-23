@@ -17,10 +17,11 @@ interface AuthState {
     authMode: 'login' | 'register' | null;
 
     // Actions
-    login: (phone: string) => Promise<void>;
+    login: (identifier: string, password?: string) => Promise<void>;
+    loginWithGoogle: () => Promise<void>;
     logout: () => void;
     register: (data: RegisterData) => Promise<void>;
-    becomeSeller: () => Promise<void>;
+    becomeSeller: (data: SellerData) => Promise<void>;
     clearError: () => void;
     openAuthModal: (mode: 'login' | 'register') => void;
     closeAuthModal: () => void;
@@ -30,7 +31,17 @@ interface AuthState {
 
 interface RegisterData {
     phone: string;
+    email?: string;
+    showPassword?: string;
     name?: string;
+}
+
+interface SellerData {
+    shopName: string;
+    shopLocation: string;
+    contactPerson: string;
+    contactPhone: string;
+    refundPolicy?: string;
 }
 
 /**
@@ -57,18 +68,19 @@ export const useAuthStore = create<AuthState>()(
                 authMode: null,
 
                 // Login action
-                login: async (phone: string) => {
+                login: async (identifier: string, password?: string) => {
                     set({ isLoading: true, error: null });
 
                     try {
                         // Simulate API call - Replace with actual API integration
                         await new Promise((resolve) => setTimeout(resolve, 1500));
 
-                        // In production, this would be the response from your auth API
+                        // Mock user lookup
                         const user: User = {
                             id: generateUserId(),
-                            name: 'User', // Would come from API
-                            phone,
+                            name: 'Demo User',
+                            phone: identifier.includes('@') ? '0712345678' : identifier,
+                            email: identifier.includes('@') ? identifier : 'demo@sokosnap.com',
                             type: 'verified_buyer',
                             createdAt: new Date(),
                             updatedAt: new Date(),
@@ -89,6 +101,39 @@ export const useAuthStore = create<AuthState>()(
                     }
                 },
 
+                loginWithGoogle: async () => {
+                    set({ isLoading: true, error: null });
+                    try {
+                        // Simulate Google Auth
+                        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+                        // Check if we need to collect phone (mock logic: 50% chance we need phone)
+                        // In real app, you'd check if user exists and has phone
+
+                        const user: User = {
+                            id: generateUserId(),
+                            name: 'Google User',
+                            email: 'google.user@gmail.com',
+                            phone: '', // Intentionally empty to trigger phone collection flow if needed
+                            type: 'verified_buyer',
+                            isEmailVerified: true,
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                        };
+
+                        set({
+                            user,
+                            isAuthenticated: true,
+                            isLoading: false,
+                            // Only close if profile is complete (has phone)
+                            isAuthModalOpen: !!user.phone ? false : true,
+                        });
+
+                    } catch (error) {
+                        set({ error: 'Google Sign in failed', isLoading: false });
+                    }
+                },
+
                 // Logout action
                 logout: () => {
                     set({
@@ -100,6 +145,46 @@ export const useAuthStore = create<AuthState>()(
                     });
                 },
 
+                register: async (data) => {
+                    set({ isLoading: true });
+                    try {
+                        await new Promise((resolve) => setTimeout(resolve, 1500));
+                        const user: User = {
+                            id: generateUserId(),
+                            name: data.name || 'New User',
+                            phone: data.phone,
+                            email: data.email,
+                            type: 'verified_buyer',
+                            isEmailVerified: false, // Needs verification
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                        };
+                        set({ user, isAuthenticated: true, isLoading: false, isAuthModalOpen: false });
+                    } catch (e) {
+                        set({ isLoading: false, error: 'Registration failed' });
+                    }
+                },
+
+                becomeSeller: async (data: SellerData) => {
+                    set({ isLoading: true });
+                    try {
+                        await new Promise((resolve) => setTimeout(resolve, 1500));
+                        const currentUser = get().user;
+                        if (!currentUser) throw new Error('Not authenticated');
+
+                        const updatedUser: User = {
+                            ...currentUser,
+                            type: 'verified_merchant',
+                            ...data
+                        };
+                        set({ user: updatedUser, isLoading: false });
+                    } catch (e) {
+                        set({ isLoading: false, error: 'Failed to upgrade to seller' });
+                    }
+                },
+
+                clearError: () => set({ error: null }),
+
                 updateUser: (updates) => {
                     const currentUser = get().user;
                     if (currentUser) {
@@ -107,70 +192,7 @@ export const useAuthStore = create<AuthState>()(
                     }
                 },
 
-                // Register action
-                register: async (data: RegisterData) => {
-                    set({ isLoading: true, error: null });
 
-                    try {
-                        // Simulate API call
-                        await new Promise((resolve) => setTimeout(resolve, 1500));
-
-                        const user: User = {
-                            id: generateUserId(),
-                            name: data.name || 'User',
-                            phone: data.phone,
-                            type: 'verified_buyer',
-                            createdAt: new Date(),
-                            updatedAt: new Date(),
-                        };
-
-                        set({
-                            user,
-                            isAuthenticated: true,
-                            isLoading: false,
-                            isAuthModalOpen: false,
-                            authMode: null,
-                        });
-                    } catch (error) {
-                        set({
-                            error: error instanceof Error ? error.message : 'Registration failed',
-                            isLoading: false,
-                        });
-                    }
-                },
-
-                // Upgrade to seller
-                becomeSeller: async () => {
-                    const { user } = get();
-                    if (!user) {
-                        set({ error: 'Must be logged in to become a seller' });
-                        return;
-                    }
-
-                    set({ isLoading: true, error: null });
-
-                    try {
-                        // Simulate API call for merchant verification
-                        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-                        set({
-                            user: {
-                                ...user,
-                                type: 'verified_merchant' as UserType,
-                                updatedAt: new Date(),
-                            },
-                            isLoading: false,
-                        });
-                    } catch (error) {
-                        set({
-                            error: error instanceof Error ? error.message : 'Seller upgrade failed',
-                            isLoading: false,
-                        });
-                    }
-                },
-
-                // Clear error
-                clearError: () => set({ error: null }),
 
                 // Open auth modal
                 openAuthModal: (mode) => set({ isAuthModalOpen: true, authMode: mode }),

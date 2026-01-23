@@ -284,34 +284,35 @@ const CheckoutSheet: React.FC<{
             />
 
             {/* Sheet - transparent and compact */}
-            <div className="checkout-sheet">
+            <div className="bg-black/80 backdrop-blur-xl border-t border-white/10 p-5 pb-8 rounded-t-3xl text-white transition-all duration-300 w-full md:max-w-[420px] mx-auto animate-in slide-in-from-bottom">
                 {/* Handle */}
-                <div className="w-8 h-1 bg-white/40 rounded-full mx-auto mb-3" />
+                <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4" />
 
                 {/* Close */}
                 <button
                     onClick={onClose}
-                    className="absolute top-2 right-2 p-1.5 bg-white/20 rounded-full text-white/70 hover:bg-white/30"
+                    className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white/70 hover:text-white transition-colors"
                     aria-label="Close"
                 >
-                    <X size={14} />
+                    <X size={18} />
                 </button>
 
                 {/* Compact Form */}
-                <div className="space-y-2 mb-3">
-                    <div className="checkout-input-group">
-                        <div className="checkout-input-icon">
-                            <Smartphone size={16} />
+                <div className="space-y-3 mb-6">
+                    <div className="bg-white/5 border border-white/10 rounded-2xl flex items-center p-1 focus-within:bg-black/40 focus-within:border-emerald-500/50 transition-colors">
+                        <div className="w-10 h-10 flex items-center justify-center text-emerald-400">
+                            <Smartphone size={18} />
                         </div>
-                        <div className="flex-1">
-                            <label className="block text-[8px] font-bold text-white/50 uppercase tracking-wide">
-                                M-Pesa Nambari
+                        <div className="flex-1 pr-3">
+                            <label className="block text-[8px] font-bold text-white/40 uppercase tracking-widest mb-0.5">
+                                M-Pesa Number
                             </label>
                             <input
                                 type="tel"
                                 value={phone}
                                 onChange={(e) => setPhone(e.target.value)}
-                                className="w-full bg-transparent font-bold text-sm text-white outline-none placeholder:text-white/30"
+                                className="w-full bg-transparent font-bold text-sm text-white outline-none placeholder:text-white/20"
+                                placeholder="07XX XXX XXX"
                             />
                             {errors.phone && (
                                 <p className="text-[10px] text-red-400 mt-0.5">{errors.phone}</p>
@@ -319,19 +320,20 @@ const CheckoutSheet: React.FC<{
                         </div>
                     </div>
 
-                    <div className="checkout-input-group">
-                        <div className="checkout-input-icon">
-                            <MapPin size={16} />
+                    <div className="bg-white/5 border border-white/10 rounded-2xl flex items-center p-1 focus-within:bg-black/40 focus-within:border-emerald-500/50 transition-colors">
+                        <div className="w-10 h-10 flex items-center justify-center text-blue-400">
+                            <MapPin size={18} />
                         </div>
-                        <div className="flex-1">
-                            <label className="block text-[8px] font-bold text-white/50 uppercase tracking-wide">
-                                Mahali
+                        <div className="flex-1 pr-3">
+                            <label className="block text-[8px] font-bold text-white/40 uppercase tracking-widest mb-0.5">
+                                Delivery Location
                             </label>
                             <input
                                 type="text"
                                 value={location}
                                 onChange={(e) => setLocation(e.target.value)}
-                                className="w-full bg-transparent font-bold text-sm text-white outline-none placeholder:text-white/30"
+                                className="w-full bg-transparent font-bold text-sm text-white outline-none placeholder:text-white/20"
+                                placeholder="Search or use GPS..."
                             />
                             {errors.location && (
                                 <p className="text-[10px] text-red-400 mt-0.5">{errors.location}</p>
@@ -344,23 +346,33 @@ const CheckoutSheet: React.FC<{
                 <button
                     onClick={handleSubmit}
                     disabled={isProcessing}
-                    className="checkout-pay-btn"
+                    className="w-full bg-[#4CAF50] hover:bg-[#43A047] active:scale-[0.98] text-white p-4 rounded-xl font-bold flex items-center justify-between shadow-lg shadow-emerald-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
                 >
                     {isProcessing ? (
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <div className="w-full flex justify-center">
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        </div>
                     ) : (
                         <>
-                            <span>Lipa {formatCurrency(total)}</span>
-                            <ArrowRight size={18} />
+                            <div className="flex flex-col items-start leading-none relative z-10">
+                                <span className="text-[9px] font-black uppercase tracking-widest opacity-80 mb-1">Confirm & Pay</span>
+                                <span className="text-lg font-black">{formatCurrency(total)}</span>
+                            </div>
+                            <div className="bg-black/20 p-2 rounded-lg relative z-10">
+                                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                            </div>
+
+                            {/* Shimmer */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-200%] animate-[shimmer_2s_infinite]" />
                         </>
                     )}
                 </button>
 
                 {/* Trust Badge - Kenyan friendly */}
-                <div className="flex items-center justify-center gap-1.5 mt-2 text-white/50">
+                <div className="flex items-center justify-center gap-1.5 mt-4 text-white/30">
                     <ShieldCheck size={10} />
-                    <span className="text-[9px] font-medium">
-                        Pesa yako iko salama • We pay seller when you're satisfied
+                    <span className="text-[9px] font-bold tracking-wide uppercase">
+                        TumaFast Escrow Protected
                     </span>
                 </div>
             </div>

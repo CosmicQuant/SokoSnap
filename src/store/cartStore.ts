@@ -150,23 +150,36 @@ export const useCartStore = create<CartState>()(
                 // Custom serialization for Date objects
                 storage: {
                     getItem: (name) => {
-                        const str = localStorage.getItem(name);
-                        if (!str) return null;
-                        const parsed = JSON.parse(str);
-                        // Rehydrate Date objects
-                        if (parsed.state?.items) {
-                            parsed.state.items = parsed.state.items.map((item: CartItem) => ({
-                                ...item,
-                                addedAt: new Date(item.addedAt),
-                            }));
+                        try {
+                            const str = localStorage.getItem(name);
+                            if (!str) return null;
+                            const parsed = JSON.parse(str);
+                            // Rehydrate Date objects
+                            if (parsed.state?.items) {
+                                parsed.state.items = parsed.state.items.map((item: CartItem) => ({
+                                    ...item,
+                                    addedAt: new Date(item.addedAt),
+                                }));
+                            }
+                            return parsed;
+                        } catch (e) {
+                            console.warn('Failed to load cart from local storage:', e);
+                            return null;
                         }
-                        return parsed;
                     },
                     setItem: (name, value) => {
-                        localStorage.setItem(name, JSON.stringify(value));
+                        try {
+                            localStorage.setItem(name, JSON.stringify(value));
+                        } catch (e) {
+                            console.warn('Failed to save cart to local storage:', e);
+                        }
                     },
                     removeItem: (name) => {
-                        localStorage.removeItem(name);
+                        try {
+                            localStorage.removeItem(name);
+                        } catch (e) {
+                            console.warn('Failed to remove cart from local storage:', e);
+                        }
                     },
                 },
             }

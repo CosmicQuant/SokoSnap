@@ -61,6 +61,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
     // Keyboard active state for positioning
     const [isKeyboardActive, setIsKeyboardActive] = useState(false);
+    const [isMapOpen, setIsMapOpen] = useState(false);
 
     // Feature States (Local)
     const [isLiked, setIsLiked] = useState(false);
@@ -278,7 +279,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
             {/* Action Sidebar - Hide when keyboard is active, move up when drawer is open, hidden in checkout mode */}
             {!hideActions && (
-                <div className={`absolute right-4 z-40 flex flex-col items-center gap-6 transition-all duration-200 ${isKeyboardActive
+                <div className={`absolute right-4 z-40 flex flex-col items-center gap-6 transition-all duration-200 ${isKeyboardActive || isMapOpen
                     ? 'opacity-0 pointer-events-none'
                     : showBottomSheet
                         ? 'bottom-[calc(17rem+env(safe-area-inset-bottom))]'
@@ -392,6 +393,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                             paymentMethod={paymentMethod}
                             setPaymentMethod={setPaymentMethod}
                             onKeyboardActive={setIsKeyboardActive}
+                            onMapOpen={setIsMapOpen}
                         />
 
                         {/* EDITABLE USER DATA HINT (Full-width Tab) */}
@@ -448,14 +450,14 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                                 {/* RIGHT: Price Box */}
                                 <div className="relative z-30 ml-auto h-full flex items-center">
                                     <div className="bg-white/5 backdrop-blur-sm rounded-lg px-2 py-1 border border-white/10 flex flex-col items-end min-w-[70px]">
-                                        <span className="text-sm font-black italic tracking-tighter block leading-none text-white drop-shadow-md">
-                                            <span className="text-yellow-400 text-[9px] mr-1">KES</span>
+                                        <span className={`text-sm font-black italic tracking-tighter block leading-none drop-shadow-md transition-all duration-300 ${paymentMethod === 'cod' ? 'text-white/30' : 'text-white'}`}>
+                                            <span className={`text-[9px] mr-1 ${paymentMethod === 'cod' ? 'text-white/30' : 'text-yellow-400'}`}>KES</span>
                                             {product.price.toLocaleString()}
                                         </span>
 
                                         {/* Smart Delivery Quote Logic */}
                                         {deliveryQuote ? (
-                                            <span className="text-[7px] font-black text-yellow-400 uppercase tracking-wide mt-0.5 block animate-in fade-in">
+                                            <span className={`font-black uppercase tracking-wide mt-0.5 block animate-in fade-in transition-all duration-300 ${paymentMethod === 'cod' ? 'text-yellow-400 text-[10px] drop-shadow-sm' : 'text-yellow-400 text-[7px]'}`}>
                                                 + {deliveryQuote} Del.
                                             </span>
                                         ) : (

@@ -13,7 +13,8 @@ interface InputFloatingCardProps {
     allowCOD?: boolean; // Whether seller allows Cash on Delivery
     paymentMethod?: 'mpesa' | 'cod';
     setPaymentMethod?: (method: 'mpesa' | 'cod') => void;
-    onKeyboardActive?: (active: boolean) => void; // Notify parent when keyboard is active
+    onKeyboardActive?: (active: boolean) => void;
+    onMapOpen?: (isOpen: boolean) => void;
 }
 
 export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
@@ -24,7 +25,8 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
     allowCOD = false,
     paymentMethod = 'mpesa',
     setPaymentMethod,
-    onKeyboardActive
+    onKeyboardActive,
+    onMapOpen
 }) => {
     const [showMap, setShowMap] = useState(false);
     const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
@@ -269,13 +271,25 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                             </button>
                             {/* Map Button */}
                             <button
-                                onClick={() => setShowMap(true)}
+                                onClick={() => {
+                                    setShowMap(true);
+                                    onMapOpen?.(true);
+                                }}
                                 className="w-[32px] h-[32px] shrink-0 bg-white/5 border border-white/15 rounded-lg flex items-center justify-center text-white/40 hover:text-yellow-400 active:scale-95 transition-all"
                                 title="Pin on Map"
                             >
                                 <Map size={14} />
                             </button>
                         </div>
+
+                        {/* Hint for COD */}
+                        {isCOD && (
+                            <div className="px-1 py-0.5 animate-in fade-in slide-in-from-top-1">
+                                <p className="text-[9px] text-emerald-400 italic font-medium leading-tight">
+                                    <span className="font-bold text-yellow-400">*Note:</span> Delivery fees must be paid upfront to dispatch rider.
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -283,10 +297,14 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
             {/* Location Picker Modal */}
             <LocationPickerModal
                 isOpen={showMap}
-                onClose={() => setShowMap(false)}
+                onClose={() => {
+                    setShowMap(false);
+                    onMapOpen?.(false);
+                }}
                 onSelectLocation={(loc) => {
                     setUserData(prev => ({ ...prev, location: loc.address }));
                     setShowMap(false);
+                    onMapOpen?.(false);
                 }}
             />
         </>

@@ -4,7 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, AlertCircle, Smartphone, Banknote } from 'lucide-react';
+import lipaNaMpesaLogo from '../../assets/lipa-na-mpesa.png';
 import { useCartStore, useUIStore, useAuthStore } from '../../store';
 import { Button } from '../common';
 import { formatCurrency } from '../../utils/formatters';
@@ -190,21 +191,58 @@ export const CartView: React.FC<CartViewProps> = ({ onBack }) => {
                         </div>
                     </div>
 
-                    {/* Checkout Button */}
+                    {/* Checkout Actions */}
                     {missingInfoError && (
                         <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-start gap-2 animate-in fade-in slide-in-from-bottom-2">
                             <AlertCircle size={16} className="shrink-0 mt-0.5" />
                             <p>{missingInfoError}</p>
                         </div>
                     )}
-                    <Button
-                        onClick={handleCheckout}
-                        variant="success"
-                        size="lg"
-                        fullWidth
-                    >
-                        Secure Checkout
-                    </Button>
+
+                    <div className="grid gap-3 pt-2">
+                        {/* Unified Checkout Button - Exact match to Feed Style */}
+                        <button
+                            onClick={handleCheckout}
+                            className="group relative w-full bg-[#4CAF50] hover:bg-[#43A047] active:scale-[0.98] text-white p-4 rounded-xl font-bold flex items-center justify-between shadow-lg shadow-emerald-500/20 transition-all overflow-hidden"
+                        >
+                            <div className="flex flex-col items-start leading-none relative z-10">
+                                <span className="text-[9px] font-black uppercase tracking-widest opacity-80 mb-1 text-emerald-100">Confirm & Pay</span>
+                                <span className="text-xl font-black">{formatCurrency(total)}</span>
+                            </div>
+
+                            <div className="flex items-center gap-3 relative z-10">
+                                <div className="flex flex-col items-end mr-1">
+                                    <span className="text-[9px] font-bold opacity-90">M-PESA</span>
+                                    <span className="text-[8px] font-medium opacity-70">Instant</span>
+                                </div>
+                                <div className="bg-black/20 p-2 rounded-lg">
+                                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                </div>
+                            </div>
+
+                            {/* Shimmer Effect */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-200%] animate-[shimmer_2s_infinite]" />
+                        </button>
+
+                        {/* Secondary Option: Cash on Delivery */}
+                        <div className="flex flex-col gap-2">
+                            <Button
+                                onClick={handleCheckout}
+                                variant="secondary"
+                                size="lg"
+                                fullWidth
+                                className="bg-white border-2 border-slate-100 text-slate-700 hover:bg-slate-50 hover:border-slate-200 py-3 shadow-sm"
+                            >
+                                <div className="flex items-center justify-center gap-2">
+                                    <Banknote size={20} className="text-slate-400" />
+                                    <span className="font-bold">Cash on Delivery</span>
+                                </div>
+                            </Button>
+                            <p className="text-[10px] text-center text-slate-400 font-medium bg-slate-50 py-1.5 px-3 rounded-full mx-auto border border-slate-100">
+                                <span className="text-amber-500 font-bold">Tip:</span> You'll pay the <span className="text-slate-600 font-bold">delivery fee</span> upfront
+                            </p>
+                        </div>
+                    </div>
                 </footer>
             )}
         </div>

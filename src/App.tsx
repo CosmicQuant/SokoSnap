@@ -12,6 +12,7 @@ import { SearchOverlay } from './components/search/SearchOverlay';
 import { SuccessView } from './components/common/SuccessView';
 import { SuccessModal } from './components/common/SuccessModal';
 import { CreatePostView } from './components/seller/CreatePostView';
+import { CreatePasswordView } from './components/features/CreatePasswordView';
 
 import { OrderHistoryView } from './components/profile/OrderHistoryView';
 
@@ -120,7 +121,7 @@ const App = () => {
 
     // Navigation State
     const [activeTab, setActiveTab] = useState('shop');
-    const [view, setView] = useState<'feed' | 'success' | 'cart' | 'profile' | 'seller-profile' | 'order-history' | 'create-post'>('feed');
+    const [view, setView] = useState<'feed' | 'success' | 'cart' | 'profile' | 'seller-profile' | 'order-history' | 'create-post' | 'create-password'>('feed');
     const [currentSeller, setCurrentSeller] = useState<{ name: string, handle: string } | undefined>(undefined);
 
     // Seller State
@@ -318,6 +319,23 @@ const App = () => {
         );
     }
 
+    if (view === 'create-password') {
+        return (
+            <CreatePasswordView
+                onBack={() => {
+                    // Try to go back to last relevant view, or feed
+                    setView('feed');
+                    setShowSuccessModal(false);
+                }}
+                onSuccess={() => {
+                    setView('order-history');
+                    setShowSuccessModal(false);
+                }}
+                phone={userData.phone || ''}
+            />
+        );
+    }
+
     if (view === 'profile') {
         return (
             <ProfileView
@@ -360,6 +378,7 @@ const App = () => {
             <SuccessView
                 otp={otp}
                 onReturn={() => setView('feed')}
+                onCreatePassword={() => setView('create-password')}
             />
         );
     }
@@ -453,6 +472,10 @@ const App = () => {
                 isOpen={showSuccessModal}
                 otp={otp}
                 onClose={handleSuccessModalClose}
+                onCreatePassword={() => {
+                    setShowSuccessModal(false);
+                    setView('create-password');
+                }}
             />
 
             {/* Trust/Info Modal */}

@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { ShoppingBag, Play, ShieldCheck, Zap, Star } from 'lucide-react';
+import { Logo } from '../common';
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -18,11 +19,13 @@ interface AppShellProps {
 const LeftSidebar: React.FC = () => (
     <div className="desktop-sidebar-left">
         {/* Logo */}
-        <div className="sidebar-logo">
-            <ShoppingBag size={28} className="text-white" />
+        <div className="mb-6 flex flex-col items-center">
+            <Logo size={64} />
+            <div className="mt-4 text-center">
+                <h1 className="sidebar-title mt-0">SokoSnap</h1>
+                <p className="sidebar-subtitle">by TumaFast</p>
+            </div>
         </div>
-        <h1 className="sidebar-title">SokoSnap</h1>
-        <p className="sidebar-subtitle">by TumaFast</p>
 
         {/* Features */}
         <div className="sidebar-feature">

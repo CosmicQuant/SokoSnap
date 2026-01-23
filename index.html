@@ -30,9 +30,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="SokoSnap" />
 
-  <!-- Favicon - Using emoji as placeholder -->
-  <link rel="icon"
-    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>" />
+  <!-- Favicon - SokoSnap Brand Logo -->
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <link rel="apple-touch-icon" href="/logo.svg" />
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -46,7 +46,28 @@
 
 <body>
   <!-- App Root -->
-  <div id="root"></div>
+  <div id="root">
+    <div
+      style="min-height: 100dvh; width: 100vw; background-color: #020617; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem;">
+      <img src="/logo.svg" alt="SokoSnap"
+        style="width: 80px; height: 80px; filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.2));" />
+      <div
+        style="width: 24px; height: 24px; border: 2.5px solid rgba(255,255,255,0.1); border-top-color: #10b981; border-radius: 50%; animation: spin 0.8s linear infinite;">
+      </div>
+    </div>
+    <style>
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      body {
+        margin: 0;
+        background-color: #020617;
+      }
+    </style>
+  </div>
 
   <!-- No JavaScript Fallback -->
   <noscript>

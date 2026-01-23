@@ -15,8 +15,18 @@ export interface User {
     handle?: string;
     phone: string;
     email?: string;
+    isEmailVerified?: boolean;
     type: UserType;
     avatar?: string;
+    location?: string;
+
+    // Seller specific fields
+    shopName?: string;
+    shopLocation?: string;
+    contactPerson?: string;
+    contactPhone?: string;
+    refundPolicy?: string;
+
     createdAt: Date;
     updatedAt: Date;
 }

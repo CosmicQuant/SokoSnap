@@ -89,10 +89,13 @@ export const Modal: React.FC<ModalProps> = ({
             relative
             bg-white
             w-full ${sizeStyles[size]}
+            max-h-[85vh]
             rounded-[2rem]
-            p-8
+            p-6 md:p-8
             shadow-2xl
             animate-in slide-in-from-bottom duration-300
+            overflow-y-auto
+            [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']
             ${className}
           `}
                 >

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, Phone, MapPin, X, AlertCircle, Map, Crosshair } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, Phone, MapPin, X, AlertCircle, Map, Crosshair, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '../../store';
 import { Button } from '../common';
 import { LocationPickerModal } from '../common/LocationPickerModal';
@@ -165,7 +165,7 @@ export const CartView: React.FC<CartViewProps> = ({ onBack, userData, setUserDat
 
             {/* Checkout Footer */}
             {items.length > 0 && (
-                <footer className={`fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 space-y-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] transition-all duration-300 ${showInputs ? 'pb-safe' : 'pb-safe'}`}>
+                <footer className={`fixed bottom-0 left-0 right-0 md:max-w-[var(--app-max-width)] mx-auto bg-white border-t border-slate-100 p-4 space-y-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] transition-all duration-300 ${showInputs ? 'pb-safe' : 'pb-safe'}`}>
 
                     {/* User Info Prompt */}
                     {showInputs && (
@@ -250,8 +250,21 @@ export const CartView: React.FC<CartViewProps> = ({ onBack, userData, setUserDat
                         }}
                     />
 
+                    {/* Edit Tab - Only show if we have data and not editing currently */}
+                    {!showInputs && userData.phone && userData.location && (
+                        <div
+                            onClick={() => setShowInputs(true)}
+                            className="absolute bottom-[calc(100%-12px)] left-0 right-0 mx-auto w-fit z-0 bg-yellow-400 border border-yellow-300 rounded-t-xl py-0.5 px-6 flex items-center justify-center cursor-pointer hover:bg-yellow-300 transition-colors shadow-sm"
+                        >
+                            <span className="text-[10px] font-medium text-black tracking-tight flex items-center gap-1.5 pt-1">
+                                <span>Using {userData.phone} • {(userData.location || '').split(',')[0]}</span>
+                                <span className="border-b border-black/50 opacity-70 text-[9px] font-bold">Edit</span>
+                            </span>
+                        </div>
+                    )}
+
                     {!showInputs && (
-                        <div className="space-y-2">
+                        <div className="space-y-2 relative z-10 bg-white pb-2">
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-500">Subtotal</span>
                                 <span className="font-bold text-slate-900">{formatCurrency(subtotal)}</span>
@@ -267,9 +280,25 @@ export const CartView: React.FC<CartViewProps> = ({ onBack, userData, setUserDat
                         </div>
                     )}
 
-                    <Button onClick={handleCheckout} variant="success" size="lg" fullWidth>
-                        Secure Checkout
-                    </Button>
+                    <button
+                        onClick={handleCheckout}
+                        className={`w-full border-y-[2px] border-x-[1px] border-yellow-400/60 text-white bg-slate-900 py-3 px-3 flex flex-col items-center gap-0.5 active:bg-slate-800 transition-all shadow-[0_4px_20px_rgba(234,179,8,0.15)] group hover:border-yellow-300 relative overflow-hidden z-20 ${!showInputs && userData.phone && userData.location ? 'rounded-b-2xl rounded-t-none' : 'rounded-2xl'}`}
+                    >
+                        {/* Shimmer Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 translate-x-[-200%] animate-[shimmer_2s_infinite]" />
+
+                        <div className="flex flex-col items-center leading-none z-20">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">TAP TO</span>
+                            <span className="text-xl font-black text-yellow-400 italic uppercase tracking-tighter drop-shadow-sm scale-y-110">ORDER NOW</span>
+                        </div>
+                    </button>
+
+                    <div className="flex items-center justify-center gap-2 pt-1 pb-1">
+                        <ShieldCheck size={12} className="text-emerald-600 shrink-0" />
+                        <span className="text-[10px] font-bold text-slate-500 leading-tight">
+                            Secure Hold by SokoSnap: Funds released after verification on delivery.
+                        </span>
+                    </div>
                 </footer>
             )}
         </div>

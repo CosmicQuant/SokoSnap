@@ -1,83 +1,126 @@
 import React from 'react';
-import { Lock, KeyRound, UserCheck, Zap, X } from 'lucide-react';
+import { Lock, KeyRound, UserCheck, Zap, X, ArrowRight, MessageSquare, Phone } from 'lucide-react';
 
 interface SuccessModalProps {
     isOpen: boolean;
     otp: number | null;
     onClose: () => void;
+    onCreatePassword?: () => void;
 }
 
-export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, otp, onClose }) => {
+export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, otp, onClose, onCreatePassword }) => {
     if (!isOpen) return null;
 
+    // Mock Seller Data
+    const sellerInfo = {
+        name: "Nanny Banana",
+        phone: "+254 712 345 678"
+    };
+
     return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
-            {/* Close button */}
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/95 backdrop-blur-md animate-in fade-in duration-300 px-4">
+            {/* Close button - Fixed to top right of screen for easy access */}
             <button
                 onClick={onClose}
-                className="absolute top-6 right-6 p-2 bg-white/10 backdrop-blur-md rounded-full text-white/60 hover:text-white hover:bg-white/20 transition-colors z-10"
+                className="absolute top-[env(safe-area-inset-top,24px)] right-6 z-50 p-2 bg-black/40 backdrop-blur-xl rounded-full text-white border border-white/20 hover:bg-black/60 transition-all shadow-2xl active:scale-95"
                 aria-label="Close"
             >
-                <X size={20} />
+                <X size={24} />
             </button>
 
-            <div className="w-full max-w-sm mx-6 flex flex-col items-center space-y-5 animate-in zoom-in-95 duration-500">
+            <div className="w-full max-w-sm mx-auto flex flex-col items-center gap-3 animate-in slide-in-from-bottom-5 duration-500 max-h-[85dvh] overflow-y-auto no-scrollbar py-2">
                 {/* Header */}
-                <div className="flex flex-col items-center text-center">
-                    <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center mb-4 shadow-xl shadow-blue-600/30">
-                        <Lock size={32} className="text-white" />
+                <div className="flex flex-col items-center text-center shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center mb-2 shadow-xl shadow-emerald-600/30">
+                        <Lock size={20} className="text-white" />
                     </div>
-                    <h1 className="text-2xl font-black italic uppercase tracking-tighter leading-none mb-1 text-white">PAYMENT SECURED</h1>
-                    <p className="text-[8px] font-black uppercase tracking-[0.3em] text-blue-400">Held in TumaFast Escrow</p>
+                    <h1 className="text-xl font-black italic uppercase tracking-tighter leading-none mb-0.5 text-white">PAYMENT SECURED</h1>
+                    <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-400">Held in TumaFast Escrow</p>
                 </div>
 
                 {/* OTP Display */}
-                <div className="bg-blue-600/20 backdrop-blur-md border border-blue-400/30 p-5 rounded-2xl w-full shadow-xl">
-                    <div className="flex items-center justify-center gap-2 mb-2 text-yellow-400">
-                        <KeyRound size={14} />
+                <div className="bg-emerald-600/20 backdrop-blur-md border border-emerald-400/30 p-3 rounded-xl w-full shadow-xl shrink-0">
+                    <div className="flex items-center justify-center gap-2 mb-1 text-yellow-400">
+                        <KeyRound size={12} />
                         <span className="text-[9px] font-black uppercase tracking-widest">Your Release Code</span>
                     </div>
-                    <div className="text-5xl font-black text-white tracking-[0.15em] font-mono text-center drop-shadow-md">
+                    <div className="text-4xl font-black text-white tracking-[0.15em] font-mono text-center drop-shadow-md leading-tight">
                         {otp}
                     </div>
-                    <p className="text-[8px] font-bold text-blue-300 mt-2 uppercase tracking-wide text-center">
-                        Give this to the rider only after inspection
-                    </p>
                 </div>
 
-                {/* Rider Info Card */}
-                <div className="bg-white w-full rounded-2xl p-4 text-slate-900 shadow-2xl space-y-4 text-left">
-                    <div className="flex items-center gap-3">
-                        <img
-                            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Kamau"
-                            className="w-12 h-12 bg-slate-100 rounded-xl border border-slate-100"
-                            alt="Rider"
-                        />
+                {/* Tracking Info - Guest Recovery */}
+                <div className="w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-3 text-left shrink-0">
+                    <div className="flex items-start gap-3">
+                        <div className="p-1.5 bg-blue-500/20 rounded-lg shrink-0">
+                            <MessageSquare size={14} className="text-blue-400" />
+                        </div>
                         <div>
-                            <p className="font-black text-base uppercase italic tracking-tight">Kamau #294</p>
-                            <div className="flex items-center gap-1 text-blue-500 text-[8px] font-black uppercase tracking-widest">
-                                <UserCheck size={10} /> Vetted Dispatcher
+                            <p className="text-[10px] font-bold text-white mb-0.5">Check your SMS</p>
+                            <p className="text-[9px] text-white/70 leading-relaxed">
+                                We've sent a tracking link to your phone. Verify & track without an account.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Seller & Rider Info Card */}
+                <div className="bg-white w-full rounded-xl p-3 text-slate-900 shadow-2xl space-y-3 text-left">
+                    {/* Rider */}
+                    <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Kamau" className="w-8 h-8 bg-slate-100 rounded-lg border border-slate-200" alt="Rider" />
+                        <div>
+                            <p className="font-black text-xs uppercase italic tracking-tight text-slate-900">Kamau #294</p>
+                            <div className="flex items-center gap-1 text-emerald-600 text-[7px] font-black uppercase tracking-widest">
+                                <UserCheck size={8} /> Dispatcher
                             </div>
+                        </div>
+                        <div className="ml-auto text-right">
+                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">ETA</p>
+                            <p className="text-xs font-black text-slate-900">15m</p>
                         </div>
                     </div>
 
-                    <div className="border-t border-slate-100 pt-3">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Important</p>
-                        <p className="text-[10px] font-bold leading-tight text-slate-700">Rider is on the way. Track their location below.</p>
+                    {/* Seller Details */}
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center text-slate-900 font-black text-sm shrink-0">
+                            N
+                        </div>
+                        <div className="min-w-0">
+                            <p className="font-bold text-[10px] text-slate-900 uppercase truncate">Sold by {sellerInfo.name}</p>
+                            <p className="text-[9px] text-slate-500">{sellerInfo.phone}</p>
+                        </div>
+                        <div className="ml-auto flex gap-2">
+                            <a href={`sms:${sellerInfo.phone.replace(/\s/g, '')}`} className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded-md text-slate-600 transition-colors">
+                                <MessageSquare size={14} />
+                            </a>
+                            <a href={`tel:${sellerInfo.phone.replace(/\s/g, '')}`} className="p-1.5 bg-emerald-100 hover:bg-emerald-200 rounded-md text-emerald-700 transition-colors">
+                                <Phone size={14} />
+                            </a>
+                        </div>
                     </div>
 
-                    <button className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors">
-                        <Zap size={14} fill="currentColor" /> LIVE TRACKING
+                    <button className="w-full bg-emerald-600 text-white py-2.5 rounded-lg font-black text-[9px] uppercase italic tracking-widest shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 hover:bg-emerald-700 transition-colors">
+                        <Zap size={12} fill="currentColor" /> LIVE TRACKING
                     </button>
                 </div>
 
-                {/* Continue Shopping Button */}
-                <button
-                    onClick={onClose}
-                    className="text-white/50 font-black text-[9px] uppercase tracking-[0.3em] underline underline-offset-4 hover:text-white transition-colors pt-2"
-                >
-                    Continue Shopping
-                </button>
+                {/* Guest Upsell */}
+                <div className="w-full text-center shrink-0 flex flex-col items-center gap-6 mt-2">
+                    <button
+                        onClick={onCreatePassword}
+                        className="text-white text-[10px] font-bold underline underline-offset-4 decoration-white/30 hover:decoration-white transition-all flex items-center justify-center gap-1 mx-auto"
+                    >
+                        Create a password to check your order status <ArrowRight size={10} />
+                    </button>
+
+                    <button
+                        onClick={onClose}
+                        className="px-6 py-3 bg-white/10 rounded-full text-white font-bold text-[10px] uppercase tracking-widest hover:bg-white/20 transition-all border border-white/5"
+                    >
+                        Return to Feed
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -1,7 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { User, CreditCard, ShoppingBag, MapPin, ChevronRight, Phone, ShieldCheck, ChevronLeft, Camera, Navigation, Map, X } from 'lucide-react';
+import { User, CreditCard, ShoppingBag, MapPin, ChevronRight, Phone, ShieldCheck, ChevronLeft, Camera, Navigation, Map, X, Store, BadgeCheck } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { SellerLinksSection } from '../seller/SellerLinksSection';
+import { BecomeSellerModal } from '../features/BecomeSellerModal';
+import { LocationPickerModal } from '../common/LocationPickerModal';
 
 // Production-ready initial state
 const INITIAL_USER_DATA = {
@@ -28,6 +30,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
     const [editSection, setEditSection] = useState<'personal' | 'payment' | null>(null);
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+    const [isSellerModalOpen, setIsSellerModalOpen] = useState(false);
+    const [showMap, setShowMap] = useState(false);
 
     const handleSave = (_section: 'personal' | 'payment') => {
         setEditSection(null);
@@ -70,15 +74,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
             async (position) => {
                 const { latitude, longitude } = position.coords;
                 // In production: Call Google Geocoding API here
-                // const address = await geocode({ lat: latitude, lng: longitude });
-                // setLocation(address);
-
-                // Simulating Geocoding API response
-                setTimeout(() => {
-                    setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)} (GPS)`);
-                    setIsLoadingLocation(false);
-                    setSuggestions([]);
-                }, 1000);
+                // For now, we simply use the coordinates as "Real" location
+                setLocation(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+                setIsLoadingLocation(false);
+                setSuggestions([]);
             },
             (error) => {
                 console.error("Error getting location:", error);
@@ -89,9 +88,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
     };
 
     const pinOnMap = () => {
-        // In production: Open Map Modal similar to FeedItem
-        // For now, we simulate a user selecting a point on the map
-        setLocation("Pin: -1.2921, 36.8219 (Moi Avenue)");
+        setShowMap(true);
         setSuggestions([]);
     };
 
@@ -108,32 +105,32 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
     };
 
     return (
-        <div className="h-full w-full bg-black text-white pt-24 px-6 overflow-y-auto pb-32 relative">
+        <div className="h-full w-full bg-slate-50 text-slate-900 pt-24 px-6 overflow-y-auto pb-32 relative">
             {/* Back Button */}
             {onBack && (
                 <button
                     onClick={onBack}
-                    className="absolute top-6 left-6 p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors z-50"
+                    className="absolute top-6 left-6 p-2 rounded-full bg-white/50 hover:bg-white transition-colors z-50 border border-slate-200 shadow-sm"
                 >
-                    <ChevronLeft size={24} className="text-white" />
+                    <ChevronLeft size={24} className="text-slate-900" />
                 </button>
             )}
 
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
-                <h1 className="text-3xl font-black italic uppercase tracking-tighter">My Profile</h1>
+                <h1 className="text-3xl font-black italic uppercase tracking-tighter text-slate-900">My Profile</h1>
                 {/* Settings icon removed as requested */}
             </div>
 
             {/* Avatar & Name */}
             <div className="flex items-center gap-5 mb-10">
                 <div className="relative group cursor-pointer" onClick={triggerFileInput}>
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 p-[2px]">
-                        <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden relative">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 p-[2px]">
+                        <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden relative border-4 border-white">
                             {user?.avatar ? (
                                 <img src={user.avatar} className="w-full h-full object-cover" alt="Profile" />
                             ) : (
-                                <User size={32} className="text-white/50" />
+                                <User size={32} className="text-slate-300" />
                             )}
                             {/* Overlay */}
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -142,7 +139,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                         </div>
                     </div>
                     {/* Badge */}
-                    <div className="absolute -bottom-1 -right-1 bg-white text-black p-1 rounded-full shadow-lg border border-black group-hover:bg-yellow-400 transition-colors">
+                    <div className="absolute -bottom-1 -right-1 bg-white text-black p-1 rounded-full shadow-lg border border-slate-100 group-hover:bg-yellow-400 transition-colors">
                         <Camera size={12} />
                     </div>
                 </div>
@@ -155,13 +152,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                 />
                 <div>
                     <div className="flex items-center gap-2">
-                        <h2 className="text-xl font-bold">{user?.name || "Guest User"}</h2>
-                        <ShieldCheck size={16} className="text-yellow-400" />
+                        <h2 className="text-xl font-bold text-slate-900">{user?.name || "Guest User"}</h2>
+                        <ShieldCheck size={16} className={`text-${isSeller ? 'emerald' : 'yellow'}-500`} />
                     </div>
-                    <p className="text-sm text-white/40 font-medium">@{user?.handle || "guest"}</p>
-                    <div className={`mt-2 inline-flex items-center px-2 py-0.5 rounded ${isSeller ? 'bg-emerald-400/10 border-emerald-400/20' : 'bg-yellow-400/10 border-yellow-400/20'} border`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isSeller ? 'bg-emerald-400' : 'bg-yellow-400'} mr-1.5 animate-pulse`} />
-                        <span className={`text-[10px] font-bold ${isSeller ? 'text-emerald-400' : 'text-yellow-400'} tracking-wider uppercase`}>
+                    <p className="text-sm text-slate-500 font-medium">@{user?.handle || "guest"}</p>
+                    <div className={`mt-2 inline-flex items-center px-2 py-0.5 rounded ${isSeller ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'} border`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isSeller ? 'bg-emerald-500' : 'bg-yellow-500'} mr-1.5 animate-pulse`} />
+                        <span className="text-[10px] font-bold tracking-wider uppercase">
                             {isSeller ? 'Verified Seller' : 'Verified Buyer'}
                         </span>
                     </div>
@@ -174,66 +171,66 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                 {/* Contact Info */}
                 <div className="space-y-3">
                     <div className="flex items-center justify-between pl-1">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-white/30">Personal Details</h3>
+                        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Personal Details</h3>
                         {editSection === 'personal' ? (
-                            <button onClick={() => handleSave('personal')} className="text-[10px] font-bold text-yellow-400 uppercase">Save</button>
+                            <button onClick={() => handleSave('personal')} className="text-[10px] font-bold text-emerald-600 uppercase">Save</button>
                         ) : (
-                            <button onClick={() => setEditSection('personal')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase transition-colors">Edit</button>
+                            <button onClick={() => setEditSection('personal')} className="text-[10px] font-bold text-slate-400 hover:text-slate-900 uppercase transition-colors">Edit</button>
                         )}
                     </div>
-                    <div className={`bg-white/5 border ${editSection === 'personal' ? 'border-yellow-400/50' : 'border-white/5'} rounded-2xl overflow-hidden backdrop-blur-sm transition-colors`}>
-                        <div className="p-4 flex items-center gap-4 border-b border-white/5">
-                            <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                                <Phone size={14} className="text-blue-400" />
+                    <div className={`bg-white border ${editSection === 'personal' ? 'border-emerald-500' : 'border-slate-200'} rounded-2xl overflow-hidden shadow-sm transition-colors`}>
+                        <div className="p-4 flex items-center gap-4 border-b border-slate-100">
+                            <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center">
+                                <Phone size={14} className="text-emerald-600" />
                             </div>
                             <div className="flex-1">
-                                <p className="text-[10px] uppercase tracking-wider text-white/40 font-bold">Phone Number</p>
+                                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Phone Number</p>
                                 {editSection === 'personal' ? (
                                     <input
                                         type="tel"
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value)}
-                                        className="w-full bg-transparent border-b border-yellow-400 text-yellow-400 font-medium outline-none text-sm pt-1"
+                                        className="w-full bg-transparent border-b border-emerald-500 text-slate-900 font-medium outline-none text-sm pt-1"
                                     />
                                 ) : (
-                                    <p className="text-sm font-medium">{phone}</p>
+                                    <p className="text-sm font-medium text-slate-900">{phone}</p>
                                 )}
                             </div>
                         </div>
                         <div className="p-4 flex items-center gap-4">
-                            <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
-                                <MapPin size={14} className="text-purple-400" />
+                            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+                                <MapPin size={14} className="text-blue-600" />
                             </div>
                             <div className="flex-1">
-                                <p className="text-[10px] uppercase tracking-wider text-white/40 font-bold">Delivery Location</p>
+                                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Delivery Location</p>
                                 {editSection === 'personal' ? (
                                     <div className="relative">
-                                        <div className="flex items-center border-b border-yellow-400 pb-1">
+                                        <div className="flex items-center border-b border-emerald-500 pb-1">
                                             <input
                                                 type="text"
                                                 value={location}
                                                 onChange={handleLocationChange}
-                                                className="w-full bg-transparent text-yellow-400 font-medium outline-none text-sm placeholder-white/20"
+                                                className="w-full bg-transparent text-slate-900 font-medium outline-none text-sm placeholder-slate-300"
                                                 placeholder="Search location..."
                                             />
                                             {location && (
                                                 <button onClick={() => { setLocation(''); setSuggestions([]); }}>
-                                                    <X size={14} className="text-white/40 hover:text-white" />
+                                                    <X size={14} className="text-slate-400 hover:text-slate-600" />
                                                 </button>
                                             )}
                                         </div>
 
                                         {/* Suggestions */}
                                         {suggestions.length > 0 && (
-                                            <div className="absolute top-full left-0 right-0 mt-2 bg-[#1A1A1A] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+                                            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
                                                 {suggestions.map((s, i) => (
                                                     <button
                                                         key={i}
                                                         onClick={() => selectSuggestion(s)}
-                                                        className="w-full text-left px-4 py-3 hover:bg-white/5 border-b border-white/5 last:border-0 flex items-center gap-3 transition-colors"
+                                                        className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 flex items-center gap-3 transition-colors"
                                                     >
-                                                        <MapPin size={14} className="text-white/40" />
-                                                        <span className="text-sm text-gray-300">{s}</span>
+                                                        <MapPin size={14} className="text-slate-400" />
+                                                        <span className="text-sm text-slate-700">{s}</span>
                                                     </button>
                                                 ))}
                                             </div>
@@ -244,10 +241,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                                             <button
                                                 onClick={useCurrentLocation}
                                                 disabled={isLoadingLocation}
-                                                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-bold hover:bg-blue-500/20 transition-all disabled:opacity-50"
+                                                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 text-xs font-bold hover:bg-blue-100 transition-all disabled:opacity-50"
                                             >
                                                 {isLoadingLocation ? (
-                                                    <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                                                    <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
                                                 ) : (
                                                     <Navigation size={12} />
                                                 )}
@@ -255,7 +252,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                                             </button>
                                             <button
                                                 onClick={pinOnMap}
-                                                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-bold hover:bg-purple-500/20 transition-all"
+                                                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 text-xs font-bold hover:bg-emerald-100 transition-all"
                                             >
                                                 <Map size={12} />
                                                 Pin on Map
@@ -263,7 +260,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                                         </div>
                                     </div>
                                 ) : (
-                                    <p className="text-sm font-medium">{location}</p>
+                                    <p className="text-sm font-medium text-slate-900">{location}</p>
                                 )}
                             </div>
                         </div>
@@ -273,35 +270,35 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                 {/* Payment Methods */}
                 <div className="space-y-3">
                     <div className="flex items-center justify-between pl-1">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-white/30">Payment & Wallet</h3>
+                        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Payment & Wallet</h3>
                         {editSection === 'payment' ? (
-                            <button onClick={() => handleSave('payment')} className="text-[10px] font-bold text-yellow-400 uppercase">Save</button>
+                            <button onClick={() => handleSave('payment')} className="text-[10px] font-bold text-emerald-600 uppercase">Save</button>
                         ) : (
-                            <button onClick={() => setEditSection('payment')} className="text-[10px] font-bold text-white/40 hover:text-white uppercase transition-colors">Edit</button>
+                            <button onClick={() => setEditSection('payment')} className="text-[10px] font-bold text-slate-400 hover:text-slate-900 uppercase transition-colors">Edit</button>
                         )}
                     </div>
 
-                    <div className={`bg-white/5 border ${editSection === 'payment' ? 'border-yellow-400/50' : 'border-white/5'} rounded-2xl overflow-hidden backdrop-blur-sm`}>
+                    <div className={`bg-white border ${editSection === 'payment' ? 'border-emerald-500' : 'border-slate-200'} rounded-2xl overflow-hidden shadow-sm`}>
                         <div className="p-4 flex items-center gap-4">
-                            <div className="w-8 h-8 rounded-full bg-yellow-400/20 flex items-center justify-center">
-                                <CreditCard size={14} className="text-yellow-400" />
+                            <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center">
+                                <CreditCard size={14} className="text-emerald-600" />
                             </div>
                             <div className="flex-1">
                                 <div className="flex items-center justify-between mb-1">
-                                    <p className="text-[10px] uppercase tracking-wider text-white/40 font-bold">Default Method</p>
-                                    <span className="text-[9px] font-bold bg-yellow-400/20 text-yellow-400 px-1.5 py-0.5 rounded">ACTIVE</span>
+                                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Default Method</p>
+                                    <span className="text-[9px] font-bold bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-100">ACTIVE</span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm font-bold">M-PESA</span>
+                                    <span className="text-sm font-bold text-slate-900">M-PESA</span>
                                     {editSection === 'payment' ? (
                                         <input
                                             type="tel"
                                             value={mpesaNumber}
                                             onChange={(e) => setMpesaNumber(e.target.value)}
-                                            className="bg-transparent border-b border-yellow-400 text-yellow-400 font-medium outline-none text-sm text-right w-32"
+                                            className="bg-transparent border-b border-emerald-500 text-slate-900 font-medium outline-none text-sm text-right w-32"
                                         />
                                     ) : (
-                                        <span className="text-white/60 text-xs font-medium">{mpesaNumber}</span>
+                                        <span className="text-slate-500 text-xs font-medium">{mpesaNumber}</span>
                                     )}
                                 </div>
                             </div>
@@ -310,29 +307,66 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                 </div>
 
                 <div className="space-y-3">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-white/30 pl-1">History</h3>
+                    <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 pl-1">History</h3>
                     <div
                         onClick={onOrderHistory}
-                        className="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors group"
+                        className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors group shadow-sm"
                     >
                         <div className="flex items-center gap-3">
-                            <ShoppingBag size={18} className="text-white/60 group-hover:text-yellow-400 transition-colors" />
-                            <span className="font-medium text-sm group-hover:text-white transition-colors">Order History</span>
+                            <ShoppingBag size={18} className="text-slate-400 group-hover:text-emerald-600 transition-colors" />
+                            <span className="font-medium text-sm text-slate-700 group-hover:text-slate-900 transition-colors">Order History</span>
                         </div>
-                        <ChevronRight size={16} className="text-white/20 group-hover:text-white transition-colors" />
+                        <ChevronRight size={16} className="text-slate-300 group-hover:text-slate-600 transition-colors" />
                     </div>
                 </div>
 
                 {/* Seller Links Section - Only visible for sellers */}
-                {isSeller && (
+                {isSeller ? (
                     <SellerLinksSection onCreateNew={onCreatePost} />
+                ) : (
+                    <div className="space-y-3">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 pl-1">Business</h3>
+                        <div
+                            onClick={() => setIsSellerModalOpen(true)}
+                            className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 flex items-center justify-between cursor-pointer hover:shadow-lg transition-all group relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/10 rounded-full -mr-10 -mt-10 blur-2xl" />
+
+                            <div className="flex items-center gap-4 relative z-10">
+                                <div className="w-10 h-10 rounded-full bg-yellow-400/20 flex items-center justify-center border border-yellow-400/30">
+                                    <Store size={20} className="text-yellow-400" />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-white text-sm">Become a Seller</h4>
+                                    <p className="text-[10px] text-slate-400 mt-0.5">Setup your shop & start selling today</p>
+                                </div>
+                            </div>
+                            <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                                <ChevronRight size={16} className="text-white" />
+                            </div>
+                        </div>
+                    </div>
                 )}
 
             </div>
 
-            <div className="mt-12 text-center text-[10px] text-white/20 uppercase tracking-widest font-black">
-                SokoSnap v1.0.5 (Beta)
+            <div className="mt-12 text-center text-[10px] text-slate-300 uppercase tracking-widest font-black">
+                SokoSnap v2.0 (Luminous)
             </div>
+
+            <BecomeSellerModal
+                isOpen={isSellerModalOpen}
+                onClose={() => setIsSellerModalOpen(false)}
+            />
+
+            <LocationPickerModal
+                isOpen={showMap}
+                onClose={() => setShowMap(false)}
+                onSelectLocation={(loc) => {
+                    setLocation(loc.address);
+                    setShowMap(false);
+                }}
+            />
         </div>
     );
 };

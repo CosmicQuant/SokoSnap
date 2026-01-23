@@ -191,13 +191,13 @@ export const CreatePostView: React.FC<CreatePostViewProps> = ({ onBack, onPostCr
     const canCreate = productName.trim() && price.trim() && media.length > 0;
 
     return (
-        <div className="min-h-[100dvh] w-full bg-black text-white flex flex-col">
+        <div className="min-h-[100dvh] w-full bg-slate-50 text-slate-900 flex flex-col">
             {/* Header */}
-            <div className="sticky top-0 z-50 bg-black/90 backdrop-blur-md border-b border-white/10">
+            <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
                 <div className="flex items-center justify-between px-4 py-4">
                     <button
                         onClick={onBack}
-                        className="p-2 -ml-2 text-white/70 hover:text-white transition-colors"
+                        className="p-2 -ml-2 text-slate-500 hover:text-slate-900 transition-colors"
                     >
                         <ChevronLeft size={24} />
                     </button>
@@ -212,7 +212,7 @@ export const CreatePostView: React.FC<CreatePostViewProps> = ({ onBack, onPostCr
 
                     {/* Media Upload Section */}
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                             Media ({media.length}/{MAX_VIDEOS + MAX_IMAGES})
                         </label>
 
@@ -220,7 +220,7 @@ export const CreatePostView: React.FC<CreatePostViewProps> = ({ onBack, onPostCr
                         {media.length > 0 && (
                             <div className="grid grid-cols-3 gap-2">
                                 {media.map((item) => (
-                                    <div key={item.id} className="relative aspect-square rounded-xl overflow-hidden bg-white/5">
+                                    <div key={item.id} className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
                                         {item.type === 'video' ? (
                                             <video
                                                 src={item.preview}
@@ -234,19 +234,19 @@ export const CreatePostView: React.FC<CreatePostViewProps> = ({ onBack, onPostCr
                                             />
                                         )}
                                         {/* Type Badge */}
-                                        <div className="absolute top-1 left-1 bg-black/70 rounded-md px-1.5 py-0.5">
+                                        <div className="absolute top-1 left-1 bg-black/50 backdrop-blur-sm rounded-md px-1.5 py-0.5">
                                             {item.type === 'video' ? (
-                                                <span className="text-[8px] font-bold text-white/70">
+                                                <span className="text-[8px] font-bold text-white/90">
                                                     {item.duration ? `${Math.round(item.duration)}s` : 'VID'}
                                                 </span>
                                             ) : (
-                                                <ImageIcon size={10} className="text-white/70" />
+                                                <ImageIcon size={10} className="text-white/90" />
                                             )}
                                         </div>
                                         {/* Remove Button */}
                                         <button
                                             onClick={() => removeMedia(item.id)}
-                                            className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center"
+                                            className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-sm"
                                         >
                                             <X size={12} className="text-white" />
                                         </button>
@@ -260,21 +260,21 @@ export const CreatePostView: React.FC<CreatePostViewProps> = ({ onBack, onPostCr
                             <button
                                 onClick={() => videoInputRef.current?.click()}
                                 disabled={videoCount >= MAX_VIDEOS}
-                                className="flex-1 py-4 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center gap-2 hover:border-yellow-400/50 hover:bg-yellow-400/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="flex-1 py-4 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center gap-2 hover:border-yellow-400 hover:bg-yellow-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white"
                             >
-                                <Video size={24} className="text-yellow-400" />
-                                <span className="text-[9px] font-bold uppercase tracking-wider text-white/50">
+                                <Video size={24} className="text-slate-400 hover:text-yellow-500" />
+                                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
                                     Video ({videoCount}/{MAX_VIDEOS})
                                 </span>
-                                <span className="text-[8px] text-white/30">Max {MAX_VIDEO_DURATION}s each</span>
+                                <span className="text-[8px] text-slate-400">Max {MAX_VIDEO_DURATION}s each</span>
                             </button>
                             <button
                                 onClick={() => imageInputRef.current?.click()}
                                 disabled={imageCount >= MAX_IMAGES}
-                                className="flex-1 py-4 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center gap-2 hover:border-yellow-400/50 hover:bg-yellow-400/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="flex-1 py-4 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center gap-2 hover:border-yellow-400 hover:bg-yellow-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white"
                             >
-                                <ImageIcon size={24} className="text-yellow-400" />
-                                <span className="text-[9px] font-bold uppercase tracking-wider text-white/50">
+                                <ImageIcon size={24} className="text-slate-400 hover:text-yellow-500" />
+                                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
                                     Image ({imageCount}/{MAX_IMAGES})
                                 </span>
                             </button>
@@ -301,7 +301,7 @@ export const CreatePostView: React.FC<CreatePostViewProps> = ({ onBack, onPostCr
 
                     {/* Product Name */}
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                             Product Name *
                         </label>
                         <input
@@ -309,13 +309,13 @@ export const CreatePostView: React.FC<CreatePostViewProps> = ({ onBack, onPostCr
                             value={productName}
                             onChange={(e) => setProductName(e.target.value)}
                             placeholder="e.g., Air Jordan 1 Retro High"
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/30 text-sm font-medium focus:border-yellow-400/50 focus:outline-none transition-colors"
+                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 focus:outline-none transition-all shadow-sm"
                         />
                     </div>
 
                     {/* Price */}
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                             Price (KES) *
                         </label>
                         <input
@@ -324,13 +324,13 @@ export const CreatePostView: React.FC<CreatePostViewProps> = ({ onBack, onPostCr
                             value={price}
                             onChange={(e) => setPrice(e.target.value)}
                             placeholder="e.g., 4500"
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/30 text-sm font-medium focus:border-yellow-400/50 focus:outline-none transition-colors"
+                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 focus:outline-none transition-all shadow-sm"
                         />
                     </div>
 
                     {/* Description */}
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                             Description
                         </label>
                         <textarea
@@ -338,44 +338,44 @@ export const CreatePostView: React.FC<CreatePostViewProps> = ({ onBack, onPostCr
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Describe your product... #sneakers #fashion #kenya"
                             rows={4}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/30 text-sm font-medium focus:border-yellow-400/50 focus:outline-none transition-colors resize-none"
+                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 focus:outline-none transition-all resize-none shadow-sm"
                         />
-                        <p className="text-[9px] text-white/30">You can use #hashtags in your description</p>
+                        <p className="text-[9px] text-slate-400">You can use #hashtags in your description</p>
                     </div>
 
                     {/* Error Message */}
                     {error && (
-                        <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
-                            <AlertCircle size={16} className="text-red-400 shrink-0" />
-                            <span className="text-xs text-red-400">{error}</span>
+                        <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                            <AlertCircle size={16} className="text-red-500 shrink-0" />
+                            <span className="text-xs text-red-600 font-medium">{error}</span>
                         </div>
                     )}
 
                     {/* Created Link Display */}
                     {createdLink && (
-                        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 space-y-3">
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-3">
                             <div className="flex items-center gap-2">
-                                <Link2 size={16} className="text-emerald-400" />
-                                <span className="text-xs font-black uppercase tracking-wider text-emerald-400">
+                                <Link2 size={16} className="text-emerald-600" />
+                                <span className="text-xs font-black uppercase tracking-wider text-emerald-600">
                                     Checkout Link Created!
                                 </span>
                             </div>
-                            <div className="flex items-center gap-2 bg-black/30 rounded-lg px-3 py-2">
-                                <span className="flex-1 text-xs text-white/70 truncate font-mono">
+                            <div className="flex items-center gap-2 bg-white border border-emerald-100 rounded-lg px-3 py-2 shadow-sm">
+                                <span className="flex-1 text-xs text-slate-600 truncate font-mono">
                                     {createdLink}
                                 </span>
                                 <button
                                     onClick={copyLink}
-                                    className="shrink-0 p-2 bg-emerald-500 rounded-lg hover:bg-emerald-400 transition-colors"
+                                    className="shrink-0 p-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg transition-colors"
                                 >
                                     {copied ? (
-                                        <Check size={14} className="text-white" />
+                                        <Check size={14} />
                                     ) : (
-                                        <Copy size={14} className="text-white" />
+                                        <Copy size={14} />
                                     )}
                                 </button>
                             </div>
-                            <p className="text-[9px] text-emerald-400/70">
+                            <p className="text-[9px] text-emerald-600/70">
                                 Share this link on TikTok, Instagram, or any platform!
                             </p>
                         </div>
@@ -384,11 +384,11 @@ export const CreatePostView: React.FC<CreatePostViewProps> = ({ onBack, onPostCr
             </div>
 
             {/* Bottom Action Button */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black to-transparent">
+            <div className="fixed bottom-0 left-0 right-0 md:max-w-[var(--app-max-width)] mx-auto p-4 bg-gradient-to-t from-slate-50 via-slate-50 to-transparent">
                 <button
                     onClick={handleCreateLink}
                     disabled={!canCreate || isCreating || !!createdLink}
-                    className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-black py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-yellow-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:from-yellow-300 hover:to-yellow-400 transition-all"
+                    className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-slate-900 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-yellow-400/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:from-yellow-300 hover:to-yellow-400 transition-all border border-yellow-400/50"
                 >
                     {isCreating ? (
                         <>

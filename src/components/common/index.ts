@@ -14,3 +14,4 @@ export { Toast, useShowToast } from './Toast';
 export { LazyVideo, LazyImage } from './LazyMedia';
 export type { LazyVideoProps, LazyImageProps } from './LazyMedia';
 export { MpesaLogo, LipaNaMpesaLogo } from './MpesaLogo';
+export { Logo } from './Logo';
