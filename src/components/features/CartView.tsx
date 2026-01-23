@@ -4,8 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus, AlertCircle, Smartphone, Banknote } from 'lucide-react';
-import lipaNaMpesaLogo from '../../assets/lipa-na-mpesa.png';
+import { ArrowLeft, ArrowRight, ShoppingCart, Trash2, Plus, Minus, AlertCircle, Banknote } from 'lucide-react';
 import { useCartStore, useUIStore, useAuthStore } from '../../store';
 import { Button } from '../common';
 import { formatCurrency } from '../../utils/formatters';

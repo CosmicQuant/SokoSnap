@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { User, CreditCard, ShoppingBag, MapPin, ChevronRight, Phone, ShieldCheck, ChevronLeft, Camera, Navigation, Map, X, Store, BadgeCheck } from 'lucide-react';
+import { User, CreditCard, ShoppingBag, MapPin, ChevronRight, Phone, ShieldCheck, ChevronLeft, Camera, Navigation, Map, X, Store } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { SellerLinksSection } from '../seller/SellerLinksSection';
 import { BecomeSellerModal } from '../features/BecomeSellerModal';

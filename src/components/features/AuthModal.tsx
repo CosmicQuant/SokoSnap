@@ -4,11 +4,11 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Mail, Lock, Phone, User as UserIcon, X, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, Phone, User as UserIcon, X } from 'lucide-react';
 import { Modal, Input, Button } from '../common';
 import { GoogleButton } from '../common/GoogleButton';
 import { useAuthStore, useIsAuthModalOpen } from '../../store';
-import { loginSchema, kenyanPhoneSchema } from '../../utils/validators';
+import { kenyanPhoneSchema } from '../../utils/validators';
 
 type AuthTab = 'login' | 'register';
 

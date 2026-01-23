@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 import { persist, devtools } from 'zustand/middleware';
-import type { User, UserType } from '../types';
+import type { User } from '../types';
 
 interface AuthState {
     // State
@@ -68,7 +68,7 @@ export const useAuthStore = create<AuthState>()(
                 authMode: null,
 
                 // Login action
-                login: async (identifier: string, password?: string) => {
+                login: async (identifier: string, _password?: string) => {
                     set({ isLoading: true, error: null });
 
                     try {

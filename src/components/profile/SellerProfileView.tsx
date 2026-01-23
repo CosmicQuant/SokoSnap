@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, MapPin, BadgeCheck, Phone, Mail, UserCheck, Plus, MessageSquare } from 'lucide-react';
+import { ChevronLeft, MapPin, BadgeCheck, Phone, UserCheck, Plus, MessageSquare } from 'lucide-react';
 
 interface SellerProfileProps {
     seller: { name: string, handle: string };

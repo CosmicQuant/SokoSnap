@@ -184,32 +184,32 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
             >
                 {/* Solid thin card - prevent any touch scrolling */}
                 <div
-                    className="bg-neutral-900 border border-white/20 rounded-t-xl shadow-lg overflow-hidden"
+                    className="bg-transparent border-t border-white/20 rounded-t-xl shadow-lg overflow-hidden backdrop-blur-[2px]"
                     style={{ touchAction: isKeyboardOpen ? 'none' : 'auto' }}
                 >
 
                     {/* Compact Header: Close + Logo + Title - all in one thin line */}
-                    <div className="flex items-center justify-between px-2 py-1 border-b border-white/10 bg-white/5">
+                    <div className="flex items-center justify-between px-2 py-0 border-b border-white/10 bg-black/20 backdrop-blur-md">
                         <button
                             onClick={onClose}
                             className="text-white/50 hover:text-white p-0.5 rounded transition-colors"
                         >
                             <X size={14} />
                         </button>
-                        <div className="flex items-center gap-1.5">
-                            <img src={mpesaLogo} className="h-5 object-contain" alt="M-Pesa" />
-                            <span className="text-[8px] text-white/60 font-bold uppercase tracking-wider">Secure Checkout</span>
+                        <div className="flex items-center gap-1.5 overflow-hidden">
+                            <img src={mpesaLogo} className="h-8 object-contain drop-shadow-lg -my-1" alt="M-Pesa" />
+                            <span className="text-[9px] text-white/80 font-black uppercase tracking-widest drop-shadow-md whitespace-nowrap">Secure Checkout</span>
                         </div>
                         <div className="w-5" /> {/* Spacer for centering */}
                     </div>
 
                     {/* Ultra-compact inputs - minimal padding, no safe-area when keyboard open */}
-                    <div className={`px-2 py-1.5 space-y-1 ${isKeyboardOpen ? 'pb-1' : 'pb-[env(safe-area-inset-bottom)]'}`}>
+                    <div className={`px-2 py-1.5 space-y-1 ${isKeyboardOpen ? 'pb-1' : 'pb-[env(safe-area-inset-bottom)]'} bg-gradient-to-t from-black/40 to-transparent`}>
 
                         {/* Row 1: Phone Input + COD Toggle (if allowed) */}
                         <div className="flex gap-1.5">
                             <div className="flex-1 relative">
-                                <Phone size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-yellow-400/70" />
+                                <Phone size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-yellow-400 drop-shadow-md" />
                                 <input
                                     ref={phoneInputRef}
                                     type="tel"
@@ -217,7 +217,7 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                                     placeholder={isCOD ? "Phone for delivery" : "M-Pesa Number (0712...)"}
                                     value={userData.phone}
                                     onChange={(e) => setUserData(prev => ({ ...prev, phone: e.target.value }))}
-                                    className="w-full h-[32px] bg-white/10 border border-white/15 rounded-lg py-1.5 pl-7 pr-2 text-[11px] font-bold text-white placeholder:text-white/30 outline-none focus:border-yellow-400/50 transition-all"
+                                    className="w-full h-[32px] bg-black/40 border border-white/20 rounded-lg py-1.5 pl-7 pr-2 text-[11px] font-bold text-white placeholder:text-yellow-100/90 placeholder:font-bold outline-none focus:border-yellow-400/80 transition-all backdrop-blur-md shadow-inner"
                                 />
                             </div>
                             {/* Cash on Delivery Button - Emerald green when active */}
@@ -242,14 +242,14 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                         {/* Row 2: Location Input + GPS + Map */}
                         <div className="flex gap-1.5">
                             <div className="flex-1 relative">
-                                <MapPin size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-yellow-400/70" />
+                                <MapPin size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-yellow-400 drop-shadow-md" />
                                 <input
                                     ref={locationInputRef}
                                     type="text"
                                     placeholder="Delivery Location"
                                     value={userData.location}
                                     onChange={(e) => setUserData(prev => ({ ...prev, location: e.target.value }))}
-                                    className="w-full h-[32px] bg-white/10 border border-white/15 rounded-lg py-1.5 pl-7 pr-2 text-[11px] font-bold text-white placeholder:text-white/30 outline-none focus:border-yellow-400/50 transition-all"
+                                    className="w-full h-[32px] bg-black/40 border border-white/20 rounded-lg py-1.5 pl-7 pr-2 text-[11px] font-bold text-white placeholder:text-yellow-100/90 placeholder:font-bold outline-none focus:border-yellow-400/80 transition-all backdrop-blur-md shadow-inner"
                                 />
                             </div>
                             {/* GPS Button */}
@@ -264,7 +264,7 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                                         });
                                     }
                                 }}
-                                className="w-[32px] h-[32px] shrink-0 bg-white/5 border border-white/15 rounded-lg flex items-center justify-center text-white/40 hover:text-yellow-400 active:scale-95 transition-all"
+                                className="w-[32px] h-[32px] shrink-0 bg-black/40 backdrop-blur-md border border-white/20 rounded-lg flex items-center justify-center text-white/60 hover:text-yellow-400 active:scale-95 transition-all shadow-lg"
                                 title="Use GPS"
                             >
                                 <Crosshair size={14} />
@@ -275,7 +275,7 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                                     setShowMap(true);
                                     onMapOpen?.(true);
                                 }}
-                                className="w-[32px] h-[32px] shrink-0 bg-white/5 border border-white/15 rounded-lg flex items-center justify-center text-white/40 hover:text-yellow-400 active:scale-95 transition-all"
+                                className="w-[32px] h-[32px] shrink-0 bg-black/40 backdrop-blur-md border border-white/20 rounded-lg flex items-center justify-center text-white/60 hover:text-yellow-400 active:scale-95 transition-all shadow-lg"
                                 title="Pin on Map"
                             >
                                 <Map size={14} />

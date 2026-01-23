@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { ShoppingBag, Play, ShieldCheck, Zap, Star } from 'lucide-react';
+import { Play, ShieldCheck, Zap, Star } from 'lucide-react';
 import { Logo } from '../common';
 
 interface AppShellProps {

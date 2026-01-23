@@ -47,7 +47,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     };
 
     const handleBecomeSeller = async () => {
-        await becomeSeller();
+        if (user) {
+            await becomeSeller({
+                shopName: `${user.name || 'User'}'s Shop`,
+                shopLocation: 'Nairobi',
+                contactPerson: user.name || 'User',
+                contactPhone: user.phone || ''
+            });
+        }
         onNavigateToDashboard();
     };
 
