@@ -26,6 +26,8 @@ interface FeedItemProps {
     isProcessing: boolean;
     deliveryQuote: number | null;
     onView?: (seller: { name: string, handle: string }) => void;
+    hideActions?: boolean; // Hide action sidebar (for checkout mode)
+    disableScroll?: boolean; // Disable vertical scroll/snap (for checkout mode)
 }
 
 export const FeedItem: React.FC<FeedItemProps> = ({
@@ -38,7 +40,9 @@ export const FeedItem: React.FC<FeedItemProps> = ({
     onCheckout,
     isProcessing,
     deliveryQuote,
-    onView
+    onView,
+    hideActions = false,
+    disableScroll = false
 }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -197,7 +201,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
     return (
         <div
             ref={containerRef}
-            className="h-[100dvh] w-full snap-start snap-always relative flex flex-col bg-black overflow-hidden shrink-0"
+            className={`h-[100dvh] w-full ${disableScroll ? '' : 'snap-start snap-always'} relative flex flex-col bg-black overflow-hidden shrink-0`}
         >
             {/* 
               Media Layer:
@@ -272,46 +276,47 @@ export const FeedItem: React.FC<FeedItemProps> = ({
             {showComments && <CommentsOverlay onClose={() => setShowComments(false)} />}
 
 
-            {/* Action Sidebar - Hide when keyboard is active, move up when drawer is open */}
-            <div className={`absolute right-4 z-40 flex flex-col items-center gap-6 transition-all duration-200 ${isKeyboardActive
-                ? 'opacity-0 pointer-events-none'
-                : showBottomSheet
-                    ? 'bottom-[calc(17rem+env(safe-area-inset-bottom))]'
-                    : 'bottom-[calc(10rem+env(safe-area-inset-bottom))]'
-                } animate-in fade-in duration-300`}>
-                <ActionBtn
-                    icon={<Heart size={28} className={`drop-shadow-lg transition-colors ${isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`} />}
-                    label={isLiked ? `${likesCount}` : product.likes}
-                    onClick={handleLike}
-                />
-                <ActionBtn
-                    icon={<MessageCircle size={28} className="drop-shadow-lg" />}
-                    onClick={() => setShowComments(true)}
-                />
-                <ActionBtn
-                    icon={<Share2 size={28} className="drop-shadow-lg" />}
-                    onClick={handleShare}
-                />
-                <ActionBtn
-                    icon={<ShoppingBag size={28} className={`drop-shadow-lg transition-colors duration-300 ${isInCart ? 'text-yellow-400 fill-yellow-400/20' : 'text-white'}`} />}
-                    onClick={(e) => {
-                        e?.stopPropagation();
-                        onAddToCart(product);
-                    }}
-                    onRemoveClick={isInCart ? (e) => {
-                        e.stopPropagation(); // Make sure to use 'e' or just rename it if not needed, but stopProp is good here too
-                        if (onRemoveFromCart) {
-                            onRemoveFromCart(product);
-                        } else {
-                            // Fallback logic if needed, or update App.tsx next
-                            onAddToCart({ ...product, quantity: -1 }); // Example hack if store supports it
-                        }
-                    } : undefined}
-                    count={cartItemQuantity}
-                    showAddHint={!isInCart}
-                    className={isInCart ? "bg-white/20 rounded-full" : ""}
-                />
-            </div>
+            {/* Action Sidebar - Hide when keyboard is active, move up when drawer is open, hidden in checkout mode */}
+            {!hideActions && (
+                <div className={`absolute right-4 z-40 flex flex-col items-center gap-6 transition-all duration-200 ${isKeyboardActive
+                    ? 'opacity-0 pointer-events-none'
+                    : showBottomSheet
+                        ? 'bottom-[calc(17rem+env(safe-area-inset-bottom))]'
+                        : 'bottom-[calc(10rem+env(safe-area-inset-bottom))]'
+                    } animate-in fade-in duration-300`}>
+                    <ActionBtn
+                        icon={<Heart size={28} className={`drop-shadow-lg transition-colors ${isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`} />}
+                        label={isLiked ? `${likesCount}` : product.likes}
+                        onClick={handleLike}
+                    />
+                    <ActionBtn
+                        icon={<MessageCircle size={28} className="drop-shadow-lg" />}
+                        onClick={() => setShowComments(true)}
+                    />
+                    <ActionBtn
+                        icon={<Share2 size={28} className="drop-shadow-lg" />}
+                        onClick={handleShare}
+                    />
+                    <ActionBtn
+                        icon={<ShoppingBag size={28} className={`drop-shadow-lg transition-colors duration-300 ${isInCart ? 'text-yellow-400 fill-yellow-400/20' : 'text-white'}`} />}
+                        onClick={(e) => {
+                            e?.stopPropagation();
+                            onAddToCart(product);
+                        }}
+                        onRemoveClick={isInCart ? (e) => {
+                            e.stopPropagation();
+                            if (onRemoveFromCart) {
+                                onRemoveFromCart(product);
+                            } else {
+                                onAddToCart({ ...product, quantity: -1 });
+                            }
+                        } : undefined}
+                        count={cartItemQuantity}
+                        showAddHint={!isInCart}
+                        className={isInCart ? "bg-white/20 rounded-full" : ""}
+                    />
+                </div>
+            )}
 
             {/* Bottom Information Stack */}
             <div className="relative z-30 mt-auto w-full pb-[env(safe-area-inset-bottom)]">

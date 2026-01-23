@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { User, CreditCard, ShoppingBag, MapPin, ChevronRight, Phone, ShieldCheck, ChevronLeft, Camera, Navigation, Map, X } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import { SellerLinksSection } from '../seller/SellerLinksSection';
 
 // Production-ready initial state
 const INITIAL_USER_DATA = {
@@ -13,11 +14,13 @@ const INITIAL_USER_DATA = {
 interface ProfileViewProps {
     onBack?: () => void;
     onOrderHistory: () => void;
+    onCreatePost?: () => void;
 }
 
-export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory }) => {
+export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory, onCreatePost }) => {
     const { user, updateUser } = useAuthStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const isSeller = user?.type === 'verified_merchant';
 
     const [phone, setPhone] = useState(INITIAL_USER_DATA.phone);
     const [location, setLocation] = useState(INITIAL_USER_DATA.location);
@@ -156,9 +159,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                         <ShieldCheck size={16} className="text-yellow-400" />
                     </div>
                     <p className="text-sm text-white/40 font-medium">@{user?.handle || "guest"}</p>
-                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded bg-yellow-400/10 border border-yellow-400/20">
-                        <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mr-1.5 animate-pulse" />
-                        <span className="text-[10px] font-bold text-yellow-400 tracking-wider uppercase">Verified Buyer</span>
+                    <div className={`mt-2 inline-flex items-center px-2 py-0.5 rounded ${isSeller ? 'bg-emerald-400/10 border-emerald-400/20' : 'bg-yellow-400/10 border-yellow-400/20'} border`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isSeller ? 'bg-emerald-400' : 'bg-yellow-400'} mr-1.5 animate-pulse`} />
+                        <span className={`text-[10px] font-bold ${isSeller ? 'text-emerald-400' : 'text-yellow-400'} tracking-wider uppercase`}>
+                            {isSeller ? 'Verified Seller' : 'Verified Buyer'}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -317,6 +322,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
                         <ChevronRight size={16} className="text-white/20 group-hover:text-white transition-colors" />
                     </div>
                 </div>
+
+                {/* Seller Links Section - Only visible for sellers */}
+                {isSeller && (
+                    <SellerLinksSection onCreateNew={onCreatePost} />
+                )}
 
             </div>
 

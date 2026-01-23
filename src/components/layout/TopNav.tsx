@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Search, ShoppingBag, ChevronLeft } from 'lucide-react';
+import { User, Search, ShoppingBag, ChevronLeft, Plus } from 'lucide-react';
 
 interface TopNavProps {
     activeTab: string;
@@ -9,8 +9,10 @@ interface TopNavProps {
     onProfileClick: () => void;
     onSearchClick: () => void;
     onCartClick: () => void;
+    onCreateClick?: () => void;
     currentSeller?: { name: string, handle: string };
     onBack?: () => void;
+    isSeller?: boolean;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -21,8 +23,10 @@ export const TopNav: React.FC<TopNavProps> = ({
     onProfileClick,
     onSearchClick,
     onCartClick,
+    onCreateClick,
     currentSeller,
-    onBack
+    onBack,
+    isSeller = false
 }) => {
     return (
         <div className="absolute top-0 left-0 right-0 z-50 pt-6 pb-4 px-6 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
@@ -107,30 +111,41 @@ export const TopNav: React.FC<TopNavProps> = ({
                 >
                     <Search size={20} />
                 </button>
-                {/* Cart Action + Total (Grouped but visually separated) */}
-                <div className="relative flex flex-col items-center">
+
+                {/* Create Button for Sellers OR Cart for Buyers */}
+                {isSeller ? (
                     <button
-                        onClick={onCartClick}
-                        aria-label="View Cart"
-                        className="flex items-center justify-center text-white/80 hover:text-white transition-colors p-2 bg-black/20 backdrop-blur-md rounded-full relative"
+                        onClick={onCreateClick}
+                        aria-label="Create Post"
+                        className="flex items-center justify-center text-black bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 transition-all p-2 rounded-full shadow-lg shadow-yellow-500/30"
                     >
-                        <ShoppingBag size={20} />
-                        {cartCount > 0 && (
-                            <div key={cartCount} className="absolute -top-1 -right-1 min-w-[16px] h-[16px] bg-red-600 border border-black rounded-full flex items-center justify-center px-1 animate-pulse-once">
-                                <span className="text-[9px] font-bold text-white leading-none">{cartCount}</span>
+                        <Plus size={20} strokeWidth={3} />
+                    </button>
+                ) : (
+                    <div className="relative flex flex-col items-center">
+                        <button
+                            onClick={onCartClick}
+                            aria-label="View Cart"
+                            className="flex items-center justify-center text-white/80 hover:text-white transition-colors p-2 bg-black/20 backdrop-blur-md rounded-full relative"
+                        >
+                            <ShoppingBag size={20} />
+                            {cartCount > 0 && (
+                                <div key={cartCount} className="absolute -top-1 -right-1 min-w-[16px] h-[16px] bg-red-600 border border-black rounded-full flex items-center justify-center px-1 animate-pulse-once">
+                                    <span className="text-[9px] font-bold text-white leading-none">{cartCount}</span>
+                                </div>
+                            )}
+                        </button>
+
+                        {/* Total Amount - Absolute positioned below to prevent layout shift */}
+                        {cartTotal !== undefined && cartTotal > 0 && (
+                            <div className="absolute top-full mt-1 flex justify-center w-max pointer-events-none">
+                                <span className="text-[9px] font-black text-white bg-black/40 backdrop-blur-md px-1.5 py-0.5 rounded-full leading-none tracking-tight shadow-sm">
+                                    KES {cartTotal.toLocaleString()}
+                                </span>
                             </div>
                         )}
-                    </button>
-
-                    {/* Total Amount - Absolute positioned below to prevent layout shift */}
-                    {cartTotal !== undefined && cartTotal > 0 && (
-                        <div className="absolute top-full mt-1 flex justify-center w-max pointer-events-none">
-                            <span className="text-[9px] font-black text-white bg-black/40 backdrop-blur-md px-1.5 py-0.5 rounded-full leading-none tracking-tight shadow-sm">
-                                KES {cartTotal.toLocaleString()}
-                            </span>
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
         </div>
     );

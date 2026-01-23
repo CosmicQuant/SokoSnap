@@ -33,6 +33,36 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- Deep Link: Handle sokosnap.app/p/123 checkout links -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="sokosnap.app" android:pathPrefix="/p/" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" android:host="sokosnap.app" android:pathPrefix="/p/" />
+            </intent-filter>
+            
+            <!-- Deep Link: Handle sokosnap.vercel.app for development -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="sokosnap.vercel.app" android:pathPrefix="/p/" />
+            </intent-filter>
+
+            <!-- Custom URL Scheme: sokosnap://p/123 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="sokosnap" android:host="p" />
+            </intent-filter>
+
         </activity>
 
         <provider

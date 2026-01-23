@@ -1,14 +1,17 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { generateMockSecureOTP } from './utils/validation';
-import { useCartStore } from './store';
+import { useCartStore, useAuthStore, useSellerStore } from './store';
 import { FeedItem } from '@components/feed/FeedItem';
 import { TopNav } from './components/layout/TopNav';
+import { CheckoutTopNav } from './components/layout/CheckoutTopNav';
 import { CartView } from './components/cart/CartView';
 import { ProfileView } from './components/profile/ProfileView';
 import { SellerProfileView } from './components/profile/SellerProfileView';
 import { SearchOverlay } from './components/search/SearchOverlay';
 import { SuccessView } from './components/common/SuccessView';
+import { SuccessModal } from './components/common/SuccessModal';
+import { CreatePostView } from './components/seller/CreatePostView';
 
 import { OrderHistoryView } from './components/profile/OrderHistoryView';
 
@@ -104,21 +107,95 @@ const PRODUCTS = [
 ];
 
 const App = () => {
+    // Checkout Mode State (for shared checkout links)
+    const [isCheckoutMode, setIsCheckoutMode] = useState(false);
+    const [checkoutProductId, setCheckoutProductId] = useState<number | null>(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    // Ref to track checkout mode for async callbacks
+    const isCheckoutModeRef = useRef(isCheckoutMode);
+    useEffect(() => {
+        isCheckoutModeRef.current = isCheckoutMode;
+    }, [isCheckoutMode]);
+
     // Navigation State
     const [activeTab, setActiveTab] = useState('shop');
-    const [view, setView] = useState<'feed' | 'success' | 'cart' | 'profile' | 'seller-profile' | 'order-history'>('feed');
+    const [view, setView] = useState<'feed' | 'success' | 'cart' | 'profile' | 'seller-profile' | 'order-history' | 'create-post'>('feed');
     const [currentSeller, setCurrentSeller] = useState<{ name: string, handle: string } | undefined>(undefined);
+
+    // Seller State
+    const { user } = useAuthStore();
+    const { addPost } = useSellerStore();
+    const isSeller = user?.type === 'verified_merchant';
 
     // Feature State
     const [showTrustModal, setShowTrustModal] = useState(false);
     const [showSearch, setShowSearch] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
+    // Parse URL for checkout mode on mount and handle deep links
+    useEffect(() => {
+        const parseCheckoutUrl = (url: string) => {
+            // Match patterns: /p/123, ?p=123, or #/p/123 (hash routing)
+            const pathMatch = url.match(/\/p\/(\d+)/);
+            const queryMatch = url.match(/[?&]p=(\d+)/);
+            const hashMatch = url.match(/#\/p\/(\d+)/);
+
+            const productId = pathMatch?.[1] || queryMatch?.[1] || hashMatch?.[1];
+
+            console.log('[Checkout] Parsing URL:', url, 'Found ID:', productId);
+
+            if (productId) {
+                const id = parseInt(productId, 10);
+                const product = PRODUCTS.find(p => p.id === id);
+                console.log('[Checkout] Product found:', !!product, 'Setting checkout mode');
+                if (product) {
+                    setIsCheckoutMode(true);
+                    setCheckoutProductId(id);
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        // Check initial URL
+        parseCheckoutUrl(window.location.href);
+
+        // Listen for deep links on native (Capacitor)
+        const appUrlListener = CapacitorApp.addListener('appUrlOpen', (event) => {
+            parseCheckoutUrl(event.url);
+        });
+
+        // Listen for popstate (browser back/forward)
+        const handlePopState = () => {
+            if (!parseCheckoutUrl(window.location.href)) {
+                // If no checkout URL, exit checkout mode
+                setIsCheckoutMode(false);
+                setCheckoutProductId(null);
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+
+        return () => {
+            appUrlListener.then(h => h.remove());
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, []);
+
     // Hardware Back Button Handling
     useEffect(() => {
         const backListener = CapacitorApp.addListener('backButton', () => {
-            if (showSearch) {
+            if (showSuccessModal) {
+                // Close success modal first
+                handleSuccessModalClose();
+            } else if (showSearch) {
                 setShowSearch(false);
+            } else if (isCheckoutMode) {
+                // In checkout mode, back button exits checkout mode
+                setIsCheckoutMode(false);
+                setCheckoutProductId(null);
+                // Clear URL
+                window.history.replaceState({}, '', '/');
             } else if (view !== 'feed') {
                 // Return to feed from any other view
                 setView('feed');
@@ -176,6 +253,9 @@ const App = () => {
     };
 
     const handleCheckout = async () => {
+        // Use ref to get current value (avoids stale closure)
+        const inCheckoutMode = isCheckoutModeRef.current;
+        console.log('[Checkout] handleCheckout called, isCheckoutMode:', inCheckoutMode);
         setIsProcessing(true);
 
         // Simulate secure OTP generation from server
@@ -184,9 +264,25 @@ const App = () => {
 
         setIsProcessing(false);
         clearCart();
-        setView('success');
+
+        // In checkout mode, show modal instead of navigating to success page
+        console.log('[Checkout] Showing success, isCheckoutMode:', inCheckoutMode);
+        if (inCheckoutMode) {
+            console.log('[Checkout] Setting showSuccessModal to true');
+            setShowSuccessModal(true);
+        } else {
+            setView('success');
+        }
     };
 
+    // Handle success modal close - exit checkout mode and show normal feed
+    const handleSuccessModalClose = () => {
+        setShowSuccessModal(false);
+        setIsCheckoutMode(false);
+        setCheckoutProductId(null);
+        // Clear URL to show normal feed
+        window.history.replaceState({}, '', '/');
+    };
     const filteredProducts = useMemo(() => {
         if (!searchQuery) return PRODUCTS;
         return PRODUCTS.filter(p =>
@@ -227,6 +323,7 @@ const App = () => {
             <ProfileView
                 onBack={() => setView('feed')}
                 onOrderHistory={() => setView('order-history')}
+                onCreatePost={() => setView('create-post')}
             />
         );
     }
@@ -235,6 +332,25 @@ const App = () => {
         return (
             <OrderHistoryView
                 onBack={() => setView('profile')}
+            />
+        );
+    }
+
+    if (view === 'create-post') {
+        return (
+            <CreatePostView
+                onBack={() => setView('feed')}
+                onPostCreated={(post) => {
+                    addPost({
+                        id: post.id,
+                        name: post.name,
+                        description: post.description,
+                        price: post.price,
+                        checkoutLink: post.checkoutLink,
+                        createdAt: post.createdAt,
+                        thumbnailUrl: post.media[0]?.preview,
+                    });
+                }}
             />
         );
     }
@@ -265,39 +381,51 @@ const App = () => {
         );
     }
 
+    // Get checkout product if in checkout mode
+    const checkoutProduct = isCheckoutMode && checkoutProductId
+        ? PRODUCTS.find(p => p.id === checkoutProductId)
+        : null;
+
     // Default: Feed View
     return (
         <div className="h-[100dvh] w-full bg-black relative flex flex-col overflow-hidden select-none">
 
-            <TopNav
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                cartCount={cartCount}
-                cartTotal={cartTotal}
-                onProfileClick={() => setView('profile')}
-                onBack={currentSeller ? () => {
-                    setView('seller-profile');
-                    // We keep currentSeller as is, so we return to their profile info
-                } : undefined}
-                onSearchClick={() => setShowSearch(true)}
-                onCartClick={() => setView('cart')}
-                currentSeller={currentSeller}
-            />
+            {/* Conditional TopNav based on checkout mode */}
+            {isCheckoutMode ? (
+                <CheckoutTopNav />
+            ) : (
+                <TopNav
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    cartCount={cartCount}
+                    cartTotal={cartTotal}
+                    onProfileClick={() => setView('profile')}
+                    onBack={currentSeller ? () => {
+                        setView('seller-profile');
+                    } : undefined}
+                    onSearchClick={() => setShowSearch(true)}
+                    onCartClick={() => setView('cart')}
+                    onCreateClick={() => setView('create-post')}
+                    currentSeller={currentSeller}
+                    isSeller={isSeller}
+                />
+            )}
 
-            {/* Feed List */}
-            <div className="flex-1 overflow-y-scroll snap-y snap-mandatory hide-scrollbar">
+            {/* Feed List - Single product in checkout mode, full feed otherwise */}
+            <div className={`flex-1 ${isCheckoutMode ? 'overflow-hidden' : 'overflow-y-scroll snap-y snap-mandatory'} hide-scrollbar`}>
                 {/* 
                     Feed Logic:
-                    1. If activeTab is 'shop' AND we have a currentSeller, we only show products from that seller.
-                    2. If activeTab is 'foryou', we show everything (mixed).
+                    1. In checkout mode: Only show the single checkout product
+                    2. If activeTab is 'shop' AND we have a currentSeller, we only show products from that seller.
+                    3. If activeTab is 'foryou', we show everything (mixed).
                 */}
-                {PRODUCTS
+                {(isCheckoutMode && checkoutProduct ? [checkoutProduct] : PRODUCTS
                     .filter(p => {
                         if (activeTab === 'shop' && currentSeller) {
                             return p.seller === currentSeller.name;
                         }
                         return true;
-                    })
+                    }))
                     .map(p => (
                         <FeedItem
                             key={p.id}
@@ -310,13 +438,22 @@ const App = () => {
                             onCheckout={handleCheckout}
                             isProcessing={isProcessing}
                             deliveryQuote={deliveryQuote}
-                            onView={(seller) => {
+                            onView={isCheckoutMode ? undefined : (seller) => {
                                 setCurrentSeller(seller);
                                 setView('seller-profile');
                             }}
+                            hideActions={isCheckoutMode}
+                            disableScroll={isCheckoutMode}
                         />
                     ))}
             </div>
+
+            {/* Success Modal (for checkout mode) */}
+            <SuccessModal
+                isOpen={showSuccessModal}
+                otp={otp}
+                onClose={handleSuccessModalClose}
+            />
 
             {/* Trust/Info Modal */}
             {showTrustModal && (
