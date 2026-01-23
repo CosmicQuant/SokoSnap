@@ -52,10 +52,25 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
         onDone?.();
     }, [onDone]);
 
-    // Handle Enter key on inputs
-    const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Handle Enter key on Phone Input - Move to Location
+    const handlePhoneKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
-            handleDone();
+            e.preventDefault();
+            locationInputRef.current?.focus();
+        }
+    };
+
+    // Handle Enter key on Location Input - Finish if valid
+    const handleLocationKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (!userData.phone) {
+                // If phone is missing, go back to phone
+                phoneInputRef.current?.focus();
+            } else {
+                // Otherwise submit/done
+                handleDone();
+            }
         }
     };
 
@@ -244,7 +259,7 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                                     ref={phoneInputRef}
                                     type="tel"
                                     inputMode="numeric"
-                                    onKeyDown={handleKeyDown}
+                                    onKeyDown={handlePhoneKeyDown}
                                     placeholder={isCOD ? "Phone for delivery" : "M-Pesa Number (0712...)"}
                                     value={userData.phone}
                                     onChange={(e) => setUserData(prev => ({ ...prev, phone: e.target.value }))}
@@ -277,7 +292,7 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                                 <input
                                     ref={locationInputRef}
                                     type="text"
-                                    onKeyDown={handleKeyDown}
+                                    onKeyDown={handleLocationKeyDown}
                                     placeholder="Delivery Location"
                                     value={userData.location}
                                     onChange={(e) => setUserData(prev => ({ ...prev, location: e.target.value }))}

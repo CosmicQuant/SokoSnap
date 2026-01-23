@@ -10,9 +10,10 @@ import { generateOTP, generateOrderId } from '../../utils/formatters';
 
 interface SuccessViewProps {
     onContinue: () => void;
+    onCreatePassword?: () => void;
 }
 
-export const SuccessView: React.FC<SuccessViewProps> = ({ onContinue }) => {
+export const SuccessView: React.FC<SuccessViewProps> = ({ onContinue, onCreatePassword }) => {
     // Generate order details (in production these would come from API)
     const escrowId = generateOrderId('TRX');
     const otp = generateOTP(4);
@@ -85,9 +86,15 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ onContinue }) => {
                     </p>
                 </div>
 
-                {/* Track Order Button */}
-                <Button variant="primary" size="lg" fullWidth>
-                    Track Order Live
+                {/* Create Password / Track Button */}
+                <Button
+                    onClick={onCreatePassword}
+                    variant="primary"
+                    size="lg"
+                    fullWidth
+                    className="mt-2 bg-slate-900 text-yellow-400 hover:bg-slate-800 border border-slate-700 shadow-xl"
+                >
+                    Create Password to View Status
                 </Button>
             </div>
 

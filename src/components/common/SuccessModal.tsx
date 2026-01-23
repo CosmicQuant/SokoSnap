@@ -18,11 +18,11 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, otp, onClose
     };
 
     return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/95 backdrop-blur-md animate-in fade-in duration-300 px-4">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-white/95 backdrop-blur-md animate-in fade-in duration-300 px-4">
             {/* Close button - Fixed to top right of screen for easy access */}
             <button
                 onClick={onClose}
-                className="absolute top-[env(safe-area-inset-top,24px)] right-6 z-50 p-2 bg-black/40 backdrop-blur-xl rounded-full text-white border border-white/20 hover:bg-black/60 transition-all shadow-2xl active:scale-95"
+                className="absolute top-[env(safe-area-inset-top,24px)] right-6 z-50 p-2 bg-slate-100 backdrop-blur-xl rounded-full text-slate-900 border border-slate-200 hover:bg-slate-200 transition-all shadow-xl active:scale-95"
                 aria-label="Close"
             >
                 <X size={24} />
@@ -31,33 +31,41 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, otp, onClose
             <div className="w-full max-w-sm mx-auto flex flex-col items-center gap-3 animate-in slide-in-from-bottom-5 duration-500 max-h-[85dvh] overflow-y-auto no-scrollbar py-2">
                 {/* Header */}
                 <div className="flex flex-col items-center text-center shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center mb-2 shadow-xl shadow-emerald-600/30">
-                        <Lock size={20} className="text-white" />
+                    <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mb-2 shadow-xl shadow-emerald-200">
+                        <Lock size={20} className="text-emerald-600" />
                     </div>
-                    <h1 className="text-xl font-black italic uppercase tracking-tighter leading-none mb-0.5 text-white">PAYMENT SECURED</h1>
-                    <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-400">Held in TumaFast Escrow</p>
+                    <h1 className="text-xl font-black italic uppercase tracking-tighter leading-none mb-0.5 text-slate-900">PAYMENT SECURED</h1>
+                    <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-600">Held in TumaFast Escrow</p>
                 </div>
 
                 {/* OTP Display */}
-                <div className="bg-emerald-600/20 backdrop-blur-md border border-emerald-400/30 p-3 rounded-xl w-full shadow-xl shrink-0">
-                    <div className="flex items-center justify-center gap-2 mb-1 text-yellow-400">
+                <div className="bg-emerald-50 backdrop-blur-md border border-emerald-100 p-3 rounded-xl w-full shadow-lg shrink-0">
+                    <div className="flex items-center justify-center gap-2 mb-1 text-yellow-600">
                         <KeyRound size={12} />
                         <span className="text-[9px] font-black uppercase tracking-widest">Your Release Code</span>
                     </div>
-                    <div className="text-4xl font-black text-white tracking-[0.15em] font-mono text-center drop-shadow-md leading-tight">
+                    <div className="text-4xl font-black text-slate-900 tracking-[0.15em] font-mono text-center drop-shadow-sm leading-tight">
                         {otp}
                     </div>
                 </div>
 
+                {/* Create Password Button logic for guest users */}
+                <button
+                    onClick={onCreatePassword}
+                    className="w-full py-3 bg-slate-900 text-yellow-400 font-black uppercase text-xs tracking-wider rounded-xl shadow-lg active:scale-95 transition-all hover:bg-slate-800 border border-slate-700"
+                >
+                    Create Password to View Status
+                </button>
+
                 {/* Tracking Info - Guest Recovery */}
-                <div className="w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-3 text-left shrink-0">
+                <div className="w-full bg-slate-50 backdrop-blur-md border border-slate-100 rounded-xl p-3 text-left shrink-0">
                     <div className="flex items-start gap-3">
-                        <div className="p-1.5 bg-blue-500/20 rounded-lg shrink-0">
-                            <MessageSquare size={14} className="text-blue-400" />
+                        <div className="p-1.5 bg-blue-100 rounded-lg shrink-0">
+                            <MessageSquare size={14} className="text-blue-600" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-white mb-0.5">Check your SMS</p>
-                            <p className="text-[9px] text-white/70 leading-relaxed">
+                            <p className="text-[10px] font-bold text-slate-900 mb-0.5">Check your SMS</p>
+                            <p className="text-[9px] text-slate-500 leading-relaxed">
                                 We've sent a tracking link to your phone. Verify & track without an account.
                             </p>
                         </div>
@@ -65,7 +73,7 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, otp, onClose
                 </div>
 
                 {/* Seller & Rider Info Card */}
-                <div className="bg-white w-full rounded-xl p-3 text-slate-900 shadow-2xl space-y-3 text-left">
+                <div className="bg-white w-full rounded-xl p-3 text-slate-900 shadow-xl border border-slate-100 space-y-3 text-left">
                     {/* Rider */}
                     <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
                         <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Kamau" className="w-8 h-8 bg-slate-100 rounded-lg border border-slate-200" alt="Rider" />
