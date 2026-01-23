@@ -61,7 +61,6 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
     // Keyboard active state for positioning
     const [isKeyboardActive, setIsKeyboardActive] = useState(false);
-    const [keyboardHeight, setKeyboardHeight] = useState(0); // Track height
     const [isMapOpen, setIsMapOpen] = useState(false);
 
     // Feature States (Local)
@@ -395,7 +394,6 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                             setPaymentMethod={setPaymentMethod}
                             onKeyboardActive={setIsKeyboardActive}
                             onMapOpen={setIsMapOpen}
-                            onKeyboardHeightChange={setKeyboardHeight}
                             onDone={() => {
                                 // If we have data, collapse the drawer to focus on the button
                                 if (userData.phone && userData.location) {
@@ -410,7 +408,6 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                                     }
                                 }
                             }}
-                            bottomOffset={56}
                         />
 
                         {/* EDITABLE USER DATA HINT (Full-width Tab) */}
