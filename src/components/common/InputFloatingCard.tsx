@@ -15,6 +15,7 @@ interface InputFloatingCardProps {
     setPaymentMethod?: (method: 'mpesa' | 'cod') => void;
     onKeyboardActive?: (active: boolean) => void;
     onMapOpen?: (isOpen: boolean) => void;
+    onDone?: () => void;
 }
 
 export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
@@ -26,7 +27,8 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
     paymentMethod = 'mpesa',
     setPaymentMethod,
     onKeyboardActive,
-    onMapOpen
+    onMapOpen,
+    onDone
 }) => {
     const [showMap, setShowMap] = useState(false);
     const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
@@ -34,6 +36,28 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
     const phoneInputRef = useRef<HTMLInputElement>(null);
     const locationInputRef = useRef<HTMLInputElement>(null);
     const drawerRef = useRef<HTMLDivElement>(null);
+
+    // Handle "Done" action - dismiss keyboard and notify parent
+    const handleDone = useCallback(async () => {
+        // Blur inputs
+        phoneInputRef.current?.blur();
+        locationInputRef.current?.blur();
+
+        // Hide native keyboard if available
+        if (Capacitor.isNativePlatform()) {
+            await Keyboard.hide();
+        }
+
+        // Notify parent
+        onDone?.();
+    }, [onDone]);
+
+    // Handle Enter key on inputs
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleDone();
+        }
+    };
 
     // Auto-focus phone input when card opens, hide keyboard when it closes
     useEffect(() => {
@@ -200,11 +224,17 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                             <img src={mpesaLogo} className="h-8 object-contain drop-shadow-lg -my-1" alt="M-Pesa" />
                             <span className="text-[9px] text-white/80 font-black uppercase tracking-widest drop-shadow-md whitespace-nowrap">Secure Checkout</span>
                         </div>
-                        <div className="w-5" /> {/* Spacer for centering */}
+                        {/* Done Button */}
+                        <button
+                            onClick={handleDone}
+                            className={`bg-yellow-400/20 hover:bg-yellow-400/30 text-yellow-400 text-[9px] font-black px-2 py-0.5 rounded border border-yellow-400/30 transition-all uppercase tracking-wider ${!isKeyboardOpen && userData.phone && userData.location ? 'animate-pulse' : ''}`}
+                        >
+                            DONE
+                        </button>
                     </div>
 
-                    {/* Ultra-compact inputs - minimal padding, no safe-area when keyboard open */}
-                    <div className={`px-2 py-1.5 space-y-1 ${isKeyboardOpen ? 'pb-1' : 'pb-[env(safe-area-inset-bottom)]'} bg-gradient-to-t from-black/40 to-transparent`}>
+                    {/* Ultra-compact inputs - minimal padding, fixed gap issue by removing extra safe-area padding */}
+                    <div className="px-2 py-1.5 space-y-1 pb-1 bg-gradient-to-t from-black/40 to-transparent">
 
                         {/* Row 1: Phone Input + COD Toggle (if allowed) */}
                         <div className="flex gap-1.5">
@@ -214,6 +244,7 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                                     ref={phoneInputRef}
                                     type="tel"
                                     inputMode="numeric"
+                                    onKeyDown={handleKeyDown}
                                     placeholder={isCOD ? "Phone for delivery" : "M-Pesa Number (0712...)"}
                                     value={userData.phone}
                                     onChange={(e) => setUserData(prev => ({ ...prev, phone: e.target.value }))}
@@ -246,6 +277,7 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                                 <input
                                     ref={locationInputRef}
                                     type="text"
+                                    onKeyDown={handleKeyDown}
                                     placeholder="Delivery Location"
                                     value={userData.location}
                                     onChange={(e) => setUserData(prev => ({ ...prev, location: e.target.value }))}

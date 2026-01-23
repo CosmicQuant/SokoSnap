@@ -61,6 +61,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
     // Keyboard active state for positioning
     const [isKeyboardActive, setIsKeyboardActive] = useState(false);
+    const [keyboardHeight, setKeyboardHeight] = useState(0); // Track height
     const [isMapOpen, setIsMapOpen] = useState(false);
 
     // Feature States (Local)
@@ -394,6 +395,22 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                             setPaymentMethod={setPaymentMethod}
                             onKeyboardActive={setIsKeyboardActive}
                             onMapOpen={setIsMapOpen}
+                            onKeyboardHeightChange={setKeyboardHeight}
+                            onDone={() => {
+                                // If we have data, collapse the drawer to focus on the button
+                                if (userData.phone && userData.location) {
+                                    setShowBottomSheet(false);
+                                    // Highlight button logic could go here via a prop ref or new state
+                                    const button = document.getElementById(`btn-${product.id}`);
+                                    if (button) {
+                                        button.classList.add('animate-pulse', 'ring-2', 'ring-yellow-400');
+                                        setTimeout(() => {
+                                            button.classList.remove('animate-pulse', 'ring-2', 'ring-yellow-400');
+                                        }, 1500);
+                                    }
+                                }
+                            }}
+                            bottomOffset={56}
                         />
 
                         {/* EDITABLE USER DATA HINT (Full-width Tab) */}
@@ -414,9 +431,12 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
                         {/* THE GOLDEN GLASS BUTTON */}
                         <button
+                            id={`btn-${product.id}`}
                             onClick={handleActionClick}
-                            className={`w-full border-y-[2px] border-x-[1px] border-yellow-400/60 text-white py-1.5 px-3 flex flex-col items-center gap-0.5 active:bg-yellow-400/10 transition-all shadow-[0_0_20px_rgba(234,179,8,0.1)] group hover:border-yellow-300 relative overflow-hidden z-10 bg-black/10 backdrop-blur-[2px] ${hasUserData ? 'rounded-b-2xl rounded-t-none' : 'rounded-2xl'
-                                }`}
+                            className={`w-full border-y-[2px] border-x-[1px] border-yellow-400/60 text-white py-1.5 px-3 flex flex-col items-center gap-0.5 active:bg-yellow-400/10 transition-all shadow-[0_0_20px_rgba(234,179,8,0.1)] group hover:border-yellow-300 relative overflow-hidden z-10 bg-black/10 backdrop-blur-[2px] 
+                                ${hasUserData ? 'rounded-b-2xl rounded-t-none' : 'rounded-2xl'}
+                                ${showBottomSheet ? 'opacity-80' : 'opacity-100'}
+                            `}
                         >
                             {/* Top Row: Action & Price */}
                             <div className="w-full h-10 relative flex items-center justify-between gap-2">
