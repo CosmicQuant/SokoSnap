@@ -129,11 +129,11 @@ const App = () => {
 
     // Navigation State
     const [activeTab, setActiveTab] = useState('shop');
-    const [view, setView] = useState<'feed' | 'success' | 'cart' | 'profile' | 'seller-profile' | 'order-history' | 'create-post' | 'create-password'>('feed');
+    const [view, setView] = useState<'feed' | 'success' | 'cart' | 'profile' | 'seller-profile' | 'order-history' | 'create-post'>('feed');
     const [currentSeller, setCurrentSeller] = useState<{ name: string, handle: string } | undefined>(undefined);
 
     // Seller State
-    const { user } = useAuthStore();
+    const { user, openAuthModal } = useAuthStore();
     const { addPost } = useSellerStore();
     const isSeller = user?.type === 'verified_merchant';
 
@@ -331,25 +331,6 @@ const App = () => {
         );
     }
 
-    if (view === 'create-password') {
-        return (
-            <Suspense fallback={<PageLoader />}>
-                <CreatePasswordView
-                    onBack={() => {
-                        // Try to go back to last relevant view, or feed
-                        setView('feed');
-                        setShowSuccessModal(false);
-                    }}
-                    onSuccess={() => {
-                        setView('order-history');
-                        setShowSuccessModal(false);
-                    }}
-                    phone={userData.phone || ''}
-                />
-            </Suspense>
-        );
-    }
-
     if (view === 'profile') {
         return (
             <Suspense fallback={<PageLoader />}>
@@ -399,7 +380,8 @@ const App = () => {
                 <SuccessView
                     otp={otp}
                     onReturn={() => setView('feed')}
-                    onCreatePassword={() => setView('create-password')}
+                    onLogin={() => openAuthModal('login')}
+                    onViewOrders={() => setView('order-history')}
                     isLoggedIn={!!user}
                 />
             </Suspense>
@@ -498,12 +480,21 @@ const App = () => {
                     isOpen={showSuccessModal}
                     otp={otp}
                     onClose={handleSuccessModalClose}
-                    onCreatePassword={() => {
+                    onLogin={() => {
                         setShowSuccessModal(false);
-                        setView('create-password');
+                        openAuthModal('login');
+                    }}
+                    onViewOrders={() => {
+                        setShowSuccessModal(false);
+                        setView('order-history');
                     }}
                     isLoggedIn={!!user}
                 />
+            </Suspense>
+
+            {/* Auth Modal (Global) */}
+            <Suspense fallback={null}>
+                <AuthModal />
             </Suspense>
 
             {/* Trust/Info Modal */}

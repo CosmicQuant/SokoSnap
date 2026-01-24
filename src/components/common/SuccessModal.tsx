@@ -131,7 +131,7 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, otp, onClose
                                 <span>View Order Status</span>
                                 <ArrowRight size={14} />
                             </button>
-                            
+
                             <button
                                 onClick={onClose}
                                 className="w-full py-3 bg-slate-100 text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-sm active:scale-95 transition-all hover:bg-slate-200 border border-slate-200 flex items-center justify-center gap-2"
