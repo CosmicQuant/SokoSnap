@@ -49,6 +49,9 @@ export default defineConfig(({ mode }) => {
       // Output directory
       outDir: 'dist',
 
+      // Increase chunk size warning limit
+      chunkSizeWarningLimit: 1000,
+
       // Generate source maps for production debugging
       sourcemap: true,
 
@@ -56,12 +59,18 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            // Vendor chunk for React
             'vendor-react': ['react', 'react-dom'],
-            // Vendor chunk for other libraries
             'vendor-ui': ['lucide-react', 'recharts'],
-            // State management
-            'vendor-state': ['zustand', 'zod'],
+            'vendor-maps': ['leaflet', 'react-leaflet'],
+            'vendor-state': ['zustand', 'zod', '@tanstack/react-query'],
+            'vendor-capacitor': [
+              '@capacitor/core',
+              '@capacitor/app',
+              '@capacitor/camera',
+              '@capacitor/geolocation',
+              '@capacitor/filesystem',
+              '@capacitor/share',
+            ],
           },
         },
       },

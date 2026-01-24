@@ -156,6 +156,17 @@ export const FeedItem: React.FC<FeedItemProps> = ({
     const isInCart = cart.some(i => i.product.id === product.id);
     const cartItemQuantity = cart.find(i => i.product.id === product.id)?.quantity || 0;
     const hasUserData = userData.phone && userData.location;
+    const [shouldAnimateAbsorb, setShouldAnimateAbsorb] = useState(false);
+
+    // Golden Bounce Animation Trigger
+    // When user finishes entering data (hasUserData becomes true), trigger the absorb animation
+    useEffect(() => {
+        if (hasUserData && !showBottomSheet) {
+            setShouldAnimateAbsorb(true);
+            const timer = setTimeout(() => setShouldAnimateAbsorb(false), 500);
+            return () => clearTimeout(timer);
+        }
+    }, [hasUserData, showBottomSheet]);
 
     // Carousel Logic
     const slides = product.slides || [{ type: product.type, url: product.media }];
@@ -395,17 +406,10 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                             onKeyboardActive={setIsKeyboardActive}
                             onMapOpen={setIsMapOpen}
                             onDone={() => {
-                                // If we have data, collapse the drawer to focus on the button
+                                // If we have data, we simply close the sheet.
+                                // The useEffect above handles the "Golden Charge" animation automatically when state changes.
                                 if (userData.phone && userData.location) {
                                     setShowBottomSheet(false);
-                                    // Highlight button logic could go here via a prop ref or new state
-                                    const button = document.getElementById(`btn-${product.id}`);
-                                    if (button) {
-                                        button.classList.add('animate-pulse', 'ring-2', 'ring-yellow-400');
-                                        setTimeout(() => {
-                                            button.classList.remove('animate-pulse', 'ring-2', 'ring-yellow-400');
-                                        }, 1500);
-                                    }
                                 }
                             }}
                         />
@@ -430,11 +434,22 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                         <button
                             id={`btn-${product.id}`}
                             onClick={handleActionClick}
-                            className={`w-full border-y-[2px] border-x-[1px] border-yellow-400/60 text-white py-1.5 px-3 flex flex-col items-center gap-0.5 active:bg-yellow-400/10 transition-all shadow-[0_0_20px_rgba(234,179,8,0.1)] group hover:border-yellow-300 relative overflow-hidden z-10 bg-black/10 backdrop-blur-[2px] 
+                            className={`
+                                w-full border-y-[2px] border-x-[1px] py-1.5 px-3 flex flex-col items-center gap-0.5 transition-all shadow-lg relative overflow-hidden z-10 
+                                ${hasUserData
+                                    ? 'bg-black/10 backdrop-blur-[2px] border-yellow-400/90 text-white shadow-yellow-400/10 active:scale-[0.98]'
+                                    : 'bg-black/10 backdrop-blur-[2px] border-yellow-400/60 text-white hover:border-yellow-300 active:bg-yellow-400/10'
+                                }
                                 ${hasUserData ? 'rounded-b-2xl rounded-t-none' : 'rounded-2xl'}
                                 ${showBottomSheet ? 'opacity-80' : 'opacity-100'}
+                                ${shouldAnimateAbsorb ? 'animate-absorb' : ''}
                             `}
                         >
+                            {/* Golden Sheen Effect (Only when filled) - Modified to be distinct and yellow */}
+                            {hasUserData && !isProcessing && (
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/60 to-transparent w-full h-full skew-x-[-12deg] animate-gold-sheen pointer-events-none mix-blend-plus-lighter" />
+                            )}
+
                             {/* Top Row: Action & Price */}
                             <div className="w-full h-10 relative flex items-center justify-between gap-2">
 
@@ -444,7 +459,8 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                                         <Loader2 size={24} className="text-yellow-400 animate-spin" />
                                     ) : (
                                         <div className="h-10 w-16 flex items-center justify-start overflow-visible relative">
-                                            <div className="absolute inset-0 bg-yellow-400/20 blur-lg rounded-full animate-pulse opacity-50" />
+                                            {/* Glow behind logo */}
+                                            <div className="absolute inset-0 blur-lg rounded-full animate-pulse opacity-50 bg-yellow-400/20" />
                                             <img src={mpesaLogo} className="h-[160%] w-auto object-contain object-left relative z-10" alt="M-Pesa" />
                                         </div>
                                     )}
@@ -453,20 +469,24 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                                 {/* CENTER: CTA */}
                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                                     {isProcessing ? (
-                                        <span className="text-[10px] font-black italic tracking-tighter uppercase leading-none text-yellow-400 animate-pulse">
+                                        <span className="text-[10px] font-black italic tracking-tighter uppercase leading-none animate-pulse text-yellow-400">
                                             PROCESSING
                                         </span>
                                     ) : (
-                                        <div className="flex flex-col items-center leading-none animate-pulse opacity-90">
-                                            <span className="text-[7px] font-bold text-white/60 uppercase tracking-[0.2em]">TAP TO</span>
-                                            <span className="text-xs font-black text-yellow-400 italic uppercase tracking-tighter drop-shadow-sm scale-y-110">ORDER NOW</span>
+                                        <div className={`flex flex-col items-center leading-none ${hasUserData ? '' : 'animate-pulse opacity-90'}`}>
+                                            <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-white/60">
+                                                {hasUserData ? 'CLICK TO' : 'TAP TO'}
+                                            </span>
+                                            <span className="text-xs font-black italic uppercase tracking-tighter drop-shadow-sm scale-y-110 text-yellow-400">
+                                                {hasUserData ? 'PAY NOW' : 'ORDER NOW'}
+                                            </span>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* RIGHT: Price Box */}
                                 <div className="relative z-30 ml-auto h-full flex items-center">
-                                    <div className="bg-white/5 backdrop-blur-sm rounded-lg px-2 py-1 border border-white/10 flex flex-col items-end min-w-[70px]">
+                                    <div className="rounded-lg px-2 py-1 border flex flex-col items-end min-w-[70px] bg-white/5 backdrop-blur-sm border-white/10">
                                         <span className={`text-sm font-black italic tracking-tighter block leading-none drop-shadow-md transition-all duration-300 ${paymentMethod === 'cod' ? 'text-white/30' : 'text-white'}`}>
                                             <span className={`text-[9px] mr-1 ${paymentMethod === 'cod' ? 'text-white/30' : 'text-yellow-400'}`}>KES</span>
                                             {product.price.toLocaleString()}
@@ -474,11 +494,11 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
                                         {/* Smart Delivery Quote Logic */}
                                         {deliveryQuote ? (
-                                            <span className={`font-black uppercase tracking-wide mt-0.5 block animate-in fade-in transition-all duration-300 ${paymentMethod === 'cod' ? 'text-yellow-400 text-[10px] drop-shadow-sm' : 'text-yellow-400 text-[7px]'}`}>
+                                            <span className={`font-black uppercase tracking-wide mt-0.5 block animate-in fade-in transition-all duration-300 ${paymentMethod === 'cod' ? 'text-[10px] drop-shadow-sm' : 'text-[7px]'} text-yellow-400`}>
                                                 + {deliveryQuote} Del.
                                             </span>
                                         ) : (
-                                            <span className="text-[7px] font-black text-white/30 uppercase tracking-wide mt-0.5 block">
+                                            <span className={`text-[7px] font-black uppercase tracking-wide mt-0.5 block ${hasUserData ? 'text-black/30' : 'text-white/30'}`}>
                                                 + Delivery
                                             </span>
                                         )}

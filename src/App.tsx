@@ -1,22 +1,30 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
+import { ShieldCheck, Loader2 } from 'lucide-react';
 import { generateMockSecureOTP } from './utils/validation';
 import { useCartStore, useAuthStore, useSellerStore } from './store';
 import { FeedItem } from '@components/feed/FeedItem';
 import { TopNav } from './components/layout/TopNav';
 import { CheckoutTopNav } from './components/layout/CheckoutTopNav';
-import { CartView } from './components/cart/CartView';
-import { ProfileView } from './components/profile/ProfileView';
-import { SellerProfileView } from './components/profile/SellerProfileView';
-import { SearchOverlay } from './components/search/SearchOverlay';
-import { SuccessView } from './components/common/SuccessView';
-import { SuccessModal } from './components/common/SuccessModal';
-import { CreatePostView } from './components/seller/CreatePostView';
-import { CreatePasswordView } from './components/features/CreatePasswordView';
 
-import { OrderHistoryView } from './components/profile/OrderHistoryView';
+// Lazy Load Views for Code Splitting
+const CartView = lazy(() => import('./components/cart/CartView').then(module => ({ default: module.CartView })));
+const ProfileView = lazy(() => import('./components/profile/ProfileView').then(module => ({ default: module.ProfileView })));
+const SellerProfileView = lazy(() => import('./components/profile/SellerProfileView').then(module => ({ default: module.SellerProfileView })));
+const SearchOverlay = lazy(() => import('./components/search/SearchOverlay').then(module => ({ default: module.SearchOverlay })));
+const SuccessView = lazy(() => import('./components/common/SuccessView').then(module => ({ default: module.SuccessView })));
+const SuccessModal = lazy(() => import('./components/common/SuccessModal').then(module => ({ default: module.SuccessModal })));
+const CreatePostView = lazy(() => import('./components/seller/CreatePostView').then(module => ({ default: module.CreatePostView })));
+const CreatePasswordView = lazy(() => import('./components/features/CreatePasswordView').then(module => ({ default: module.CreatePasswordView })));
+const OrderHistoryView = lazy(() => import('./components/profile/OrderHistoryView').then(module => ({ default: module.OrderHistoryView })));
 
 import { App as CapacitorApp } from '@capacitor/app';
+
+// Loading Fallback
+const PageLoader = () => (
+    <div className="h-full w-full flex items-center justify-center bg-white z-50">
+        <Loader2 className="animate-spin text-yellow-500" size={32} />
+    </div>
+);
 
 // Unified Data Structure
 const PRODUCTS = [
@@ -295,108 +303,125 @@ const App = () => {
     // View Routing
     if (showSearch) {
         return (
-            <SearchOverlay
-                onClose={() => setShowSearch(false)}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                results={filteredProducts}
-                onResultClick={() => {
-                    setShowSearch(false);
-                    setView('feed');
-                }}
-            />
+            <Suspense fallback={<PageLoader />}>
+                <SearchOverlay
+                    onClose={() => setShowSearch(false)}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    results={filteredProducts}
+                    onResultClick={() => {
+                        setShowSearch(false);
+                        setView('feed');
+                    }}
+                />
+            </Suspense>
         );
     }
 
     if (view === 'cart') {
         return (
-            <CartView
-                onBack={() => setView('feed')}
-                userData={userData}
-                setUserData={setUserData}
-                onCheckout={handleCheckout}
-            />
+            <Suspense fallback={<PageLoader />}>
+                <CartView
+                    onBack={() => setView('feed')}
+                    userData={userData}
+                    setUserData={setUserData}
+                    onCheckout={handleCheckout}
+                />
+            </Suspense>
         );
     }
 
     if (view === 'create-password') {
         return (
-            <CreatePasswordView
-                onBack={() => {
-                    // Try to go back to last relevant view, or feed
-                    setView('feed');
-                    setShowSuccessModal(false);
-                }}
-                onSuccess={() => {
-                    setView('order-history');
-                    setShowSuccessModal(false);
-                }}
-                phone={userData.phone || ''}
-            />
+            <Suspense fallback={<PageLoader />}>
+                <CreatePasswordView
+                    onBack={() => {
+                        // Try to go back to last relevant view, or feed
+                        setView('feed');
+                        setShowSuccessModal(false);
+                    }}
+                    onSuccess={() => {
+                        setView('order-history');
+                        setShowSuccessModal(false);
+                    }}
+                    phone={userData.phone || ''}
+                />
+            </Suspense>
         );
     }
 
     if (view === 'profile') {
         return (
-            <ProfileView
-                onBack={() => setView('feed')}
-                onOrderHistory={() => setView('order-history')}
-                onCreatePost={() => setView('create-post')}
-            />
+            <Suspense fallback={<PageLoader />}>
+                <ProfileView
+                    onBack={() => setView('feed')}
+                    onOrderHistory={() => setView('order-history')}
+                    onCreatePost={() => setView('create-post')}
+                />
+            </Suspense>
         );
     }
 
     if (view === 'order-history') {
         return (
-            <OrderHistoryView
-                onBack={() => setView('profile')}
-            />
+            <Suspense fallback={<PageLoader />}>
+                <OrderHistoryView
+                    onBack={() => setView('profile')}
+                />
+            </Suspense>
         );
     }
 
     if (view === 'create-post') {
         return (
-            <CreatePostView
-                onBack={() => setView('feed')}
-                onPostCreated={(post) => {
-                    addPost({
-                        id: post.id,
-                        name: post.name,
-                        description: post.description,
-                        price: post.price,
-                        checkoutLink: post.checkoutLink,
-                        createdAt: post.createdAt,
-                        thumbnailUrl: post.media[0]?.preview,
-                    });
-                }}
-            />
+            <Suspense fallback={<PageLoader />}>
+                <CreatePostView
+                    onBack={() => setView('feed')}
+                    onPostCreated={(post) => {
+                        addPost({
+                            id: post.id,
+                            name: post.name,
+                            description: post.description,
+                            price: post.price,
+                            checkoutLink: post.checkoutLink,
+                            createdAt: post.createdAt,
+                            thumbnailUrl: post.media[0]?.preview,
+                        });
+                    }}
+                />
+            </Suspense>
         );
     }
 
     if (view === 'success') {
         return (
-            <SuccessView
-                otp={otp}
-                onReturn={() => setView('feed')}
-                onCreatePassword={() => setView('create-password')}
-            />
+            <Suspense fallback={<PageLoader />}>
+                <SuccessView
+                    otp={otp}
+                    onReturn={() => setView('feed')}
+                    onCreatePassword={() => setView('create-password')}
+                    isLoggedIn={!!user}
+                />
+            </Suspense>
         );
     }
 
     if (view === 'seller-profile' && currentSeller) {
         return (
-            <SellerProfileView
-                seller={currentSeller}
-                onBack={() => {
-                    setView('feed');
-                    setCurrentSeller(undefined);
-                }}
-                products={PRODUCTS.filter(p => p.seller === currentSeller.name)}
-                onSelectPost={() => {
-                    setActiveTab('shop');
-                    setView('feed');
-                }}
-            />
+            <Suspense fallback={<PageLoader />}>
+                <SellerProfileView
+                    seller={currentSeller}
+                    onBack={() => {
+                        setView('feed');
+                        setCurrentSeller(undefined);
+                    }}
+                    products={PRODUCTS.filter(p => p.seller === currentSeller.name)}
+                    onSelectPost={() => {
+                        setActiveTab('shop');
+                        setView('feed');
+                    }}
+                />
+            </Suspense>
         );
     }
 
@@ -468,15 +493,18 @@ const App = () => {
             </div>
 
             {/* Success Modal (for checkout mode) */}
-            <SuccessModal
-                isOpen={showSuccessModal}
-                otp={otp}
-                onClose={handleSuccessModalClose}
-                onCreatePassword={() => {
-                    setShowSuccessModal(false);
-                    setView('create-password');
-                }}
-            />
+            <Suspense fallback={null}>
+                <SuccessModal
+                    isOpen={showSuccessModal}
+                    otp={otp}
+                    onClose={handleSuccessModalClose}
+                    onCreatePassword={() => {
+                        setShowSuccessModal(false);
+                        setView('create-password');
+                    }}
+                    isLoggedIn={!!user}
+                />
+            </Suspense>
 
             {/* Trust/Info Modal */}
             {showTrustModal && (

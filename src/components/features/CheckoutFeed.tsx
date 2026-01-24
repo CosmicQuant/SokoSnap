@@ -4,7 +4,7 @@
  * Properly styled with Tailwind CSS
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
     Heart,
     MessageCircle,
@@ -255,6 +255,19 @@ const CheckoutSheet: React.FC<{
     const [isProcessing, setIsProcessing] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    // "Absorb" Animation Trigger
+    const [shouldAnimateAbsorb, setShouldAnimateAbsorb] = useState(false);
+    const isFormFilled = phone.length >= 10 && location.length >= 3;
+
+    // Trigger animation when form BECOMES filled
+    useEffect(() => {
+        if (isFormFilled) {
+            setShouldAnimateAbsorb(true);
+            const timer = setTimeout(() => setShouldAnimateAbsorb(false), 500);
+            return () => clearTimeout(timer);
+        }
+    }, [isFormFilled]);
+
     if (!isOpen || !product) return null;
 
     const deliveryFee = APP_CONFIG.deliveryFee;
@@ -342,11 +355,18 @@ const CheckoutSheet: React.FC<{
                     </div>
                 </div>
 
-                {/* Pay Button */}
+                {/* Pay Button - "Golden Charge" Animation */}
                 <button
                     onClick={handleSubmit}
-                    disabled={isProcessing}
-                    className="w-full bg-[#4CAF50] hover:bg-[#43A047] active:scale-[0.98] text-white p-4 rounded-xl font-bold flex items-center justify-between shadow-lg shadow-emerald-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
+                    disabled={isProcessing || !isFormFilled}
+                    className={`
+                        w-full p-4 rounded-xl font-bold flex items-center justify-between transition-all duration-300 relative overflow-hidden group
+                        ${isFormFilled
+                            ? 'bg-yellow-400 text-slate-900 shadow-lg shadow-yellow-400/20 hover:bg-yellow-300'
+                            : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5'
+                        }
+                        ${shouldAnimateAbsorb ? 'animate-absorb' : 'active:scale-[0.98]'}
+                    `}
                 >
                     {isProcessing ? (
                         <div className="w-full flex justify-center">
@@ -355,15 +375,20 @@ const CheckoutSheet: React.FC<{
                     ) : (
                         <>
                             <div className="flex flex-col items-start leading-none relative z-10">
-                                <span className="text-[9px] font-black uppercase tracking-widest opacity-80 mb-1">Confirm & Pay</span>
+                                <span className={`text-[9px] font-black uppercase tracking-widest mb-1 transition-opacity ${isFormFilled ? 'opacity-80' : 'opacity-50'}`}>
+                                    {isFormFilled ? 'Confirm Payment' : 'Enter Details to Pay'}
+                                </span>
                                 <span className="text-lg font-black">{formatCurrency(total)}</span>
                             </div>
-                            <div className="bg-black/20 p-2 rounded-lg relative z-10">
-                                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+
+                            <div className={`p-2 rounded-lg relative z-10 transition-all ${isFormFilled ? 'bg-slate-900/10 text-slate-900' : 'bg-white/5 text-slate-600'}`}>
+                                <ArrowRight size={20} className={`transform transition-transform ${isFormFilled ? 'group-hover:translate-x-1' : ''}`} />
                             </div>
 
-                            {/* Shimmer */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-200%] animate-[shimmer_2s_infinite]" />
+                            {/* Golden Sheen Effect (Only when filled) */}
+                            {isFormFilled && (
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent w-full h-full skew-x-[-12deg] animate-gold-sheen pointer-events-none mix-blend-overlay" />
+                            )}
                         </>
                     )}
                 </button>

@@ -1,25 +1,24 @@
 import React from 'react';
-import { Lock, KeyRound, UserCheck, Zap, X, ArrowRight, MessageSquare, Phone } from 'lucide-react';
+import { Lock, KeyRound, X, MessageSquare, Zap, ArrowRight, Phone } from 'lucide-react';
 
 interface SuccessModalProps {
     isOpen: boolean;
     otp: number | null;
     onClose: () => void;
     onCreatePassword?: () => void;
+    isLoggedIn?: boolean;
 }
 
-export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, otp, onClose, onCreatePassword }) => {
+export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, otp, onClose, onCreatePassword, isLoggedIn }) => {
     if (!isOpen) return null;
 
-    // Mock Seller Data
-    const sellerInfo = {
-        name: "Nanny Banana",
-        phone: "+254 712 345 678"
-    };
+    // Mock Models
+    const rider = { name: "Kamau #294", phone: "0712345678" };
+    const seller = { name: "Nanny Banana", phone: "0712345678" };
 
     return (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-white/95 backdrop-blur-md animate-in fade-in duration-300 px-4">
-            {/* Close button - Fixed to top right of screen for easy access */}
+            {/* Close button - Top Right */}
             <button
                 onClick={onClose}
                 className="absolute top-[env(safe-area-inset-top,24px)] right-6 z-50 p-2 bg-slate-100 backdrop-blur-xl rounded-full text-slate-900 border border-slate-200 hover:bg-slate-200 transition-all shadow-xl active:scale-95"
@@ -39,95 +38,107 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, otp, onClose
                 </div>
 
                 {/* OTP Display */}
-                <div className="bg-emerald-50 backdrop-blur-md border border-emerald-100 p-3 rounded-xl w-full shadow-lg shrink-0">
+                <div className="bg-emerald-50 backdrop-blur-md border border-emerald-100 p-3 rounded-xl w-full shadow-lg shrink-0 flex flex-col items-center">
                     <div className="flex items-center justify-center gap-2 mb-1 text-yellow-600">
                         <KeyRound size={12} />
-                        <span className="text-[9px] font-black uppercase tracking-widest">Your Release Code</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest">Release Code</span>
                     </div>
-                    <div className="text-4xl font-black text-slate-900 tracking-[0.15em] font-mono text-center drop-shadow-sm leading-tight">
+                    <div className="text-5xl font-black text-slate-900 tracking-[0.1em] font-mono text-center drop-shadow-sm leading-tight py-1">
                         {otp}
                     </div>
+                    <p className="text-[8px] font-bold text-center text-emerald-700 uppercase tracking-wide opacity-60">Give to rider after inspection</p>
                 </div>
 
-                {/* Create Password Button logic for guest users */}
-                <button
-                    onClick={onCreatePassword}
-                    className="w-full py-3 bg-slate-900 text-yellow-400 font-black uppercase text-xs tracking-wider rounded-xl shadow-lg active:scale-95 transition-all hover:bg-slate-800 border border-slate-700"
-                >
-                    Create Password to View Status
-                </button>
-
-                {/* Tracking Info - Guest Recovery */}
+                {/* Tracking Info */}
                 <div className="w-full bg-slate-50 backdrop-blur-md border border-slate-100 rounded-xl p-3 text-left shrink-0">
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-center gap-3">
                         <div className="p-1.5 bg-blue-100 rounded-lg shrink-0">
                             <MessageSquare size={14} className="text-blue-600" />
                         </div>
-                        <div>
-                            <p className="text-[10px] font-bold text-slate-900 mb-0.5">Check your SMS</p>
-                            <p className="text-[9px] text-slate-500 leading-relaxed">
-                                We've sent a tracking link to your phone. Verify & track without an account.
-                            </p>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold text-slate-900 leading-tight">Check your SMS</p>
+                            <p className="text-[9px] text-slate-500 leading-tight truncate">Tracking link sent to verify & track without account.</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Seller & Rider Info Card */}
                 <div className="bg-white w-full rounded-xl p-3 text-slate-900 shadow-xl border border-slate-100 space-y-3 text-left">
-                    {/* Rider */}
-                    <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Kamau" className="w-8 h-8 bg-slate-100 rounded-lg border border-slate-200" alt="Rider" />
-                        <div>
-                            <p className="font-black text-xs uppercase italic tracking-tight text-slate-900">Kamau #294</p>
-                            <div className="flex items-center gap-1 text-emerald-600 text-[7px] font-black uppercase tracking-widest">
-                                <UserCheck size={8} /> Dispatcher
+                    {/* Rider - Separate Row */}
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div className="flex items-center gap-2">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Kamau" className="w-8 h-8 bg-slate-100 rounded-lg border border-slate-200" alt="Rider" />
+                            <div>
+                                <p className="font-black text-xs uppercase italic tracking-tight text-slate-900">{rider.name}</p>
+                                <div className="text-emerald-600 text-[7px] font-black uppercase tracking-widest">Dispatcher</div>
                             </div>
                         </div>
-                        <div className="ml-auto text-right">
-                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">ETA</p>
-                            <p className="text-xs font-black text-slate-900">15m</p>
-                        </div>
-                    </div>
-
-                    {/* Seller Details */}
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center text-slate-900 font-black text-sm shrink-0">
-                            N
-                        </div>
-                        <div className="min-w-0">
-                            <p className="font-bold text-[10px] text-slate-900 uppercase truncate">Sold by {sellerInfo.name}</p>
-                            <p className="text-[9px] text-slate-500">{sellerInfo.phone}</p>
-                        </div>
-                        <div className="ml-auto flex gap-2">
-                            <a href={`sms:${sellerInfo.phone.replace(/\s/g, '')}`} className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded-md text-slate-600 transition-colors">
+                        {/* Rider Actions */}
+                        <div className="flex gap-1.5 ml-auto">
+                            <a href={`sms:${rider.phone}`} className="p-1.5 bg-slate-50 hover:bg-slate-100 rounded-md text-slate-500 hover:text-slate-900 transition-colors border border-slate-100">
                                 <MessageSquare size={14} />
                             </a>
-                            <a href={`tel:${sellerInfo.phone.replace(/\s/g, '')}`} className="p-1.5 bg-emerald-100 hover:bg-emerald-200 rounded-md text-emerald-700 transition-colors">
+                            <a href={`tel:${rider.phone}`} className="p-1.5 bg-emerald-50 hover:bg-emerald-100 rounded-md text-emerald-600 hover:text-emerald-700 transition-colors border border-emerald-100">
                                 <Phone size={14} />
                             </a>
                         </div>
                     </div>
 
-                    <button className="w-full bg-emerald-600 text-white py-2.5 rounded-lg font-black text-[9px] uppercase italic tracking-widest shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 hover:bg-emerald-700 transition-colors">
+                    {/* Seller - Separate Row */}
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center text-slate-900 font-black text-xs">N</div>
+                            <div className="min-w-0 max-w-[80px]">
+                                <p className="font-bold text-[9px] text-slate-900 uppercase truncate">Nanny B.</p>
+                                <p className="text-[8px] text-slate-500 truncate">Seller</p>
+                            </div>
+                        </div>
+                        {/* Seller Actions */}
+                        <div className="flex gap-1.5 ml-auto">
+                            <a href={`sms:${seller.phone}`} className="p-1.5 bg-slate-50 hover:bg-slate-100 rounded-md text-slate-500 hover:text-slate-900 transition-colors border border-slate-100">
+                                <MessageSquare size={14} />
+                            </a>
+                            <a href={`tel:${seller.phone}`} className="p-1.5 bg-emerald-50 hover:bg-emerald-100 rounded-md text-emerald-600 hover:text-emerald-700 transition-colors border border-emerald-100">
+                                <Phone size={14} />
+                            </a>
+                        </div>
+                    </div>
+
+                    <button className="w-full bg-slate-900 text-yellow-400 py-2.5 rounded-xl font-black text-[9px] uppercase italic tracking-widest shadow-lg flex items-center justify-center gap-2 hover:bg-slate-800 transition-all">
                         <Zap size={12} fill="currentColor" /> LIVE TRACKING
                     </button>
                 </div>
 
-                {/* Guest Upsell */}
-                <div className="w-full text-center shrink-0 flex flex-col items-center gap-6 mt-2">
-                    <button
-                        onClick={onCreatePassword}
-                        className="text-white text-[10px] font-bold underline underline-offset-4 decoration-white/30 hover:decoration-white transition-all flex items-center justify-center gap-1 mx-auto"
-                    >
-                        Create a password to check your order status <ArrowRight size={10} />
-                    </button>
+                {/* Action Buttons */}
+                <div className="w-full space-y-2 mt-2">
+                    {/* Logged Out: Show 'Log in to view status' prompt */}
+                    {!isLoggedIn ? (
+                        <button
+                            onClick={onCreatePassword}
+                            className="w-full py-3 bg-yellow-400 text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md active:scale-95 transition-all hover:bg-yellow-300 border border-yellow-300 flex items-center justify-center gap-2"
+                        >
+                            <span>Log in to View Status</span>
+                            <ArrowRight size={14} />
+                        </button>
+                    ) : (
+                        /* Logged In: Only allow Return to Shop, hide Upsell */
+                        <button
+                            onClick={onClose}
+                            className="w-full py-3 bg-slate-100 text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-sm active:scale-95 transition-all hover:bg-slate-200 border border-slate-200 flex items-center justify-center gap-2"
+                        >
+                            <span>Return to Shop</span>
+                            <ArrowRight size={14} />
+                        </button>
+                    )}
 
-                    <button
-                        onClick={onClose}
-                        className="px-6 py-3 bg-white/10 rounded-full text-white font-bold text-[10px] uppercase tracking-widest hover:bg-white/20 transition-all border border-white/5"
-                    >
-                        Return to Feed
-                    </button>
+                    {!isLoggedIn && (
+                        <button
+                            onClick={onClose}
+                            className="w-full py-2 bg-transparent text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-slate-900 transition-all"
+                        >
+                            Return to Shop
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
