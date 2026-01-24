@@ -5,11 +5,12 @@ interface SuccessModalProps {
     isOpen: boolean;
     otp: number | null;
     onClose: () => void;
-    onCreatePassword?: () => void;
+    onLogin?: () => void;
+    onViewOrders?: () => void;
     isLoggedIn?: boolean;
 }
 
-export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, otp, onClose, onCreatePassword, isLoggedIn }) => {
+export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, otp, onClose, onLogin, onViewOrders, isLoggedIn }) => {
     if (!isOpen) return null;
 
     // Mock Models
@@ -114,21 +115,30 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, otp, onClose
                     {/* Logged Out: Show 'Log in to view status' prompt */}
                     {!isLoggedIn ? (
                         <button
-                            onClick={onCreatePassword}
+                            onClick={onLogin}
                             className="w-full py-3 bg-yellow-400 text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md active:scale-95 transition-all hover:bg-yellow-300 border border-yellow-300 flex items-center justify-center gap-2"
                         >
                             <span>Log in to View Status</span>
                             <ArrowRight size={14} />
                         </button>
                     ) : (
-                        /* Logged In: Only allow Return to Shop, hide Upsell */
-                        <button
-                            onClick={onClose}
-                            className="w-full py-3 bg-slate-100 text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-sm active:scale-95 transition-all hover:bg-slate-200 border border-slate-200 flex items-center justify-center gap-2"
-                        >
-                            <span>Return to Shop</span>
-                            <ArrowRight size={14} />
-                        </button>
+                        /* Logged In: Show View Status or Return */
+                        <div className="space-y-2">
+                            <button
+                                onClick={onViewOrders}
+                                className="w-full py-3 bg-yellow-400 text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md active:scale-95 transition-all hover:bg-yellow-300 border border-yellow-300 flex items-center justify-center gap-2"
+                            >
+                                <span>View Order Status</span>
+                                <ArrowRight size={14} />
+                            </button>
+                            
+                            <button
+                                onClick={onClose}
+                                className="w-full py-3 bg-slate-100 text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-sm active:scale-95 transition-all hover:bg-slate-200 border border-slate-200 flex items-center justify-center gap-2"
+                            >
+                                <span>Return to Shop</span>
+                            </button>
+                        </div>
                     )}
 
                     {!isLoggedIn && (

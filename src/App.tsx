@@ -13,8 +13,8 @@ const SellerProfileView = lazy(() => import('./components/profile/SellerProfileV
 const SearchOverlay = lazy(() => import('./components/search/SearchOverlay').then(module => ({ default: module.SearchOverlay })));
 const SuccessView = lazy(() => import('./components/common/SuccessView').then(module => ({ default: module.SuccessView })));
 const SuccessModal = lazy(() => import('./components/common/SuccessModal').then(module => ({ default: module.SuccessModal })));
+const AuthModal = lazy(() => import('./components/features/AuthModal').then(module => ({ default: module.AuthModal })));
 const CreatePostView = lazy(() => import('./components/seller/CreatePostView').then(module => ({ default: module.CreatePostView })));
-const CreatePasswordView = lazy(() => import('./components/features/CreatePasswordView').then(module => ({ default: module.CreatePasswordView })));
 const OrderHistoryView = lazy(() => import('./components/profile/OrderHistoryView').then(module => ({ default: module.OrderHistoryView })));
 
 import { App as CapacitorApp } from '@capacitor/app';
