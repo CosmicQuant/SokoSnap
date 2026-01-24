@@ -393,10 +393,15 @@ const App = () => {
                 <SuccessView
                     otp={otp}
                     onReturn={() => setView('feed')}
-                    onLogin={() => openAuthModal('login')}
+                    onLogin={() => {
+                        // Keep current view as success, but open the modal
+                        openAuthModal('login');
+                    }}
                     onViewOrders={() => setView('order-history')}
                     isLoggedIn={!!user}
                 />
+                {/* Ensure AuthModal is mounted if it is triggered from here */}
+                <AuthModal />
             </Suspense>
         );
     }
@@ -505,7 +510,7 @@ const App = () => {
                 />
             </Suspense>
 
-            {/* Auth Modal (Global) */}
+            {/* Auth Modal (Global) - Render this outside of views to ensure it works everywhere */}
             <Suspense fallback={null}>
                 <AuthModal />
             </Suspense>

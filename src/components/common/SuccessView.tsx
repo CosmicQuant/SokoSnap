@@ -112,13 +112,22 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ otp, onReturn, onLogin
                 <div className="shrink-0 w-full pt-1 space-y-2">
                     {/* Show 'Log in to Status' button only if NOT logged in */}
                     {!isLoggedIn ? (
-                        <button
-                            onClick={onLogin}
-                            className="w-full py-3 bg-yellow-400 text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md active:scale-95 transition-all hover:bg-yellow-300 border border-yellow-300 flex items-center justify-center gap-2"
-                        >
-                            <span>Log in to View Status</span>
-                            <ArrowRight size={14} />
-                        </button>
+                        <>
+                            <button
+                                onClick={onLogin}
+                                className="w-full py-3 bg-yellow-400 text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md active:scale-95 transition-all hover:bg-yellow-300 border border-yellow-300 flex items-center justify-center gap-2"
+                            >
+                                <span>Log in to View Status</span>
+                                <ArrowRight size={14} />
+                            </button>
+
+                            <button
+                                onClick={onReturn}
+                                className="w-full py-2 bg-transparent text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-slate-900 transition-all mt-2"
+                            >
+                                Return to Shop
+                            </button>
+                        </>
                     ) : (
                         <div className="space-y-2">
                             <button
@@ -136,16 +145,6 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ otp, onReturn, onLogin
                                 <span>Return to Shop</span>
                             </button>
                         </div>
-                    )}
-
-                    {/* Secondary return button for logged out users */}
-                    {!isLoggedIn && (
-                        <button
-                            onClick={onReturn}
-                            className="w-full py-2 bg-transparent text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-slate-900 transition-all"
-                        >
-                            Return to Shop
-                        </button>
                     )}
                 </div>
             </div>

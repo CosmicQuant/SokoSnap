@@ -1,5 +1,5 @@
 import React from 'react';
-import { WifiOff, X } from 'lucide-react';
+import { WifiOff } from 'lucide-react';
 import { Modal } from './Modal';
 
 interface NoInternetModalProps {
