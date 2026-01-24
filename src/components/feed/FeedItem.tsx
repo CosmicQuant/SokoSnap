@@ -423,9 +423,11 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                                 }}
                                 className="absolute bottom-full mb-[-2px] inset-x-0 z-0 bg-yellow-400 border border-yellow-300 rounded-t-xl py-0.5 flex items-center justify-center cursor-pointer hover:bg-yellow-300 transition-colors"
                             >
-                                <span className="text-[10px] font-medium text-black tracking-tight flex items-center gap-1.5">
-                                    <span>Using {userData.phone} • {userData.location}</span>
-                                    <span className="border-b border-black/50 opacity-70 text-[9px]">Edit</span>
+                                <span className="text-[10px] font-bold text-slate-900 tracking-tight flex items-center gap-1.5 px-2">
+                                    <span className="truncate max-w-[220px]">
+                                        Pay via {userData.phone} • To {userData.location && userData.location.length > 15 ? userData.location.substring(0, 15) + '...' : userData.location}
+                                    </span>
+                                    <span className="border-b-2 border-black/30 text-[9px] font-black uppercase shrink-0 opacity-70">Edit</span>
                                 </span>
                             </div>
                         )}
@@ -435,21 +437,16 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                             id={`btn-${product.id}`}
                             onClick={handleActionClick}
                             className={`
-                                w-full border-y-[2px] border-x-[1px] py-1.5 px-3 flex flex-col items-center gap-0.5 transition-all shadow-lg relative overflow-hidden z-10 
+                                w-full border-y-[2px] border-x-[1px] py-1.5 px-3 flex flex-col items-center gap-0.5 shadow-lg relative overflow-hidden z-10
                                 ${hasUserData
                                     ? 'bg-black/10 backdrop-blur-[2px] border-yellow-400/90 text-white shadow-yellow-400/10 active:scale-[0.98]'
-                                    : 'bg-black/10 backdrop-blur-[2px] border-yellow-400/60 text-white hover:border-yellow-300 active:bg-yellow-400/10'
+                                    : 'bg-black/10 backdrop-blur-[2px] border-yellow-400/60 text-white hover:border-yellow-300 active:bg-yellow-400/10 transition-all'
                                 }
                                 ${hasUserData ? 'rounded-b-2xl rounded-t-none' : 'rounded-2xl'}
                                 ${showBottomSheet ? 'opacity-80' : 'opacity-100'}
                                 ${shouldAnimateAbsorb ? 'animate-absorb' : ''}
                             `}
                         >
-                            {/* Golden Sheen Effect (Only when filled) - Modified to be distinct and yellow */}
-                            {hasUserData && !isProcessing && (
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/60 to-transparent w-full h-full skew-x-[-12deg] animate-gold-sheen pointer-events-none mix-blend-plus-lighter" />
-                            )}
-
                             {/* Top Row: Action & Price */}
                             <div className="w-full h-10 relative flex items-center justify-between gap-2">
 
@@ -473,11 +470,16 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                                             PROCESSING
                                         </span>
                                     ) : (
-                                        <div className={`flex flex-col items-center leading-none ${hasUserData ? '' : 'animate-pulse opacity-90'}`}>
+                                        <div className={`flex flex-col items-center leading-none ${hasUserData ? 'animate-heartbeat' : 'animate-pulse opacity-90'}`}>
                                             <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-white/60">
                                                 TAP TO
                                             </span>
-                                            <span className="text-xs font-black italic uppercase tracking-tighter drop-shadow-sm scale-y-110 text-yellow-400">
+                                            <span
+                                                className={`text-xs font-black italic uppercase tracking-tighter drop-shadow-sm scale-y-110 pr-0.5 ${hasUserData
+                                                        ? 'bg-gradient-to-r from-yellow-400 via-white to-yellow-400 bg-[length:200%_auto] bg-clip-text text-transparent animate-text-shimmer'
+                                                        : 'text-yellow-400'
+                                                    }`}
+                                            >
                                                 {hasUserData ? 'ORDER NOW' : 'ORDER NOW'}
                                             </span>
                                         </div>

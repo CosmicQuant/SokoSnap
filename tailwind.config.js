@@ -34,6 +34,10 @@ export default {
                 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                 'pulse-once': 'pulseOnce 0.3s ease-in-out',
                 'gold-sheen': 'goldSheen 3s ease-in-out infinite',
+                'liquid-gold': 'gradientXY 4s ease infinite',
+                'shiny-pulse': 'shinyPulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                'heartbeat': 'heartbeat 1.5s ease-in-out infinite',
+                'sharp-sheen': 'sharpSheen 3s ease-in-out infinite',
             },
             keyframes: {
                 fadeIn: {
@@ -67,6 +71,34 @@ export default {
                 goldSheen: {
                     '0%': { transform: 'translateX(-100%) skewX(-12deg)' },
                     '100%': { transform: 'translateX(200%) skewX(-12deg)' },
+                },
+                gradientXY: {
+                    '0%': {
+                        'background-size': '400% 400%',
+                        'background-position': '0% 50%'
+                    },
+                    '50%': {
+                        'background-size': '200% 200%',
+                        'background-position': '100% 50%'
+                    },
+                    '100%': {
+                        'background-size': '400% 400%',
+                        'background-position': '0% 50%'
+                    }
+                },
+                shinyPulse: {
+                    '0%, 100%': { 'opacity': '1' },
+                    '50%': { 'opacity': '0.5' }
+                },
+                heartbeat: {
+                    '0%, 100%': { transform: 'scale(1)' },
+                    '50%': { transform: 'scale(1.05)' },
+                },
+                sharpSheen: {
+                    '0%': { transform: 'translateX(-100%) skewX(-12deg)', opacity: '0' },
+                    '5%': { opacity: '1' },
+                    '25%': { transform: 'translateX(200%) skewX(-12deg)', opacity: '1' },
+                    '100%': { transform: 'translateX(200%) skewX(-12deg)', opacity: '0' },
                 },
             },
             screens: {

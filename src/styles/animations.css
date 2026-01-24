@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+    --animate-sheen: sheen-move 3s ease-in-out infinite;
+    --animate-heartbeat: heartbeat 1.5s ease-in-out infinite;
+
+    @keyframes sheen-move {
+        0% {
+            transform: translateX(-150%) skewX(-12deg);
+        }
+
+        100% {
+            transform: translateX(250%) skewX(-12deg);
+        }
+    }
+
+    @keyframes heartbeat {
+
+        0%,
+        100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    @keyframes text-shimmer {
+        0% {
+            background-position: 100% center;
+        }
+
+        100% {
+            background-position: -100% center;
+        }
+    }
+
+    --animate-text-shimmer: text-shimmer 2s linear infinite;
+    --animate-liquid-flow: liquid-flow 3s ease infinite;
+
+    @keyframes liquid-flow {
+        0% {
+            background-position: 0% 50%;
+        }
+
+        50% {
+            background-position: 100% 50%;
+        }
+
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+}
+
+/* Fallback for mixing regular CSS and Tailwind v4 themes if needed */
+.animate-sheen {
+    animation: sheen-move 3s ease-in-out infinite;
+}
+
+.animate-heartbeat {
+    animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+.animate-text-shimmer {
+    animation: text-shimmer 2s linear infinite;
+}
+
+.animate-liquid-flow {
+    animation: liquid-flow 3s ease infinite;
+}

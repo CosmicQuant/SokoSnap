@@ -135,12 +135,9 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ otp, onReturn, onViewO
                 <div className="shrink-0 w-full pt-2 px-1">
                     <button
                         onClick={onReturn}
-                        className="relative w-full py-4 bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-400 text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-amber-400/20 active:scale-95 transition-all overflow-hidden group flex items-center justify-center gap-3 border border-yellow-300 transform hover:-translate-y-0.5"
+                        className="relative w-full py-4 bg-gradient-to-r from-orange-500 via-amber-500 via-yellow-400 via-amber-500 to-orange-500 animate-liquid-flow bg-[length:400%_auto] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-500/30 active:scale-95 transition-all overflow-hidden group flex items-center justify-center gap-3 border border-orange-400 transform hover:-translate-y-0.5"
                     >
-                        {/* Shimmer Effect */}
-                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 animate-gold-sheen pointer-events-none" />
-
-                        <Sparkles size={16} className="text-slate-800 animate-pulse relative z-10" />
+                        <Sparkles size={16} className="text-white animate-pulse relative z-10" />
                         <span className="relative z-10 drop-shadow-sm">DISCOVER MORE</span>
                         <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform relative z-10" />
                     </button>
