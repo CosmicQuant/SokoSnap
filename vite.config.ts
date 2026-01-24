@@ -7,6 +7,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
+    // Base path for Capacitor/Production
+    base: './',
+
     // Development server configuration
     server: {
       port: 3000,
@@ -60,7 +63,6 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: {
             'vendor-react': ['react', 'react-dom'],
-            'vendor-ui': ['lucide-react', 'recharts'],
             'vendor-maps': ['leaflet', 'react-leaflet'],
             'vendor-state': ['zustand', 'zod', '@tanstack/react-query'],
             'vendor-capacitor': [

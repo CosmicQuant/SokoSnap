@@ -15,3 +15,4 @@ export { LazyVideo, LazyImage } from './LazyMedia';
 export type { LazyVideoProps, LazyImageProps } from './LazyMedia';
 export { MpesaLogo, LipaNaMpesaLogo } from './MpesaLogo';
 export { Logo } from './Logo';
+export { NoInternetModal } from './NoInternetModal';

@@ -2,9 +2,11 @@ import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import { generateMockSecureOTP } from './utils/validation';
 import { useCartStore, useAuthStore, useSellerStore } from './store';
+import { useNetworkStatus } from './hooks';
 import { FeedItem } from '@components/feed/FeedItem';
 import { TopNav } from './components/layout/TopNav';
 import { CheckoutTopNav } from './components/layout/CheckoutTopNav';
+import { NoInternetModal } from './components/common/NoInternetModal';
 
 // Lazy Load Views for Code Splitting
 const CartView = lazy(() => import('./components/cart/CartView').then(module => ({ default: module.CartView })));
@@ -136,6 +138,17 @@ const App = () => {
     const { user, openAuthModal } = useAuthStore();
     const { addPost } = useSellerStore();
     const isSeller = user?.type === 'verified_merchant';
+
+    // Network Status
+    const isOnline = useNetworkStatus();
+    const [isOfflineDismissed, setIsOfflineDismissed] = useState(false);
+
+    // Reset dismissed state when online comes back
+    useEffect(() => {
+        if (isOnline) {
+            setIsOfflineDismissed(false);
+        }
+    }, [isOnline]);
 
     // Feature State
     const [showTrustModal, setShowTrustModal] = useState(false);
@@ -496,6 +509,12 @@ const App = () => {
             <Suspense fallback={null}>
                 <AuthModal />
             </Suspense>
+
+            {/* Offline Modal */}
+            <NoInternetModal
+                isOpen={!isOnline && !isOfflineDismissed}
+                onClose={() => setIsOfflineDismissed(true)}
+            />
 
             {/* Trust/Info Modal */}
             {showTrustModal && (
