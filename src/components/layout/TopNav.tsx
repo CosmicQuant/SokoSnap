@@ -98,7 +98,7 @@ export const TopNav: React.FC<TopNavProps> = ({
                         : 'text-white/40 hover:text-white/60'
                         } ${currentSeller ? 'mb-3' : ''}`} // Align with the pill if pill exists
                 >
-                    For You
+                    Discover
                 </button>
             </div>
 

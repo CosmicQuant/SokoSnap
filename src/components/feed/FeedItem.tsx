@@ -475,10 +475,10 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                                     ) : (
                                         <div className={`flex flex-col items-center leading-none ${hasUserData ? '' : 'animate-pulse opacity-90'}`}>
                                             <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-white/60">
-                                                {hasUserData ? 'CLICK TO' : 'TAP TO'}
+                                                TAP TO
                                             </span>
                                             <span className="text-xs font-black italic uppercase tracking-tighter drop-shadow-sm scale-y-110 text-yellow-400">
-                                                {hasUserData ? 'PAY NOW' : 'ORDER NOW'}
+                                                {hasUserData ? 'ORDER NOW' : 'ORDER NOW'}
                                             </span>
                                         </div>
                                     )}

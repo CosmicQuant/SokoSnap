@@ -33,6 +33,7 @@ export default {
                 'zoom-in': 'zoomIn 0.3s ease-out',
                 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                 'pulse-once': 'pulseOnce 0.3s ease-in-out',
+                'gold-sheen': 'goldSheen 3s ease-in-out infinite',
             },
             keyframes: {
                 fadeIn: {
@@ -62,6 +63,10 @@ export default {
                 pulseOnce: {
                     '0%, 100%': { transform: 'scale(1)' },
                     '50%': { transform: 'scale(1.3)' },
+                },
+                goldSheen: {
+                    '0%': { transform: 'translateX(-100%) skewX(-12deg)' },
+                    '100%': { transform: 'translateX(200%) skewX(-12deg)' },
                 },
             },
             screens: {

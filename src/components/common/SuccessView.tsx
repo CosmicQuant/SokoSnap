@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lock, KeyRound, Zap, MessageSquare, ArrowRight, X, Phone } from 'lucide-react';
+import { Lock, KeyRound, MessageSquare, ArrowRight, X, Phone, Sparkles } from 'lucide-react';
 
 interface SuccessViewProps {
     otp: number | null;
@@ -9,15 +9,15 @@ interface SuccessViewProps {
     isLoggedIn?: boolean;
 }
 
-export const SuccessView: React.FC<SuccessViewProps> = ({ otp, onReturn, onLogin, onViewOrders, isLoggedIn }) => {
+export const SuccessView: React.FC<SuccessViewProps> = ({ otp, onReturn, onViewOrders }) => {
     // Mock Rider & Seller Data
     const rider = { name: "Kamau #294", phone: "0712345678" };
     const seller = { name: "Nanny B.", phone: "0712345678", location: "Westlands, NRB" };
 
     return (
-        <div className="h-[100dvh] w-full bg-white flex flex-col items-stretch overflow-hidden">
+        <div className="h-[100dvh] w-full bg-white flex flex-col items-stretch overflow-hidden animate-in fade-in duration-300">
             {/* 1. Top Bar: Back Action (Compact) */}
-            <div className="shrink-0 px-4 py-2 flex justify-end z-20">
+            <div className="shrink-0 px-4 pt-[calc(0.5rem+env(safe-area-inset-top))] pb-2 flex justify-end z-20">
                 <button
                     onClick={onReturn}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-full text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 hover:text-slate-900 transition-all border border-slate-100"
@@ -85,7 +85,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ otp, onReturn, onLogin
                     </div>
 
                     {/* Seller Row */}
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <div className="w-9 h-9 bg-yellow-400 rounded-xl flex items-center justify-center text-slate-900 font-black text-xs shadow-sm">N</div>
                             <div>
@@ -103,49 +103,51 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ otp, onReturn, onLogin
                         </div>
                     </div>
 
-                    <button className="w-full bg-slate-900 text-yellow-400 py-2.5 rounded-xl font-black text-[9px] uppercase italic tracking-widest shadow-md flex items-center justify-center gap-2 hover:bg-slate-800 transition-all">
-                        <Zap size={12} fill="currentColor" /> LIVE TRACKING
-                    </button>
+                    {/* Live Tracking Mini-Map Container */}
+                    <div className="flex items-center gap-3 p-2 bg-emerald-600/5 rounded-xl border border-emerald-100">
+                        {/* Mini Map Placeholder */}
+                        <div className="w-16 h-10 bg-emerald-100 rounded-lg relative overflow-hidden shrink-0 border border-emerald-200">
+                            {/* Simple map-like elements */}
+                            <div className="absolute top-1/2 left-0 w-full h-1 bg-white/50 -rotate-12 translate-y-1" />
+                            <div className="absolute top-0 right-1/3 w-1 h-full bg-white/50 rotate-12" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-2 h-2 bg-emerald-600 rounded-full ring-2 ring-white animate-pulse" />
+                            </div>
+                        </div>
+
+                        <div className="flex-1 flex justify-between items-center min-w-0">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-emerald-800 uppercase tracking-wide">Tracking Order</span>
+                                <span className="text-[8px] font-bold text-emerald-600/70 truncate animate-pulse">Live updates...</span>
+                            </div>
+
+                            <button
+                                onClick={onViewOrders}
+                                className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg font-black text-[9px] uppercase tracking-widest shadow-sm hover:bg-emerald-700 transition-all border border-emerald-500 whitespace-nowrap"
+                            >
+                                Track Now
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 {/* 6. Action Buttons (Bottom) */}
-                <div className="shrink-0 w-full pt-1 space-y-2">
-                    {/* Show 'Log in to Status' button only if NOT logged in */}
-                    {!isLoggedIn ? (
-                        <>
-                            <button
-                                onClick={onLogin}
-                                className="w-full py-3 bg-yellow-400 text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md active:scale-95 transition-all hover:bg-yellow-300 border border-yellow-300 flex items-center justify-center gap-2"
-                            >
-                                <span>Log in to View Status</span>
-                                <ArrowRight size={14} />
-                            </button>
+                <div className="shrink-0 w-full pt-2 px-1">
+                    <button
+                        onClick={onReturn}
+                        className="relative w-full py-4 bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-400 text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-amber-400/20 active:scale-95 transition-all overflow-hidden group flex items-center justify-center gap-3 border border-yellow-300 transform hover:-translate-y-0.5"
+                    >
+                        {/* Shimmer Effect */}
+                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 animate-gold-sheen pointer-events-none" />
 
-                            <button
-                                onClick={onReturn}
-                                className="w-full py-2 bg-transparent text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-slate-900 transition-all mt-2"
-                            >
-                                Return to Shop
-                            </button>
-                        </>
-                    ) : (
-                        <div className="space-y-2">
-                            <button
-                                onClick={onViewOrders}
-                                className="w-full py-3 bg-yellow-400 text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md active:scale-95 transition-all hover:bg-yellow-300 border border-yellow-300 flex items-center justify-center gap-2"
-                            >
-                                <span>View Order Status</span>
-                                <ArrowRight size={14} />
-                            </button>
+                        <Sparkles size={16} className="text-slate-800 animate-pulse relative z-10" />
+                        <span className="relative z-10 drop-shadow-sm">DISCOVER MORE</span>
+                        <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform relative z-10" />
+                    </button>
 
-                            <button
-                                onClick={onReturn}
-                                className="w-full py-3 bg-slate-100 text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-sm active:scale-95 transition-all hover:bg-slate-200 border border-slate-200 flex items-center justify-center gap-2"
-                            >
-                                <span>Return to Shop</span>
-                            </button>
-                        </div>
-                    )}
+                    <p className="text-center text-[9px] text-slate-400 font-medium mt-3 pb-1 uppercase tracking-wider opacity-60">
+                        Continue Shopping
+                    </p>
                 </div>
             </div>
         </div>

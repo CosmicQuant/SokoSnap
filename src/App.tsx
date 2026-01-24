@@ -14,7 +14,6 @@ const ProfileView = lazy(() => import('./components/profile/ProfileView').then(m
 const SellerProfileView = lazy(() => import('./components/profile/SellerProfileView').then(module => ({ default: module.SellerProfileView })));
 const SearchOverlay = lazy(() => import('./components/search/SearchOverlay').then(module => ({ default: module.SearchOverlay })));
 const SuccessView = lazy(() => import('./components/common/SuccessView').then(module => ({ default: module.SuccessView })));
-const SuccessModal = lazy(() => import('./components/common/SuccessModal').then(module => ({ default: module.SuccessModal })));
 const AuthModal = lazy(() => import('./components/features/AuthModal').then(module => ({ default: module.AuthModal })));
 const CreatePostView = lazy(() => import('./components/seller/CreatePostView').then(module => ({ default: module.CreatePostView })));
 const OrderHistoryView = lazy(() => import('./components/profile/OrderHistoryView').then(module => ({ default: module.OrderHistoryView })));
@@ -493,22 +492,25 @@ const App = () => {
             </div>
 
             {/* Success Modal (for checkout mode) */}
-            <Suspense fallback={null}>
-                <SuccessModal
-                    isOpen={showSuccessModal}
-                    otp={otp}
-                    onClose={handleSuccessModalClose}
-                    onLogin={() => {
-                        setShowSuccessModal(false);
-                        openAuthModal('login');
-                    }}
-                    onViewOrders={() => {
-                        setShowSuccessModal(false);
-                        setView('order-history');
-                    }}
-                    isLoggedIn={!!user}
-                />
-            </Suspense>
+            {showSuccessModal && (
+                <div className="fixed inset-0 z-[10000] bg-white animate-in fade-in duration-300 slide-in-from-bottom-5">
+                    <Suspense fallback={<PageLoader />}>
+                        <SuccessView
+                            otp={otp}
+                            onReturn={handleSuccessModalClose}
+                            onLogin={() => {
+                                setShowSuccessModal(false);
+                                openAuthModal('login');
+                            }}
+                            onViewOrders={() => {
+                                setShowSuccessModal(false);
+                                setView('order-history');
+                            }}
+                            isLoggedIn={!!user}
+                        />
+                    </Suspense>
+                </div>
+            )}
 
             {/* Auth Modal (Global) - Render this outside of views to ensure it works everywhere */}
             <Suspense fallback={null}>
