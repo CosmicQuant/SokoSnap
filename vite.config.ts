@@ -5,10 +5,11 @@ import react from '@vitejs/plugin-react';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+  const isVercel = process.env.VERCEL === '1';
 
   return {
-    // Base path for Capacitor/Production
-    base: './',
+    // Base path: '/' for Vercel/Web to support nested routes (e.g. /p/1), './' for Capacitor/Builds
+    base: isVercel ? '/' : './',
 
     // Development server configuration
     server: {
