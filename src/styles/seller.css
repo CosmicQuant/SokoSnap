@@ -1,0 +1,16 @@
+/* Overrides for the Seller Landing Page to enable standard web scrolling */
+html,
+body {
+    overflow: auto !important;
+    position: static !important;
+    height: auto !important;
+    background-color: white !important;
+    overscroll-behavior-y: auto !important;
+}
+
+/* Ensure the root container doesn't restrict height */
+#root {
+    min-height: 100vh;
+    height: auto !important;
+    overflow: visible !important;
+}

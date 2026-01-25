@@ -111,6 +111,10 @@ export default defineConfig(({ mode }) => {
 
       // Rollup options for code splitting
       rollupOptions: {
+        input: {
+          main: path.resolve(__dirname, 'index.html'),
+          seller: path.resolve(__dirname, 'seller.html'),
+        },
         output: {
           manualChunks: {
             'vendor-react': ['react', 'react-dom'],
