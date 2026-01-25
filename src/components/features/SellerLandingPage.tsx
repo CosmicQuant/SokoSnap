@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     CheckCircle2,
     ArrowRight,
@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import { LocationPickerModal } from '../common/LocationPickerModal';
 import { AuthModal } from './AuthModal';
+import { SellerDashboard } from './SellerDashboard';
+import { SellerInfoPages } from './SellerInfoPages';
 import { useAuthStore } from '../../store';
 
 // --- HELPER COMPONENTS (Defined at top to prevent errors) ---
@@ -58,7 +60,7 @@ const Share2Icon = () => (
 
 // --- SOCIAL ICONS (REAL LOGOS) ---
 
-const InstagramLogo = ({ size = 24 }: { size?: number }) => (
+export const InstagramLogo = ({ size = 24 }: { size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
             <radialGradient id="insta-gradient" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(6.5 23) rotate(-57.947) scale(29.155 28.3276)">
@@ -71,13 +73,13 @@ const InstagramLogo = ({ size = 24 }: { size?: number }) => (
     </svg>
 );
 
-const WhatsAppLogo = ({ size = 24 }: { size?: number }) => (
+export const WhatsAppLogo = ({ size = 24 }: { size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path fillRule="evenodd" clipRule="evenodd" d="M12.007 0C5.378 0 0 5.377 0 12.006C0 14.12 0.55 16.182 1.597 18L0.05 23.636L5.823 22.122C7.575 23.078 9.57 23.582 11.996 23.582H12.006C18.634 23.582 24 18.271 24 11.996C24 5.388 18.625 0 12.007 0ZM12.007 21.602H11.997C9.96 21.602 8.01 21.056 6.34 20.066L5.94 19.83L2.52 20.728L3.43 17.39L3.17 16.974C2.09 15.26 1.52 13.33 1.52 11.996C1.52 6.216 6.22 1.518 12.007 1.518C17.78 1.518 22.48 6.216 22.48 11.996C22.48 17.786 17.79 21.602 12.007 21.602ZM17.71 14.39C17.4 14.23 15.86 13.47 15.57 13.37C15.29 13.27 15.08 13.22 14.87 13.53C14.66 13.84 14.06 14.54 13.88 14.75C13.7 14.95 13.51 14.98 13.21 14.82C12.91 14.67 11.93 14.35 10.77 13.32C9.87 12.51 9.27 11.52 8.97 11.01C8.67 10.49 8.94 10.21 9.09 10.06C9.22 9.93 9.38 9.72 9.54 9.54C9.69 9.35 9.74 9.22 9.85 9.01C9.95 8.8 9.9 8.62 9.82 8.46C9.74 8.29 9.12 6.78 8.86 6.16C8.61 5.56 8.36 5.64 8.16 5.64L7.59 5.63C7.38 5.63 7.04 5.71 6.75 6.02C6.46 6.33 5.64 7.1 5.64 8.67C5.64 10.23 6.78 11.75 6.94 11.96C7.1 12.17 9.17 15.36 12.33 16.73C13.08 17.05 13.67 17.25 14.13 17.39C14.96 17.65 15.72 17.63 16.32 17.54C16.98 17.44 18.35 16.71 18.64 15.91C18.93 15.11 18.93 14.42 18.84 14.27C18.75 14.12 18.52 14.03 18.22 13.88L17.71 14.39Z" fill="#25D366" />
     </svg>
 );
 
-const FacebookLogo = ({ size = 24 }: { size?: number }) => (
+export const FacebookLogo = ({ size = 24 }: { size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M24 12C24 5.37258 18.6274 0 12 0C5.37258 0 0 5.37258 0 12C0 17.9895 4.3882 22.954 10.125 23.8534V15.4688H7.07813V12H10.125V9.35625C10.125 6.34875 11.9166 4.6875 14.6576 4.6875C15.9701 4.6875 17.3438 4.92188 17.3438 4.92188V7.875H15.8306C14.34 7.875 13.875 8.8 13.875 9.75V12H17.2031L16.6711 15.4688H13.875V23.8534C19.6118 22.954 24 17.9895 24 12Z" fill="#1877F2" />
     </svg>
@@ -92,8 +94,25 @@ const TikTokLogo = ({ size = 24 }: { size?: number }) => (
 // --- MAIN COMPONENT ---
 
 const SellerLandingPage = () => {
-    const [step, setStep] = useState('hero'); // hero, register, success
-    const { user, openAuthModal } = useAuthStore();
+    // Initialize step from URL param ?view=dashboard or default to 'hero'
+    const [step, setStep] = useState(() => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('view') || 'hero';
+    });
+    const { user, openAuthModal, becomeSeller } = useAuthStore();
+
+    // Check if user is seller or if needs to register
+    useEffect(() => {
+        if (!user) return; // Do nothing if not logged in
+
+        if (user.type === 'verified_merchant') {
+            // Already a seller, go to dashboard
+            if (step === 'register') setStep('dashboard');
+        }
+        // We DON'T auto-redirect buyers to register from 'hero' anymore
+        // allowing them to view the landing page freely.
+        // They will be prompted to register when clicking "Start Selling"
+    }, [user, step]);
 
     // Auth State Check
     const [showAuthWarning, setShowAuthWarning] = useState(false);
@@ -165,7 +184,7 @@ const SellerLandingPage = () => {
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleSubmit = (e: any) => {
+    const handleSubmit = async (e: any) => {
         e.preventDefault();
 
         // NEW: Auth Check
@@ -175,11 +194,23 @@ const SellerLandingPage = () => {
         }
 
         setIsSubmitting(true);
-        // Simulate API call to register seller
-        setTimeout(() => {
+
+        try {
+            // Register the user as a seller with their shop information
+            await becomeSeller({
+                shopName: formData.shopName,
+                shopLocation: formData.locationName,
+                contactPerson: formData.contactName,
+                contactPhone: formData.contactPhone,
+            });
+
             setIsSubmitting(false);
             setStep('success');
-        }, 2000);
+        } catch (error) {
+            console.error('Failed to register seller:', error);
+            setIsSubmitting(false);
+            alert('Failed to create shop. Please try again.');
+        }
     };
 
     const handleGoogleSignIn = () => {
@@ -191,31 +222,24 @@ const SellerLandingPage = () => {
         <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-yellow-200 overflow-x-hidden">
 
             {/* --- NAVBAR --- */}
-            <nav className="flex justify-between items-center p-6 max-w-7xl mx-auto sticky top-0 bg-white/90 backdrop-blur-md z-50 border-b border-slate-100">
-                <div className="flex items-center gap-2" onClick={() => setStep('hero')} style={{ cursor: 'pointer' }}>
-                    <div className="w-9 h-9 bg-yellow-500 rounded-xl flex items-center justify-center shadow-lg shadow-yellow-500/20 transform -rotate-3">
-                        <Store className="text-black" size={20} />
+            {step !== 'dashboard' && (
+                <nav className="flex justify-between items-center p-6 max-w-7xl mx-auto sticky top-0 bg-white/90 backdrop-blur-md z-50 border-b border-slate-100">
+                    <div className="flex items-center gap-2" onClick={() => setStep('hero')} style={{ cursor: 'pointer' }}>
+                        <div className="w-9 h-9 bg-yellow-500 rounded-xl flex items-center justify-center shadow-lg shadow-yellow-500/20 transform -rotate-3">
+                            <Store className="text-black" size={20} />
+                        </div>
+                        <span className="font-black italic text-2xl tracking-tighter text-slate-900">SokoSnap</span>
                     </div>
-                    <span className="font-black italic text-2xl tracking-tighter text-slate-900">SokoSnap</span>
-                </div>
-                <div className="flex items-center gap-6">
-                    <button
-                        onClick={() => {
-                            const element = document.getElementById('how-it-works');
-                            if (element) element.scrollIntoView({ behavior: 'smooth' });
-                        }}
-                        className="text-xs font-bold text-slate-500 hover:text-black transition-colors uppercase tracking-widest hidden md:block"
-                    >
-                        How it Works
-                    </button>
-                    <button
-                        onClick={() => openAuthModal('login')}
-                        className="text-xs font-bold text-black border-2 border-black px-6 py-2.5 rounded-full hover:bg-black hover:text-white transition-all uppercase tracking-widest"
-                    >
-                        Seller Login
-                    </button>
-                </div>
-            </nav>
+                    <div className="flex items-center gap-6">
+                        <button
+                            onClick={() => openAuthModal('login')}
+                            className="text-xs font-bold text-black border-2 border-black px-6 py-2.5 rounded-full hover:bg-black hover:text-white transition-all uppercase tracking-widest"
+                        >
+                            Seller Login
+                        </button>
+                    </div>
+                </nav>
+            )}
 
             {/* --- MAIN CONTENT SWITCHER --- */}
             {step === 'hero' && (
@@ -243,7 +267,13 @@ const SellerLandingPage = () => {
 
                                 <div className="flex flex-col sm:flex-row gap-4 items-start">
                                     <button
-                                        onClick={() => setStep('register')}
+                                        onClick={() => {
+                                            if (user) {
+                                                setStep('register');
+                                            } else {
+                                                openAuthModal('register');
+                                            }
+                                        }}
                                         className="px-10 py-5 bg-black text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-3 shadow-2xl shadow-black/20"
                                     >
                                         Start Selling Everywhere <ArrowRight size={18} strokeWidth={3} className="text-yellow-500" />
@@ -268,20 +298,20 @@ const SellerLandingPage = () => {
                                     className="relative rounded-[2.5rem] shadow-2xl border-4 border-white object-cover h-[500px] w-full"
                                 />
 
-                                {/* Floating Badge 1 (The M-Pesa Bounce) */}
-                                <div className="absolute -left-8 top-24 bg-white p-3 rounded-2xl shadow-2xl border border-green-100 flex items-center gap-3 animate-bounce delay-700 z-20">
-                                    <div className="bg-[#4CAF50] p-2.5 rounded-xl text-white shadow-lg shadow-green-500/30">
-                                        <MessageCircle size={24} fill="currentColor" />
+                                {/* Floating Badge 1 (The M-Pesa Bounce) - Repositioned higher to avoid covering face */}
+                                <div className="absolute left-2 md:-left-8 top-8 md:top-12 bg-white p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-2xl border border-green-100 flex items-center gap-2 md:gap-3 animate-bounce delay-700 z-20">
+                                    <div className="bg-[#4CAF50] p-2 md:p-2.5 rounded-lg md:rounded-xl text-white shadow-lg shadow-green-500/30">
+                                        <MessageCircle size={18} className="md:w-6 md:h-6" fill="currentColor" />
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">M-PESA CONFIRMED</p>
-                                        <p className="text-lg font-black text-slate-900 tracking-tight leading-none">KES 4,500.00</p>
-                                        <p className="text-[8px] font-bold text-slate-400 mt-1">Ref: SG829...</p>
+                                        <p className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">M-PESA CONFIRMED</p>
+                                        <p className="text-base md:text-lg font-black text-slate-900 tracking-tight leading-none">KES 4,500.00</p>
+                                        <p className="text-[7px] md:text-[8px] font-bold text-slate-400 mt-0.5 md:mt-1">Ref: SG829...</p>
                                     </div>
                                 </div>
 
-                                {/* Floating Badge 2 (Universal Link) */}
-                                <div className="absolute -right-8 bottom-24 bg-black text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-pulse delay-1000 z-20 border border-white/10">
+                                {/* Floating Badge 2 (Universal Link) - Lowered Position */}
+                                <div className="absolute -right-8 bottom-12 md:bottom-16 bg-black text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-pulse delay-1000 z-20 border border-white/10">
                                     <div className="bg-blue-600 p-3 rounded-xl text-white shadow-lg shadow-blue-600/40">
                                         <Globe size={24} />
                                     </div>
@@ -319,7 +349,7 @@ const SellerLandingPage = () => {
                                     step="01"
                                     bgClass="bg-gradient-to-br from-yellow-400 via-orange-500 to-pink-500"
                                     title="Generate Link"
-                                    desc="Upload your product photo, name, and price. We create a secure checkout link instantly."
+                                    desc="Upload your product photo or video, name, and price. We create a secure checkout link instantly."
                                     icon={<Zap className="text-white" size={28} strokeWidth={3} />}
                                 />
                                 <StepCard
@@ -371,6 +401,7 @@ const SellerLandingPage = () => {
                                     <TrustItem text="Identity Verified Seller" />
                                     <TrustItem text="M-Pesa Integration" />
                                     <TrustItem text="Store Analytics" />
+                                    <TrustItem text="TumaFast Delivery" />
                                 </div>
                             </div>
                         </div>
@@ -409,13 +440,13 @@ const SellerLandingPage = () => {
                             </div>
 
                             {/* Horizontal Links - Smaller Font */}
-                            <div className="flex flex-wrap md:justify-end gap-x-8 gap-y-4 max-w-lg text-[10px] font-bold uppercase tracking-widest text-slate-500 pt-2">
-                                <a href="#" className="hover:text-black transition-colors">About SokoSnap</a>
-                                <a href="#" className="hover:text-black transition-colors">Terms of Service</a>
-                                <a href="#" className="hover:text-black transition-colors">Privacy Policy</a>
-                                <a href="#" className="hover:text-black transition-colors">Cookie Policy</a>
-                                <a href="#" className="hover:text-black transition-colors">Merchant Agreement</a>
-                                <a href="#" className="hover:text-black transition-colors">Contact Us</a>
+                            <div className="flex flex-wrap md:justify-end gap-x-8 gap-y-4 max-w-lg text-[10px] font-bold uppercase tracking-widest text-slate-500 pt-2 cursor-pointer">
+                                <span onClick={() => setStep('about')} className="hover:text-black transition-colors">About SokoSnap</span>
+                                <span onClick={() => setStep('terms')} className="hover:text-black transition-colors">Terms of Service</span>
+                                <span onClick={() => setStep('privacy')} className="hover:text-black transition-colors">Privacy Policy</span>
+                                <span onClick={() => setStep('cookies')} className="hover:text-black transition-colors">Cookie Policy</span>
+                                <span onClick={() => setStep('merchant')} className="hover:text-black transition-colors">Merchant Agreement</span>
+                                <span onClick={() => setStep('contact')} className="hover:text-black transition-colors">Contact Us</span>
                             </div>
                         </div>
                     </div>
@@ -751,29 +782,44 @@ const SellerLandingPage = () => {
             {/* --- SUCCESS STATE --- */}
             {step === 'success' && (
                 <div className="min-h-[80vh] flex flex-col items-center justify-center px-6 text-center animate-in zoom-in-95 duration-500">
-                    <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-8 shadow-xl shadow-green-100/50">
-                        <CheckCircle2 size={48} />
+                    <div className="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 mb-8 shadow-xl shadow-yellow-100/50">
+                        <Loader2 size={48} className="animate-spin" />
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter mb-4 text-slate-900">You Are Live!</h2>
+                    <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter mb-4 text-slate-900">Application Received</h2>
                     <p className="text-slate-500 text-sm font-medium max-w-xs mx-auto mb-10 leading-relaxed">
-                        Welcome to the Elite. Your <b>Gold Verification Badge</b> is pending activation. Access your dashboard to start selling on WhatsApp & Socials.
+                        Your shop creation request is <b>Pending Verification</b>. <br />
+                        We will manually review your details shortly. You will be notified via SMS or Email once approved.
                     </p>
 
-                    <div className="bg-slate-50 border border-slate-200 p-6 rounded-3xl w-full max-w-sm mb-8 shadow-sm">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Your Shop Link</p>
+                    <div className="bg-slate-50 border border-slate-200 p-6 rounded-3xl w-full max-w-sm mb-8 shadow-sm opacity-50 select-none grayscale">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Pending Shop Link</p>
                         <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-inner">
-                            <span className="text-blue-600 font-mono text-sm font-bold">tmft.me/{formData.shopName.toLowerCase().replace(/\s/g, '')}</span>
-                            <CheckCircle2 size={18} className="text-green-500" />
+                            <span className="text-slate-400 font-mono text-sm font-bold">tmft.me/{formData.shopName.toLowerCase().replace(/\s/g, '')}</span>
+                            <Lock size={18} className="text-slate-300" />
                         </div>
                     </div>
 
                     <button
-                        onClick={() => window.location.reload()} // In real app: router.push('/dashboard')
-                        className="px-10 py-4 bg-black text-white rounded-full font-black text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-xl shadow-slate-200"
+                        onClick={() => window.location.reload()}
+                        className="px-8 py-3 bg-white border-2 border-slate-200 text-slate-600 rounded-full font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-colors"
                     >
-                        Enter Dashboard
+                        Refresh Status
+                    </button>
+
+                    <button onClick={() => setStep('hero')} className="mt-6 text-slate-400 text-[10px] font-bold uppercase tracking-widest hover:text-black">
+                        Back to Home
                     </button>
                 </div>
+            )}
+
+            {/* --- DASHBOARD VIEW --- */}
+            {step === 'dashboard' && (
+                <SellerDashboard onBack={() => setStep('hero')} />
+            )}
+
+            {/* --- INFO PAGES --- */}
+            {['about', 'terms', 'privacy', 'cookies', 'merchant', 'contact'].includes(step) && (
+                <SellerInfoPages page={step} onBack={() => setStep('hero')} onNavigate={(page) => setStep(page)} />
             )}
 
             {/* --- MODALS --- */}
