@@ -103,12 +103,12 @@ const SellerLandingPage = () => {
 
     // Check if user is seller or if needs to register
     useEffect(() => {
-        // 1. URL Protection: If accessing dashboard without login
-        if (step === 'dashboard' && !user) {
-            setStep('hero');
-            openAuthModal('login');
-            return;
-        }
+        // [TESTING ONLY] Bypass URL Protection
+        // if (step === 'dashboard' && !user) {
+        //     setStep('hero');
+        //     openAuthModal('login');
+        //     return;
+        // }
 
         if (!user) return; // Do nothing if not logged in
 
@@ -237,7 +237,14 @@ const SellerLandingPage = () => {
                         </div>
                         <span className="font-black italic text-2xl tracking-tighter text-slate-900">SokoSnap</span>
                     </div>
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-3">
+                        {/* [TESTING ONLY] Bypass Button */}
+                        <button
+                            onClick={() => setStep('dashboard')}
+                            className="text-[10px] font-bold text-red-500 bg-red-50 px-3 py-2 rounded-lg hover:bg-red-100 transition-colors uppercase tracking-wider"
+                        >
+                            Test Dash
+                        </button>
                         <button
                             onClick={() => openAuthModal('login')}
                             className="text-xs font-bold text-black border-2 border-black px-6 py-2.5 rounded-full hover:bg-black hover:text-white transition-all uppercase tracking-widest"

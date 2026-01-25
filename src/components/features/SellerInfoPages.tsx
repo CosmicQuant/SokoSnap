@@ -90,7 +90,7 @@ export const SellerInfoPages: React.FC<InfoPageProps> = ({ page, onBack, onNavig
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
                             <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter mb-6 relative z-10">Reinventing Social Commerce</h1>
                             <p className="font-medium text-lg md:text-xl leading-relaxed opacity-90 max-w-2xl relative z-10">
-                                SokoSnap is Africa's first Trust-as-a-Service platform. We bridge the gap between "Tuma Deposit" and "Payment on Delivery" by using a <b>Secure Hold</b> system until delivery is confirmed.
+                                SokoSnap is Africa's first Trust-as-a-Service platform. We bridge the gap between "Tuma Deposit" and "Payment on Delivery" by using a <b>Secure Hold Check Out</b> system until delivery is confirmed.
                             </p>
                         </div>
 
