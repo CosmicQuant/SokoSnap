@@ -23,7 +23,8 @@ export const AuthModal: React.FC = () => {
         isLoading,
         error,
         clearError,
-        user
+        user,
+        authMode
     } = useAuthStore();
 
     const [activeTab, setActiveTab] = useState<AuthTab>('login');
@@ -48,12 +49,17 @@ export const AuthModal: React.FC = () => {
             setValidationError(null);
             clearError();
         } else {
+            // Set active tab based on store request
+            if (authMode) {
+                setActiveTab(authMode);
+            }
+
             // Check if we are already authenticated but missing phone (Google flow)
             if (user && !user.phone) {
                 setMissingPhoneMode(true);
             }
         }
-    }, [isOpen, user]);
+    }, [isOpen, user, authMode]);
 
     // Handle Tab Switch
     const switchTab = (tab: AuthTab) => {

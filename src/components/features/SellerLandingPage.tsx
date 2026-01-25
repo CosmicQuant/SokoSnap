@@ -103,15 +103,22 @@ const SellerLandingPage = () => {
 
     // Check if user is seller or if needs to register
     useEffect(() => {
+        // 1. URL Protection: If accessing dashboard without login
+        if (step === 'dashboard' && !user) {
+            setStep('hero');
+            openAuthModal('login');
+            return;
+        }
+
         if (!user) return; // Do nothing if not logged in
 
         if (user.type === 'verified_merchant') {
             // Already a seller, go to dashboard
-            if (step === 'register') setStep('dashboard');
+            if (step === 'register' || step === 'hero') setStep('dashboard');
+        } else {
+            // If buyer tries to access dashboard, redirect to register
+            if (step === 'dashboard') setStep('register');
         }
-        // We DON'T auto-redirect buyers to register from 'hero' anymore
-        // allowing them to view the landing page freely.
-        // They will be prompted to register when clicking "Start Selling"
     }, [user, step]);
 
     // Auth State Check
@@ -269,7 +276,11 @@ const SellerLandingPage = () => {
                                     <button
                                         onClick={() => {
                                             if (user) {
-                                                setStep('register');
+                                                if (user.type === 'verified_merchant') {
+                                                    setStep('dashboard');
+                                                } else {
+                                                    setStep('register');
+                                                }
                                             } else {
                                                 openAuthModal('register');
                                             }
