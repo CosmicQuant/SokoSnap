@@ -1,53 +1,36 @@
-import React, { useState } from 'react';
-import { ChevronLeft, MapPin, Clock, ShieldCheck, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, Clock, ShieldCheck, X } from 'lucide-react';
+import { useOrderStore, useAuthStore } from '../../store';
 import { formatCurrency } from '../../utils/formatters';
 
 interface OrderHistoryViewProps {
     onBack: () => void;
 }
 
-// Mock Orders Data
-const MOCK_ORDERS = [
-    {
-        id: "ORD-7782-XJ",
-        status: "ongoing",
-        items: [
-            { name: "Air Jordan 1 'Uni Blue'", price: 4500, media: "https://images.unsplash.com/photo-1628253747716-0c4f5c90fdda?auto=format&fit=crop&q=80&w=200" }
-        ],
-        total: 4650,
-        date: "Today, 10:23 AM",
-        step: "In Transit",
-        eta: "14:30 PM",
-        driver: "John Kamau",
-        plate: "KDA 123X"
-    },
-    {
-        id: "ORD-9921-MC",
-        status: "delivered",
-        items: [
-            { name: "Vintage Denim Jacket", price: 2800, media: "https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&q=80&w=200" }
-        ],
-        total: 2950,
-        date: "Yesterday",
-        deliveredAt: "Yesterday, 4:15 PM",
-        step: "Delivered"
-    },
-    {
-        id: "ORD-1102-PP",
-        status: "delivered",
-        items: [
-            { name: "Gucci Marmont Handbag", price: 12500, media: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&q=80&w=200" }
-        ],
-        total: 12650,
-        date: "14 Jan 2024",
-        deliveredAt: "14 Jan 2024, 11:00 AM",
-        step: "Delivered"
-    }
-];
-
 export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({ onBack }) => {
     const [activeTab, setActiveTab] = useState<'ongoing' | 'completed'>('ongoing');
     const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+
+    const { orders, fetchOrders, loading } = useOrderStore();
+    const { user } = useAuthStore();
+
+    useEffect(() => {
+        if (user?.id) {
+            fetchOrders(user.id);
+        }
+    }, [user?.id, fetchOrders]);
+
+    // Derived lists
+    const ongoingOrders = orders.filter(o => ['pending', 'processing', 'escrow_held', 'in_transit'].includes(o.status));
+    const completedOrders = orders.filter(o => ['delivered', 'completed', 'cancelled', 'refunded'].includes(o.status));
+
+    if (loading && orders.length === 0) {
+        return (
+            <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen w-full bg-slate-50 text-slate-900 animate-in slide-in-from-right duration-300 relative">
@@ -90,37 +73,42 @@ export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({ onBack }) =>
                 {activeTab === 'ongoing' && (
                     <section className="animate-in fade-in zoom-in-95 duration-200">
                         <div className="space-y-4">
-                            {MOCK_ORDERS.filter(o => o.status === 'ongoing').map(order => (
-                                <div
-                                    key={order.id}
-                                    onClick={() => setSelectedOrder(order)}
-                                    className="bg-white border border-slate-200 rounded-2xl p-4 relative overflow-hidden active:scale-98 transition-transform cursor-pointer shadow-sm hover:shadow-md hover:border-yellow-400/50"
-                                >
-                                    <div className="flex gap-4">
-                                        <div className="w-16 h-16 bg-slate-100 rounded-xl overflow-hidden shrink-0 border border-slate-100">
-                                            <img src={order.items[0]?.media} className="w-full h-full object-cover" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start">
-                                                <h3 className="font-bold text-sm truncate pr-4 text-slate-900">{order.items[0]?.name}</h3>
-                                                <span className="text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded font-bold uppercase tracking-wide whitespace-nowrap">
-                                                    {order.step}
-                                                </span>
+                            {ongoingOrders.map(order => {
+                                const product = order.items?.[0]?.product;
+                                return (
+                                    <div
+                                        key={order.id}
+                                        onClick={() => setSelectedOrder(order)}
+                                        className="bg-white border border-slate-200 rounded-2xl p-4 relative overflow-hidden active:scale-98 transition-transform cursor-pointer shadow-sm hover:shadow-md hover:border-yellow-400/50"
+                                    >
+                                        <div className="flex gap-4">
+                                            <div className="w-16 h-16 bg-slate-100 rounded-xl overflow-hidden shrink-0 border border-slate-100">
+                                                {product && (
+                                                    <img src={product.mediaUrl} className="w-full h-full object-cover" />
+                                                )}
                                             </div>
-                                            <p className="text-[10px] text-slate-500 mt-1">Order #{order.id}</p>
-                                            <p className="text-sm font-black mt-2 text-slate-900">{formatCurrency(order.total)}</p>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-start">
+                                                    <h3 className="font-bold text-sm truncate pr-4 text-slate-900">{product?.name || 'Unknown Product'}</h3>
+                                                    <span className="text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded font-bold uppercase tracking-wide whitespace-nowrap">
+                                                        {order.status.replace('_', ' ')}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] text-slate-500 mt-1">Order #{order.id}</p>
+                                                <p className="text-sm font-black mt-2 text-slate-900">{formatCurrency(order.total)}</p>
+                                            </div>
+                                        </div>
+                                        {/* Progress Bar Mock */}
+                                        <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-2">
+                                            <div className="h-1 flex-1 bg-slate-100 rounded-full overflow-hidden">
+                                                <div className="h-full w-[50%] bg-yellow-500 rounded-full" />
+                                            </div>
+                                            <span className="text-[9px] font-bold text-slate-500">Processing</span>
                                         </div>
                                     </div>
-                                    {/* Progress Bar Mock */}
-                                    <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-2">
-                                        <div className="h-1 flex-1 bg-slate-100 rounded-full overflow-hidden">
-                                            <div className="h-full w-[70%] bg-yellow-500 rounded-full" />
-                                        </div>
-                                        <span className="text-[9px] font-bold text-slate-500">Arriving Soon</span>
-                                    </div>
-                                </div>
-                            ))}
-                            {MOCK_ORDERS.filter(o => o.status === 'ongoing').length === 0 && (
+                                );
+                            })}
+                            {ongoingOrders.length === 0 && (
                                 <div className="text-center py-10 text-slate-400 text-xs font-medium">
                                     No active orders
                                 </div>
@@ -133,29 +121,39 @@ export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({ onBack }) =>
                 {activeTab === 'completed' && (
                     <section className="animate-in fade-in zoom-in-95 duration-200">
                         <div className="space-y-4">
-                            {MOCK_ORDERS.filter(o => o.status === 'delivered').map(order => (
-                                <div
-                                    key={order.id}
-                                    onClick={() => setSelectedOrder(order)}
-                                    className="bg-white border border-slate-200 rounded-2xl p-4 opacity-100 hover:border-slate-300 transition-colors active:scale-98 cursor-pointer shadow-sm"
-                                >
-                                    <div className="flex gap-4">
-                                        <div className="w-16 h-16 bg-slate-100 rounded-xl overflow-hidden shrink-0 grayscale border border-slate-100">
-                                            <img src={order.items[0]?.media} className="w-full h-full object-cover" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start">
-                                                <h3 className="font-bold text-sm truncate pr-4 text-slate-600">{order.items[0]?.name}</h3>
-                                                <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded font-bold uppercase tracking-wide whitespace-nowrap">
-                                                    DELIVERED
-                                                </span>
+                            {completedOrders.map(order => {
+                                const product = order.items?.[0]?.product;
+                                return (
+                                    <div
+                                        key={order.id}
+                                        onClick={() => setSelectedOrder(order)}
+                                        className="bg-white border border-slate-200 rounded-2xl p-4 opacity-100 hover:border-slate-300 transition-colors active:scale-98 cursor-pointer shadow-sm"
+                                    >
+                                        <div className="flex gap-4">
+                                            <div className="w-16 h-16 bg-slate-100 rounded-xl overflow-hidden shrink-0 grayscale border border-slate-100">
+                                                {product && (
+                                                    <img src={product.mediaUrl} className="w-full h-full object-cover" />
+                                                )}
                                             </div>
-                                            <p className="text-[10px] text-slate-400 mt-1">{order.date}</p>
-                                            <p className="text-sm font-bold text-slate-500 mt-2">{formatCurrency(order.total)}</p>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-start">
+                                                    <h3 className="font-bold text-sm truncate pr-4 text-slate-600">{product?.name || 'Unknown'}</h3>
+                                                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded font-bold uppercase tracking-wide whitespace-nowrap">
+                                                        {order.status}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] text-slate-400 mt-1">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                                <p className="text-sm font-bold text-slate-500 mt-2">{formatCurrency(order.total)}</p>
+                                            </div>
                                         </div>
                                     </div>
+                                );
+                            })}
+                            {completedOrders.length === 0 && (
+                                <div className="text-center py-10 text-slate-400 text-xs font-medium">
+                                    No completed orders
                                 </div>
-                            ))}
+                            )}
                         </div>
                     </section>
                 )}
@@ -188,25 +186,22 @@ export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({ onBack }) =>
                         <div className="p-6 overflow-y-auto space-y-6">
 
                             {/* Status Banner */}
-                            <div className={`p-4 rounded-xl flex items-center gap-3 ${selectedOrder.status === 'ongoing'
+                            <div className={`p-4 rounded-xl flex items-center gap-3 ${selectedOrder.status === 'ongoing' || selectedOrder.status === 'pending'
                                 ? 'bg-yellow-50 border border-yellow-100'
                                 : 'bg-emerald-50 border border-emerald-100'
                                 }`}>
-                                {selectedOrder.status === 'ongoing' ? (
+                                {selectedOrder.status === 'ongoing' || selectedOrder.status === 'pending' ? (
                                     <Clock className="text-yellow-600" size={24} />
                                 ) : (
                                     <ShieldCheck className="text-emerald-600" size={24} />
                                 )}
                                 <div>
-                                    <p className={`text-sm font-bold uppercase tracking-wider ${selectedOrder.status === 'ongoing' ? 'text-yellow-700' : 'text-emerald-700'
+                                    <p className={`text-sm font-bold uppercase tracking-wider ${selectedOrder.status === 'ongoing' || selectedOrder.status === 'pending' ? 'text-yellow-700' : 'text-emerald-700'
                                         }`}>
-                                        {selectedOrder.status === 'ongoing' ? 'In Progress' : 'Order Completed'}
+                                        {selectedOrder.status === 'ongoing' || selectedOrder.status === 'pending' ? 'In Progress' : 'Order Completed'}
                                     </p>
                                     <p className="text-[10px] text-slate-500">
-                                        {selectedOrder.status === 'ongoing'
-                                            ? `ETA: ${selectedOrder.eta}`
-                                            : `Delivered on ${selectedOrder.deliveredAt}`
-                                        }
+                                        Status: {selectedOrder.status.replace('_', ' ')}
                                     </p>
                                 </div>
                             </div>
@@ -214,51 +209,16 @@ export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({ onBack }) =>
                             {/* Items List */}
                             <div className="space-y-3">
                                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Items</h3>
-                                {selectedOrder.items.map((item: any, i: number) => (
+                                {selectedOrder.items?.map((item: any, i: number) => (
                                     <div key={i} className="flex gap-4 items-center bg-slate-50 border border-slate-100 p-3 rounded-xl">
-                                        <img src={item.media} className="w-12 h-12 rounded-lg object-cover bg-slate-200" />
+                                        {item.product?.mediaUrl && <img src={item.product.mediaUrl} className="w-12 h-12 rounded-lg object-cover bg-slate-200" />}
                                         <div className="flex-1">
-                                            <p className="font-bold text-sm text-slate-900">{item.name}</p>
-                                            <p className="text-xs text-slate-500">{formatCurrency(item.price)}</p>
+                                            <p className="font-bold text-sm text-slate-900">{item.product?.name || 'Unknown'}</p>
+                                            <p className="text-xs text-slate-500">{formatCurrency(item.product?.price || 0)}</p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-
-                            {/* Summary */}
-                            <div className="space-y-2 pt-4 border-t border-slate-100">
-                                <div className="flex justify-between text-xs text-slate-500">
-                                    <span>Subtotal</span>
-                                    <span>{formatCurrency(selectedOrder.total - 150)}</span>
-                                </div>
-                                <div className="flex justify-between text-xs text-slate-500">
-                                    <span>Delivery Fee</span>
-                                    <span>{formatCurrency(150)}</span>
-                                </div>
-                                <div className="flex justify-between text-lg font-bold text-slate-900 pt-2">
-                                    <span>Total</span>
-                                    <span>{formatCurrency(selectedOrder.total)}</span>
-                                </div>
-                            </div>
-
-                            {/* Action Button */}
-                            {selectedOrder.status === 'ongoing' && (
-                                <div className="pt-2">
-                                    <button className="w-full py-4 bg-yellow-400 text-slate-900 font-black uppercase tracking-widest rounded-xl hover:bg-yellow-300 transition-colors shadow-lg shadow-yellow-400/20 flex items-center justify-center gap-2 border border-yellow-400/50">
-                                        <MapPin size={18} />
-                                        Track Live
-                                    </button>
-                                </div>
-                            )}
-
-                            {selectedOrder.status === 'delivered' && (
-                                <div className="pt-2">
-                                    <button className="w-full py-4 bg-white text-slate-700 font-bold uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-colors border border-slate-200 shadow-sm">
-                                        Download Receipt
-                                    </button>
-                                </div>
-                            )}
-
                         </div>
                     </div>
                 </div>

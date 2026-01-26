@@ -27,6 +27,20 @@ export interface User {
     contactPhone?: string;
     refundPolicy?: string;
 
+    // Payment & Verified Info
+    kraPin?: string;
+    mpesaType?: 'personal' | 'till' | 'paybill';
+    mpesaNumber?: string;
+    tillNumber?: string;
+    paybillNumber?: string;
+    accountNumber?: string;
+
+    // Socials
+    whatsapp?: string;
+    instagram?: string;
+    facebook?: string;
+    tiktok?: string;
+
     createdAt: Date;
     updatedAt: Date;
 }
@@ -43,6 +57,19 @@ export interface AuthState {
 // ============================================
 
 export type MediaType = 'video' | 'image';
+
+export interface LinkItem {
+    id: string | number; // Support both mock (number) and Firestore (string) until full migration
+    name: string;
+    views: number;
+    clicks: number;
+    sales: number;
+    revenue: number;
+    img: string;
+    description?: string;
+    price?: number;
+    status?: 'active' | 'archived';
+}
 
 export interface Product {
     id: string;

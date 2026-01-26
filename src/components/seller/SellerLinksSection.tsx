@@ -7,10 +7,10 @@ interface SellerLinksSectionProps {
 }
 
 export const SellerLinksSection: React.FC<SellerLinksSectionProps> = ({ onCreateNew }) => {
-    const { posts, removePost } = useSellerStore();
-    const [copiedId, setCopiedId] = useState<number | null>(null);
+    const { links: posts, archiveProduct: removePost } = useSellerStore();
+    const [copiedId, setCopiedId] = useState<string | number | null>(null);
 
-    const copyLink = async (link: string, id: number) => {
+    const copyLink = async (link: string, id: string | number) => {
         try {
             await navigator.clipboard.writeText(link);
             setCopiedId(id);
@@ -71,9 +71,9 @@ export const SellerLinksSection: React.FC<SellerLinksSectionProps> = ({ onCreate
                         <div className="flex items-start gap-3">
                             {/* Thumbnail */}
                             <div className="w-14 h-14 rounded-xl bg-white/10 overflow-hidden shrink-0">
-                                {post.thumbnailUrl ? (
+                                {post.img ? (
                                     <img
-                                        src={post.thumbnailUrl}
+                                        src={post.img}
                                         alt={post.name}
                                         className="w-full h-full object-cover"
                                     />
@@ -88,7 +88,7 @@ export const SellerLinksSection: React.FC<SellerLinksSectionProps> = ({ onCreate
                             <div className="flex-1 min-w-0">
                                 <h4 className="font-bold text-sm text-white truncate">{post.name}</h4>
                                 <p className="text-xs text-white/40 mt-0.5">
-                                    KES {post.price.toLocaleString()}
+                                    KES {(post.price || 0).toLocaleString()}
                                 </p>
 
                                 {/* Stats */}
@@ -99,10 +99,10 @@ export const SellerLinksSection: React.FC<SellerLinksSectionProps> = ({ onCreate
                                     </div>
                                     <div className="flex items-center gap-1 text-white/30">
                                         <ShoppingBag size={12} />
-                                        <span className="text-[10px] font-medium">{post.orders}</span>
+                                        <span className="text-[10px] font-medium">{post.sales}</span>
                                     </div>
                                     <span className="text-[10px] text-white/20">
-                                        {new Date(post.createdAt).toLocaleDateString()}
+                                        {/* {new Date(post.createdAt).toLocaleDateString()} */}
                                     </span>
                                 </div>
                             </div>
@@ -112,11 +112,11 @@ export const SellerLinksSection: React.FC<SellerLinksSectionProps> = ({ onCreate
                         <div className="mt-3 flex items-center gap-2">
                             <div className="flex-1 bg-black/30 rounded-lg px-3 py-2 overflow-hidden">
                                 <span className="text-[10px] text-white/50 font-mono truncate block">
-                                    {post.checkoutLink}
+                                    https://sokosnap.com/p/{post.id}
                                 </span>
                             </div>
                             <button
-                                onClick={() => copyLink(post.checkoutLink, post.id)}
+                                onClick={() => copyLink(`https://sokosnap.com/p/${post.id}`, post.id)}
                                 className="p-2 bg-yellow-400 hover:bg-yellow-300 rounded-lg transition-colors shrink-0"
                                 title="Copy link"
                             >
@@ -127,14 +127,14 @@ export const SellerLinksSection: React.FC<SellerLinksSectionProps> = ({ onCreate
                                 )}
                             </button>
                             <button
-                                onClick={() => openLink(post.checkoutLink)}
+                                onClick={() => openLink(`https://sokosnap.com/p/${post.id}`)}
                                 className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors shrink-0"
                                 title="Open link"
                             >
                                 <ExternalLink size={14} className="text-white/70" />
                             </button>
                             <button
-                                onClick={() => removePost(post.id)}
+                                onClick={() => removePost(String(post.id))}
                                 className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors shrink-0"
                                 title="Delete"
                             >

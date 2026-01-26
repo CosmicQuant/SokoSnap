@@ -4,8 +4,17 @@
  */
 
 import { create } from 'zustand';
-import { persist, devtools } from 'zustand/middleware';
+import { persist, devtools, createJSONStorage, StateStorage } from 'zustand/middleware';
 import type { User } from '../types';
+import { auth, db, googleProvider } from '../lib/firebase';
+import {
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signInWithPopup,
+    signOut,
+    updateProfile
+} from 'firebase/auth';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 interface AuthState {
     // State
@@ -45,13 +54,6 @@ interface SellerData {
 }
 
 /**
- * Generate a unique user ID
- */
-const generateUserId = (): string => {
-    return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-};
-
-/**
  * Authentication Store
  * Uses Zustand with persistence and devtools middleware
  */
@@ -68,32 +70,56 @@ export const useAuthStore = create<AuthState>()(
                 authMode: null,
 
                 // Login action
-                login: async (identifier: string, _password?: string) => {
+                login: async (identifier: string, password?: string) => {
                     set({ isLoading: true, error: null });
 
                     try {
-                        // Simulate API call - Replace with actual API integration
-                        await new Promise((resolve) => setTimeout(resolve, 1500));
+                        if (!password) throw new Error('Password is required');
 
-                        // Mock user lookup
-                        const user: User = {
-                            id: generateUserId(),
-                            name: 'Demo User',
-                            phone: identifier.includes('@') ? '0712345678' : identifier,
-                            email: identifier.includes('@') ? identifier : 'demo@sokosnap.com',
-                            type: 'verified_buyer',
-                            createdAt: new Date(),
-                            updatedAt: new Date(),
-                        };
+                        // 1. Sign in with Firebase Auth
+                        const userCredential = await signInWithEmailAndPassword(auth, identifier, password);
+                        const firebaseUser = userCredential.user;
+
+                        // 2. Fetch User Data from Firestore
+                        const docRef = doc(db, 'users', firebaseUser.uid);
+                        const docSnap = await getDoc(docRef);
+
+                        let userData: User;
+
+                        if (docSnap.exists()) {
+                            // Convert Firestore Timestamp to Date if needed, assuming direct mapping for now
+                            // but ensuring dates are Dates
+                            const data = docSnap.data();
+                            userData = {
+                                ...data,
+                                id: firebaseUser.uid,
+                                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+                                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date()
+                            } as User;
+                        } else {
+                            // Fallback if doc doesn't exist (shouldn't happen for registered users but good safety)
+                            userData = {
+                                id: firebaseUser.uid,
+                                name: firebaseUser.displayName || 'User',
+                                email: firebaseUser.email || identifier,
+                                phone: '',
+                                type: 'verified_buyer',
+                                createdAt: new Date(),
+                                updatedAt: new Date()
+                            };
+                            // Create it so next time it exists
+                            await setDoc(docRef, userData);
+                        }
 
                         set({
-                            user,
+                            user: userData,
                             isAuthenticated: true,
                             isLoading: false,
                             isAuthModalOpen: false,
                             authMode: null,
                         });
                     } catch (error) {
+                        console.error('Login error:', error);
                         set({
                             error: error instanceof Error ? error.message : 'Login failed',
                             isLoading: false,
@@ -104,93 +130,157 @@ export const useAuthStore = create<AuthState>()(
                 loginWithGoogle: async () => {
                     set({ isLoading: true, error: null });
                     try {
-                        // Simulate Google Auth
-                        await new Promise((resolve) => setTimeout(resolve, 1500));
+                        const result = await signInWithPopup(auth, googleProvider);
+                        const firebaseUser = result.user;
 
-                        // Check if we need to collect phone (mock logic: 50% chance we need phone)
-                        // In real app, you'd check if user exists and has phone
+                        // Check Firestore
+                        const docRef = doc(db, 'users', firebaseUser.uid);
+                        const docSnap = await getDoc(docRef);
 
-                        const user: User = {
-                            id: generateUserId(),
-                            name: 'Google User',
-                            email: 'google.user@gmail.com',
-                            phone: '', // Intentionally empty to trigger phone collection flow if needed
-                            type: 'verified_buyer',
-                            isEmailVerified: true,
-                            createdAt: new Date(),
-                            updatedAt: new Date(),
-                        };
+                        let userData: User;
+
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            userData = {
+                                ...data,
+                                id: firebaseUser.uid,
+                                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+                                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date()
+                            } as User;
+                        } else {
+                            // Create new user doc for Google Sign In
+                            userData = {
+                                id: firebaseUser.uid,
+                                name: firebaseUser.displayName || 'Google User',
+                                email: firebaseUser.email || '',
+                                phone: '', // Missing initially, will prompt user later
+                                avatar: firebaseUser.photoURL || undefined,
+                                type: 'verified_buyer',
+                                isEmailVerified: true,
+                                createdAt: new Date(),
+                                updatedAt: new Date(),
+                            };
+                            await setDoc(docRef, userData);
+                        }
 
                         set({
-                            user,
+                            user: userData,
                             isAuthenticated: true,
                             isLoading: false,
-                            // Only close if profile is complete (has phone)
-                            isAuthModalOpen: !!user.phone ? false : true,
+                            // If phone is missing, keep modal open (or logic elsewhere handles it)
+                            // But here we just close it generally, relying on the 'Start Selling' check logic
+                            isAuthModalOpen: false,
                         });
 
                     } catch (error) {
+                        console.error('Google Sign in failed', error);
                         set({ error: 'Google Sign in failed', isLoading: false });
                     }
                 },
 
                 // Logout action
-                logout: () => {
-                    set({
-                        user: null,
-                        isAuthenticated: false,
-                        error: null,
-                        isAuthModalOpen: false,
-                        authMode: null,
-                    });
+                logout: async () => {
+                    try {
+                        await signOut(auth);
+                        set({
+                            user: null,
+                            isAuthenticated: false,
+                            error: null,
+                            isAuthModalOpen: false,
+                            authMode: null,
+                        });
+                    } catch (error) {
+                        console.error('Logout failed', error);
+                    }
                 },
 
                 register: async (data) => {
-                    set({ isLoading: true });
+                    set({ isLoading: true, error: null });
                     try {
-                        await new Promise((resolve) => setTimeout(resolve, 1500));
-                        const user: User = {
-                            id: generateUserId(),
+                        if (!data.email || !data.showPassword) {
+                            throw new Error("Email and password required");
+                        }
+
+                        // 1. Create Auth User
+                        const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.showPassword);
+                        const firebaseUser = userCredential.user;
+
+                        // 2. Update Profile Name
+                        if (data.name) {
+                            await updateProfile(firebaseUser, { displayName: data.name });
+                        }
+
+                        // 3. Create Firestore Doc
+                        const newUser: User = {
+                            id: firebaseUser.uid,
                             name: data.name || 'New User',
                             phone: data.phone,
                             email: data.email,
                             type: 'verified_buyer',
-                            isEmailVerified: false, // Needs verification
+                            isEmailVerified: false,
                             createdAt: new Date(),
                             updatedAt: new Date(),
                         };
-                        set({ user, isAuthenticated: true, isLoading: false, isAuthModalOpen: false });
-                    } catch (e) {
-                        set({ isLoading: false, error: 'Registration failed' });
+
+                        await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+
+                        set({ user: newUser, isAuthenticated: true, isLoading: false, isAuthModalOpen: false });
+                    } catch (error: any) {
+                        console.error('Registration failed:', error);
+                        let msg = 'Registration failed';
+                        if (error.code === 'auth/email-already-in-use') msg = 'Email already in use';
+                        if (error.code === 'auth/weak-password') msg = 'Password should be at least 6 characters';
+                        set({ isLoading: false, error: msg });
                     }
                 },
 
                 becomeSeller: async (data: SellerData) => {
                     set({ isLoading: true });
                     try {
-                        await new Promise((resolve) => setTimeout(resolve, 1500));
                         const currentUser = get().user;
                         if (!currentUser) throw new Error('Not authenticated');
 
                         const updatedUser: User = {
                             ...currentUser,
                             type: 'verified_merchant',
-                            ...data
+                            ...data,
+                            updatedAt: new Date()
                         };
+
+                        // Update Firestore
+                        const docRef = doc(db, 'users', currentUser.id);
+                        await updateDoc(docRef, {
+                            type: 'verified_merchant',
+                            ...data,
+                            updatedAt: new Date()
+                        });
+
                         set({ user: updatedUser, isLoading: false });
                     } catch (e) {
+                        console.error('Become seller failed:', e);
                         set({ isLoading: false, error: 'Failed to upgrade to seller' });
                     }
                 },
 
                 clearError: () => set({ error: null }),
 
-                updateUser: (updates) => {
+                updateUser: async (updates) => {
                     const currentUser = get().user;
                     if (currentUser) {
-                        set({ user: { ...currentUser, ...updates } });
+                        // Optimistic update
+                        const updatedUser = { ...currentUser, ...updates };
+                        set({ user: updatedUser });
+
+                        // Fire and forget update to DB (or await if critical)
+                        try {
+                            const docRef = doc(db, 'users', currentUser.id);
+                            await updateDoc(docRef, { ...updates, updatedAt: new Date() });
+                        } catch (err) {
+                            console.error("Failed to sync user update", err);
+                        }
                     }
                 },
+
 
 
 

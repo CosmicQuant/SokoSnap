@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import { generateMockSecureOTP } from './utils/validation';
-import { useCartStore, useAuthStore, useSellerStore } from './store';
+import { useCartStore, useAuthStore, useSellerStore, useProductStore } from './store';
 import { useNetworkStatus } from './hooks';
 import { FeedItem } from '@components/feed/FeedItem';
 import { TopNav } from './components/layout/TopNav';
@@ -27,99 +27,18 @@ const PageLoader = () => (
     </div>
 );
 
-// Unified Data Structure
-const PRODUCTS = [
-    {
-        id: 1,
-        type: 'video',
-        seller: 'Eastleigh Kicks',
-        handle: '@eastleigh_kicks',
-        name: 'Air Jordan 1 "Uni Blue"',
-        price: 4500,
-        media: 'https://assets.mixkit.co/videos/preview/mixkit-fashion-model-showing-sneakers-34537-large.mp4',
-        slides: [
-            { type: 'video', url: 'https://assets.mixkit.co/videos/preview/mixkit-fashion-model-showing-sneakers-34537-large.mp4' },
-            { type: 'image', url: 'https://images.unsplash.com/photo-1628253747716-0c4f5c90fdda?auto=format&fit=crop&q=80&w=1080' },
-            { type: 'image', url: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=80&w=1080' }
-        ],
-        description: "Premium quality. Best sellers in Nairobi.",
-        likes: '12.4k',
-        allowCOD: true
-    },
-    {
-        id: 2,
-        type: 'image',
-        seller: 'Tech Oasis',
-        handle: '@techoasis_ke',
-        name: 'iPhone 15 Pro Max',
-        price: 155000,
-        media: 'https://images.unsplash.com/photo-1696446701796-da61225697cc?auto=format&fit=crop&q=80&w=1080',
-        slides: [
-            { type: 'image', url: 'https://images.unsplash.com/photo-1696446701796-da61225697cc?auto=format&fit=crop&q=80&w=1080' },
-            { type: 'image', url: 'https://images.unsplash.com/photo-1695048180494-1b32e043324d?auto=format&fit=crop&q=80&w=1080' }
-        ],
-        description: "Brand new, Titanium Blue. Escrow protected.",
-        likes: '8.2k',
-        allowCOD: true
-    },
-    {
-        id: 3,
-        type: 'image',
-        seller: 'Glamour Trends',
-        handle: '@glamour_ke',
-        name: 'Gucci Marmont Handbag',
-        price: 12500,
-        media: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&q=80&w=1080',
-        description: "Authentic leather. Comes with dust bag.",
-        likes: '5.1k',
-        allowCOD: true
-    },
-    {
-        id: 4,
-        type: 'video',
-        seller: 'Nanny Banana',
-        handle: '@nano_banana',
-        name: 'Summer Flora Dress',
-        price: 3200,
-        media: 'https://assets.mixkit.co/videos/preview/mixkit-woman-turning-in-slow-motion-with-a-floral-dress-39327-large.mp4',
-        slides: [
-            { type: 'video', url: 'https://assets.mixkit.co/videos/preview/mixkit-woman-turning-in-slow-motion-with-a-floral-dress-39327-large.mp4' },
-            { type: 'image', url: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&q=80&w=1080' }
-        ],
-        description: "Lightweight summer vibes. Available in all sizes.",
-        likes: '15.6k',
-        allowCOD: true
-    },
-    {
-        id: 5,
-        type: 'video',
-        seller: 'Nanny Banana',
-        handle: '@nano_banana',
-        name: 'Chic Beige Blazer',
-        price: 5500,
-        media: 'https://assets.mixkit.co/videos/preview/mixkit-young-woman-posing-with-a-blazer-34539-large.mp4',
-        description: "Perfect for the office or a casual brunch.",
-        likes: '9.3k',
-        allowCOD: true
-    },
-    {
-        id: 6,
-        type: 'image',
-        seller: 'Nanny Banana',
-        handle: '@nano_banana',
-        name: 'Velvet Evening Gown',
-        price: 8900,
-        media: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&q=80&w=1080',
-        description: "Stunning velvet texture. Create an impression.",
-        likes: '11.8k',
-        allowCOD: true
-    }
-];
-
 const App = () => {
+    // Store
+    const { products, fetchProducts, loading: productsLoading } = useProductStore();
+
+    // Initial Fetch
+    useEffect(() => {
+        fetchProducts();
+    }, [fetchProducts]);
+
     // Checkout Mode State (for shared checkout links)
     const [isCheckoutMode, setIsCheckoutMode] = useState(false);
-    const [checkoutProductId, setCheckoutProductId] = useState<number | null>(null);
+    const [checkoutProductId, setCheckoutProductId] = useState<string | null>(null);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     // Ref to track checkout mode for async callbacks
@@ -135,7 +54,7 @@ const App = () => {
 
     // Seller State
     const { user, openAuthModal } = useAuthStore();
-    const { addPost } = useSellerStore();
+    const { createProduct } = useSellerStore();
     const isSeller = user?.type === 'verified_merchant';
 
     // Network Status
@@ -157,22 +76,28 @@ const App = () => {
     // Parse URL for checkout mode on mount and handle deep links
     useEffect(() => {
         const parseCheckoutUrl = (url: string) => {
-            // Match patterns: /p/123, ?p=123, or #/p/123 (hash routing)
-            const pathMatch = url.match(/\/p\/(\d+)/);
-            const queryMatch = url.match(/[?&]p=(\d+)/);
-            const hashMatch = url.match(/#\/p\/(\d+)/);
+            // Match patterns: /p/ID
+            // Supports numeric or string IDs (Firebase IDs are mixed case strings)
+            const pathMatch = url.match(/\/p\/([^\/?#]+)/);
+            const queryMatch = url.match(/[?&]p=([^\/?#&]+)/);
+            const hashMatch = url.match(/#\/p\/([^\/?#]+)/);
 
             const productId = pathMatch?.[1] || queryMatch?.[1] || hashMatch?.[1];
 
             console.log('[Checkout] Parsing URL:', url, 'Found ID:', productId);
 
             if (productId) {
-                const id = parseInt(productId, 10);
-                const product = PRODUCTS.find(p => p.id === id);
-                console.log('[Checkout] Product found:', !!product, 'Setting checkout mode');
+                // Determine if ID exists in products or if we should trust it's loading
+                const product = products.find(p => p.id === productId || String(p.id) === productId);
+
                 if (product) {
                     setIsCheckoutMode(true);
-                    setCheckoutProductId(id);
+                    setCheckoutProductId(product.id);
+                    return true;
+                } else if (productsLoading) {
+                    // Assume loading
+                    setIsCheckoutMode(true);
+                    setCheckoutProductId(productId);
                     return true;
                 }
             }
@@ -201,7 +126,7 @@ const App = () => {
             appUrlListener.then(h => h.remove());
             window.removeEventListener('popstate', handlePopState);
         };
-    }, []);
+    }, [products, productsLoading]);
 
     // Hardware Back Button Handling
     useEffect(() => {
@@ -305,12 +230,12 @@ const App = () => {
         window.history.replaceState({}, '', '/');
     };
     const filteredProducts = useMemo(() => {
-        if (!searchQuery) return PRODUCTS;
-        return PRODUCTS.filter(p =>
+        if (!searchQuery) return products;
+        return products.filter(p =>
             p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.seller.toLowerCase().includes(searchQuery.toLowerCase())
+            p.sellerName.toLowerCase().includes(searchQuery.toLowerCase())
         );
-    }, [searchQuery]);
+    }, [searchQuery, products]);
 
     // View Routing
     if (showSearch) {
@@ -370,16 +295,24 @@ const App = () => {
             <Suspense fallback={<PageLoader />}>
                 <CreatePostView
                     onBack={() => setView('feed')}
-                    onPostCreated={(post) => {
-                        addPost({
-                            id: post.id,
-                            name: post.name,
-                            description: post.description,
-                            price: post.price,
-                            checkoutLink: post.checkoutLink,
-                            createdAt: post.createdAt,
-                            thumbnailUrl: post.media[0]?.preview,
-                        });
+                    onCreatePost={async (data, files) => {
+                        const id = await createProduct({
+                            name: data.name,
+                            description: data.description,
+                            price: data.price,
+                            sellerId: user?.id || 'unknown',
+                            sellerName: user?.shopName || user?.name || 'Seller',
+                            sellerHandle: user?.handle || '@seller',
+                            sellerAvatar: user?.avatar || '',
+                            verified: user?.type === 'verified_merchant',
+                            type: files[0]?.type.includes('video') ? 'video' : 'image',
+                            status: 'active',
+                            likes: '0',
+                            comments: '0'
+                        }, files);
+
+                        fetchProducts();
+                        return id;
                     }}
                 />
             </Suspense>
@@ -414,7 +347,7 @@ const App = () => {
                         setView('feed');
                         setCurrentSeller(undefined);
                     }}
-                    products={PRODUCTS.filter(p => p.seller === currentSeller.name)}
+                    products={products.filter(p => p.sellerName === currentSeller.name)}
                     onSelectPost={() => {
                         setActiveTab('shop');
                         setView('feed');
@@ -426,7 +359,7 @@ const App = () => {
 
     // Get checkout product if in checkout mode
     const checkoutProduct = isCheckoutMode && checkoutProductId
-        ? PRODUCTS.find(p => p.id === checkoutProductId)
+        ? products.find(p => p.id === checkoutProductId || String(p.id) === checkoutProductId)
         : null;
 
     // Default: Feed View
@@ -462,10 +395,10 @@ const App = () => {
                     2. If activeTab is 'shop' AND we have a currentSeller, we only show products from that seller.
                     3. If activeTab is 'foryou', we show everything (mixed).
                 */}
-                {(isCheckoutMode && checkoutProduct ? [checkoutProduct] : PRODUCTS
+                {(isCheckoutMode && checkoutProduct ? [checkoutProduct] : products
                     .filter(p => {
                         if (activeTab === 'shop' && currentSeller) {
-                            return p.seller === currentSeller.name;
+                            return p.sellerName === currentSeller.name;
                         }
                         return true;
                     }))

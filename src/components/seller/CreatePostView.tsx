@@ -21,22 +21,14 @@ interface MediaItem {
 
 interface CreatePostViewProps {
     onBack: () => void;
-    onPostCreated: (post: {
-        id: number;
-        name: string;
-        description: string;
-        price: number;
-        media: MediaItem[];
-        checkoutLink: string;
-        createdAt: Date;
-    }) => void;
+    onCreatePost: (data: { name: string, description: string, price: number }, files: File[]) => Promise<string>;
 }
 
 const MAX_VIDEOS = 5;
 const MAX_IMAGES = 5;
 const MAX_VIDEO_DURATION = 42; // seconds
 
-export const CreatePostView: React.FC<CreatePostViewProps> = ({ onBack, onPostCreated }) => {
+export const CreatePostView: React.FC<CreatePostViewProps> = ({ onBack, onCreatePost }) => {
     const [media, setMedia] = useState<MediaItem[]>([]);
     const [productName, setProductName] = useState('');
     const [description, setDescription] = useState('');
@@ -154,26 +146,24 @@ export const CreatePostView: React.FC<CreatePostViewProps> = ({ onBack, onPostCr
         setIsCreating(true);
         setError(null);
 
-        // Simulate API call to create post and get checkout link
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            const result = await onCreatePost(
+                {
+                    name: productName,
+                    description,
+                    price: parseInt(price, 10) || 0,
+                },
+                media.map(m => m.file)
+            );
 
-        // Generate a mock product ID and checkout link
-        const postId = Date.now();
-        const checkoutLink = `https://sokosnap.app/p/${postId}`;
-
-        setCreatedLink(checkoutLink);
-        setIsCreating(false);
-
-        // Notify parent
-        onPostCreated({
-            id: postId,
-            name: productName,
-            description,
-            price: parseInt(price, 10) || 0,
-            media,
-            checkoutLink,
-            createdAt: new Date()
-        });
+            const link = result.startsWith('http') ? result : `https://sokosnap.app/p/${result}`;
+            setCreatedLink(link);
+        } catch (err) {
+            console.error(err);
+            setError('Failed to create post');
+        } finally {
+            setIsCreating(false);
+        }
     };
 
     const copyLink = async () => {

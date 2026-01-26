@@ -37,6 +37,7 @@
     "@react-google-maps/api": "^2.20.8",
     "@tanstack/react-query": "^5.0.0",
     "@types/leaflet": "^1.9.21",
+    "firebase": "^12.8.0",
     "focus-trap-react": "^10.0.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.562.0",

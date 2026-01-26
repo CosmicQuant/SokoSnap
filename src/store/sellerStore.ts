@@ -1,93 +1,152 @@
 /**
- * Zustand Store - Seller State Management
- * Handles seller posts, checkout links, and seller-specific state
+ * Zustand Store - Seller Data Management
+ * Handles fetching products (links) and orders from Firebase
  */
-
 import { create } from 'zustand';
-import { persist, devtools } from 'zustand/middleware';
-
-interface SellerPost {
-    id: number;
-    name: string;
-    description: string;
-    price: number;
-    checkoutLink: string;
-    createdAt: Date;
-    thumbnailUrl?: string;
-    views: number;
-    orders: number;
-}
+import { db, storage } from '../lib/firebase';
+import {
+    collection,
+    query,
+    where,
+    onSnapshot,
+    addDoc,
+    updateDoc,
+    doc,
+    Timestamp
+} from 'firebase/firestore';
+import {
+    ref,
+    uploadBytes,
+    getDownloadURL
+} from 'firebase/storage';
+// We need to fetch User types from index, but LinkItem and Order need to be flexible for now
+// or we update types.ts to support Firestore-style string IDs
+import { LinkItem, Order } from '../types';
 
 interface SellerState {
-    // State
-    posts: SellerPost[];
+    links: LinkItem[];
+    orders: Order[];
     isLoading: boolean;
+    error: string | null;
+
+    // Subscriptions
+    unsubscribeLinks: (() => void) | null;
+    unsubscribeOrders: (() => void) | null;
 
     // Actions
-    addPost: (post: Omit<SellerPost, 'views' | 'orders'>) => void;
-    removePost: (id: number) => void;
-    updatePostStats: (id: number, views?: number, orders?: number) => void;
-    clearPosts: () => void;
+    fetchSellerData: (sellerId: string) => void;
+    stopListening: () => void;
+    createProduct: (product: any, files: File[]) => Promise<string>;
+    archiveProduct: (productId: string) => Promise<void>;
 }
 
-export const useSellerStore = create<SellerState>()(
-    devtools(
-        persist(
-            (set) => ({
-                // Initial State
-                posts: [],
-                isLoading: false,
+export const useSellerStore = create<SellerState>((set, get) => ({
+    links: [],
+    orders: [],
+    isLoading: false,
+    error: null,
+    unsubscribeLinks: null,
+    unsubscribeOrders: null,
 
-                // Add new post
-                addPost: (post) => {
-                    const newPost: SellerPost = {
-                        ...post,
-                        views: 0,
-                        orders: 0,
-                    };
-                    set((state) => ({
-                        posts: [newPost, ...state.posts]
-                    }));
-                },
+    fetchSellerData: (sellerId: string) => {
+        set({ isLoading: true });
 
-                // Remove post
-                removePost: (id) => {
-                    set((state) => ({
-                        posts: state.posts.filter(p => p.id !== id)
-                    }));
-                },
+        // 1. Listen to Products (Links)
+        const productsQuery = query(
+            collection(db, 'products'),
+            where('sellerId', '==', sellerId),
+            // orderBy('createdAt', 'desc') // Requires index, might fail initially without it
+        );
 
-                // Update post stats
-                updatePostStats: (id, views, orders) => {
-                    set((state) => ({
-                        posts: state.posts.map(p =>
-                            p.id === id
-                                ? {
-                                    ...p,
-                                    views: views !== undefined ? views : p.views,
-                                    orders: orders !== undefined ? orders : p.orders
-                                }
-                                : p
-                        )
-                    }));
-                },
+        const unsubLinks = onSnapshot(productsQuery, (snapshot) => {
+            const links = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as unknown as LinkItem[];
+            set({ links });
+        }, (err) => {
+            console.error("Error fetching products:", err);
+            set({ error: "Failed to load products" });
+        });
 
-                // Clear all posts
-                clearPosts: () => set({ posts: [] }),
-            }),
-            {
-                name: 'sokosnap-seller',
-                partialize: (state) => ({
-                    posts: state.posts,
-                }),
+        // 2. Listen to Orders
+        const ordersQuery = query(
+            collection(db, 'orders'),
+            where('sellerId', '==', sellerId),
+            // orderBy('date', 'desc') // Requires index
+        );
+
+        const unsubOrders = onSnapshot(ordersQuery, (snapshot) => {
+            const orders = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                date: doc.data().date?.toDate ? doc.data().date.toDate().toLocaleDateString() : 'Just now'
+            })) as unknown as Order[];
+            set({ orders, isLoading: false });
+        }, () => {
+            // console.error("Error fetching orders:", err);
+            // Silent fail for orders if collection doesn't exist yet
+        });
+
+        set({
+            unsubscribeLinks: unsubLinks,
+            unsubscribeOrders: unsubOrders,
+            isLoading: false
+        });
+    },
+
+    stopListening: () => {
+        const { unsubscribeLinks, unsubscribeOrders } = get();
+        if (unsubscribeLinks) unsubscribeLinks();
+        if (unsubscribeOrders) unsubscribeOrders();
+        set({ links: [], orders: [] });
+    },
+
+    createProduct: async (productData, files) => {
+        set({ isLoading: true });
+        try {
+            // 1. Upload Images
+            const imageUrls: string[] = [];
+            for (const file of files) {
+                const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
+                const snapshot = await uploadBytes(storageRef, file);
+                const url = await getDownloadURL(snapshot.ref);
+                imageUrls.push(url);
             }
-        ),
-        { name: 'SellerStore' }
-    )
-);
 
-// Selector hooks
-export const useSellerPosts = () => useSellerStore((state) => state.posts);
-export const useSellerLoading = () => useSellerStore((state) => state.isLoading);
+            // 2. Save to Firestore
+            const docRef = await addDoc(collection(db, 'products'), {
+                ...productData,
+                img: imageUrls[0] || '', // Main image
+                images: imageUrls,
+                createdAt: Timestamp.now(),
+                views: 0,
+                clicks: 0,
+                sales: 0,
+                revenue: 0,
+                status: 'active'
+            });
+
+            set({ isLoading: false });
+            return docRef.id;
+        } catch (error) {
+            console.error("Create Product Error:", error);
+            set({ isLoading: false, error: "Failed to create product" });
+            throw error;
+        }
+    },
+
+    archiveProduct: async (productId) => {
+        set({ isLoading: true });
+        try {
+            await updateDoc(doc(db, 'products', productId), {
+                status: 'archived'
+            });
+            set({ isLoading: false });
+        } catch (error) {
+            set({ isLoading: false, error: "Failed to archive product" });
+        }
+    }
+}));
 
 export default useSellerStore;

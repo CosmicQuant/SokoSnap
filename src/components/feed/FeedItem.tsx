@@ -169,7 +169,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
     }, [hasUserData, showBottomSheet]);
 
     // Carousel Logic
-    const slides = product.slides || [{ type: product.type, url: product.media }];
+    const slides = product.slides || [{ type: product.type, url: product.mediaUrl || product.media }];
     const [activeSlide, setActiveSlide] = useState(0);
 
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -359,13 +359,13 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                             className="w-fit flex items-center gap-2 mb-1 cursor-pointer active:scale-95 transition-transform origin-left"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                onView?.({ name: product.seller, handle: product.handle });
+                                onView?.({ name: product.sellerName || product.seller, handle: product.sellerHandle || product.handle });
                             }}
                         >
                             <div className="w-5 h-5 rounded-full border border-yellow-400/50 overflow-hidden shadow-lg">
-                                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${product.seller}`} alt="avatar" />
+                                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${product.sellerName || product.seller}`} alt="avatar" />
                             </div>
-                            <span className="text-[10px] font-black text-white uppercase tracking-tight drop-shadow-md">{product.handle}</span>
+                            <span className="text-[10px] font-black text-white uppercase tracking-tight drop-shadow-md">{product.sellerHandle || product.handle}</span>
                             <CheckCircle2 size={10} className="text-blue-400 drop-shadow-md" />
                         </div>
                         <h2 className="text-lg font-black text-white italic uppercase tracking-tighter leading-none drop-shadow-xl whitespace-nowrap overflow-hidden text-ellipsis mb-1">
@@ -476,8 +476,8 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                                             </span>
                                             <span
                                                 className={`text-xs font-black italic uppercase tracking-tighter drop-shadow-sm scale-y-110 pr-0.5 ${hasUserData
-                                                        ? 'bg-gradient-to-r from-yellow-400 via-white to-yellow-400 bg-[length:200%_auto] bg-clip-text text-transparent animate-text-shimmer'
-                                                        : 'text-yellow-400'
+                                                    ? 'bg-gradient-to-r from-yellow-400 via-white to-yellow-400 bg-[length:200%_auto] bg-clip-text text-transparent animate-text-shimmer'
+                                                    : 'text-yellow-400'
                                                     }`}
                                             >
                                                 {hasUserData ? 'ORDER NOW' : 'ORDER NOW'}

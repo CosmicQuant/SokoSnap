@@ -21,8 +21,10 @@ import {
     Play,
 } from 'lucide-react';
 import lipaNaMpesaLogo from '../../assets/lipa-na-mpesa.png';
-import { useCartStore, useUIStore } from '../../store';
-import { MOCK_PRODUCTS, APP_CONFIG } from '../../utils/constants';
+import { useCartStore, useUIStore, useAuthStore } from '../../store';
+import { useProductStore } from '../../store/productStore';
+import { useOrderStore } from '../../store/orderStore';
+import { APP_CONFIG } from '../../utils/constants';
 import { formatCurrency } from '../../utils/formatters';
 import { checkoutSchema, getErrorMessages } from '../../utils/validators';
 import type { Product, User as UserType } from '../../types';
@@ -259,6 +261,9 @@ const CheckoutSheet: React.FC<{
     const [shouldAnimateAbsorb, setShouldAnimateAbsorb] = useState(false);
     const isFormFilled = phone.length >= 10 && location.length >= 3;
 
+    const { createOrder } = useOrderStore();
+    const { user } = useAuthStore();
+
     // Trigger animation when form BECOMES filled
     useEffect(() => {
         if (isFormFilled) {
@@ -282,10 +287,27 @@ const CheckoutSheet: React.FC<{
 
         setErrors({});
         setIsProcessing(true);
-        await new Promise((resolve) => setTimeout(resolve, 2500));
-        setIsProcessing(false);
-        onClose();
-        onSuccess();
+
+        try {
+            await createOrder({
+                items: [{ product, quantity: 1, addedAt: new Date() }],
+                customerId: user?.id || 'guest',
+                customerPhone: phone,
+                sellerId: product.sellerId,
+                amount: product.price,
+                deliveryFee: deliveryFee,
+                total: total,
+                status: 'pending',
+                deliveryLocation: location
+            });
+            setIsProcessing(false);
+            onClose();
+            onSuccess();
+        } catch (err) {
+            console.error(err);
+            setIsProcessing(false);
+            alert("Failed to process order. Please try again.");
+        }
     };
 
     return (
@@ -418,7 +440,12 @@ export const CheckoutFeed: React.FC<CheckoutFeedProps> = ({
     const [activeProduct, setActiveProduct] = useState<Product | null>(null);
 
     const { items: cartItems } = useCartStore();
+    const { products, fetchProducts, loading } = useProductStore();
     const navigateTo = useUIStore((state) => state.navigateTo);
+
+    useEffect(() => {
+        fetchProducts();
+    }, [fetchProducts]);
 
     const handleBuyNow = useCallback(
         (product: Product) => {
@@ -434,10 +461,18 @@ export const CheckoutFeed: React.FC<CheckoutFeedProps> = ({
         navigateTo('success');
     }, [navigateTo]);
 
-    const followingFeed = MOCK_PRODUCTS.filter((p) =>
-        ['prod_2', 'prod_4', 'prod_6'].includes(p.id)
-    );
-    const forYouFeed = MOCK_PRODUCTS;
+    // In a real app, 'following' would filter by sellers the user follows
+    // For now, we just show all products in both, or slice them differently
+    const followingFeed = products;
+    const forYouFeed = products;
+
+    if (loading && products.length === 0) {
+        return (
+            <div className="h-full w-full bg-black flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="h-full w-full bg-black relative flex flex-col overflow-hidden">

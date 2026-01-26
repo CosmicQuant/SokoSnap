@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     Plus,
     Wallet,
@@ -31,27 +31,10 @@ import {
     Store,
     Mail
 } from 'lucide-react';
-
-interface LinkItem {
-    id: number;
-    name: string;
-    views: number;
-    clicks: number;
-    sales: number;
-    revenue: number;
-    img: string;
-}
-
-interface Order {
-    id: string;
-    customer: string;
-    product: string;
-    amount: number;
-    status: 'pending' | 'shipping' | 'completed' | 'cancelled';
-    date: string;
-    linkId: number;
-    img: string;
-}
+import { useAuthStore } from '../../store/authStore';
+import { useSellerStore } from '../../store/sellerStore';
+import { LinkItem, Order } from '../../types';
+import { formatCompactNumber } from '../../utils/formatters';
 
 interface StatCardProps {
     label: string;
@@ -118,38 +101,50 @@ const LinkCard = ({ item, onClick, action }: { item: LinkItem; onClick: () => vo
 };
 
 const OrderCard = ({ order }: { order: Order }) => {
-    const statusColor = {
-        pending: 'bg-yellow-100 text-yellow-700',
-        shipping: 'bg-blue-100 text-blue-700',
-        completed: 'bg-green-100 text-green-700',
-        cancelled: 'bg-red-100 text-red-700'
-    }[order.status];
+    // Map status to color
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'pending': return 'bg-yellow-100 text-yellow-700';
+            case 'shipping': return 'bg-blue-100 text-blue-700';
+            case 'completed': return 'bg-green-100 text-green-700';
+            case 'cancelled': return 'bg-red-100 text-red-700';
+            default: return 'bg-slate-100 text-slate-700';
+        }
+    };
 
-    const statusIcon = {
-        pending: <Clock size={12} />,
-        shipping: <Truck size={12} />,
-        completed: <CheckCircle2 size={12} />,
-        cancelled: <X size={12} />
-    }[order.status];
+    // Map status to icon
+    const getStatusIcon = (status: string) => {
+        switch (status) {
+            case 'pending': return <Clock size={12} />;
+            case 'shipping': return <Truck size={12} />;
+            case 'completed': return <CheckCircle2 size={12} />;
+            case 'cancelled': return <X size={12} />;
+            default: return <Clock size={12} />;
+        }
+    };
+
+    // Fallback for image (since Order type doesn't store product image directly anymore)
+    const productImg = order.items && order.items[0] ? order.items[0].product.mediaUrl : '';
+    const productName = order.items && order.items[0] ? order.items[0].product.name : 'Product';
 
     return (
         <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-            {order.img.includes('mp4') ? (
-                <video src={order.img} className="w-14 h-14 rounded-2xl object-cover bg-slate-100" />
+            {productImg.includes('mp4') ? (
+                <video src={productImg} className="w-14 h-14 rounded-2xl object-cover bg-slate-100" />
             ) : (
-                <img src={order.img} className="w-14 h-14 rounded-2xl object-cover bg-slate-100" />
+                <img src={productImg} className="w-14 h-14 rounded-2xl object-cover bg-slate-100" />
             )}
             <div className="flex-1">
                 <div className="flex justify-between items-start mb-1">
-                    <h4 className="font-black text-slate-900 text-sm">{order.customer}</h4>
+                    <h4 className="font-black text-slate-900 text-sm">{order.customerId}</h4>
                     <span className="text-xs font-black text-slate-900">KES {order.amount}</span>
                 </div>
-                <p className="text-[10px] font-bold text-slate-400 truncate w-40">{order.product} • {order.id}</p>
+                <p className="text-[10px] font-bold text-slate-400 truncate w-40">{productName} • {order.id}</p>
                 <div className="flex justify-between items-center mt-2">
-                    <span className={`flex items-center gap-1 text-[9px] font-bold uppercase px-2 py-1 rounded-full ${statusColor}`}>
-                        {statusIcon} {order.status}
+                    <span className={`flex items-center gap-1 text-[9px] font-bold uppercase px-2 py-1 rounded-full ${getStatusColor(order.status)}`}>
+                        {getStatusIcon(order.status)} {order.status}
                     </span>
-                    <span className="text-[9px] font-bold text-slate-300">{order.date}</span>
+                    <span className="text-[9px] font-bold text-slate-300">{/* Check date format */}</span>
                 </div>
             </div>
         </div>
@@ -164,26 +159,45 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     // Views: 'hub' | 'payouts' | 'analytics' | 'edit-link' | 'orders'
     const [view, setView] = useState('hub');
     const [selectedLink, setSelectedLink] = useState<LinkItem | null>(null);
-    const [ordersFilter, setOrdersFilter] = useState<number | null>(null); // null = all, number = linkId
+    const [ordersFilter, setOrdersFilter] = useState<string | null>(null); // null = all, string = linkId
     const [activeOrderTab, setActiveOrderTab] = useState<'ongoing' | 'completed'>('ongoing');
+
+    // Store Hooks
+    const { user, updateUser } = useAuthStore();
+    const {
+        links,
+        orders,
+        fetchSellerData,
+        createProduct: storeCreateProduct,
+        archiveProduct: storeArchiveProduct,
+        stopListening
+    } = useSellerStore();
+
+    // Fetch data on mount
+    useEffect(() => {
+        if (user?.id) {
+            fetchSellerData(user.id);
+        }
+        return () => stopListening();
+    }, [user?.id]);
 
     // Profile State
     const [profileData, setProfileData] = useState({
-        shopName: 'Eastleigh Kicks',
-        locationName: 'Eastleigh, 1st Avenue',
-        contactName: 'Ahmed Abdullah',
-        contactPhone: '+254 712 345 678',
-        email: 'ahmed@eastleighkicks.com',
-        kraPin: 'A001234567Z',
-        mpesaType: 'till', // personal, till, paybill
-        mpesaNumber: '0712 345 678',
-        tillNumber: '123456',
+        shopName: user?.shopName || 'My Shop',
+        locationName: user?.shopLocation || 'Nairobi',
+        contactName: user?.contactPerson || user?.name || '',
+        contactPhone: user?.contactPhone || user?.phone || '',
+        email: user?.email || '',
+        kraPin: 'A00xxxxxxZ', // TODO: Add to User type
+        mpesaType: 'personal', // TODO: Add to User type
+        mpesaNumber: user?.phone || '',
+        tillNumber: '',
         paybillNumber: '',
         accountNumber: '',
-        whatsapp: '+254 712 345 678',
-        instagram: '@eastleigh_kicks',
-        tiktok: '@eastleigh_kicks',
-        facebook: 'Eastleigh Kicks Ke'
+        whatsapp: user?.phone || '',
+        instagram: '',
+        tiktok: '',
+        facebook: ''
     });
 
     const [showGenerator, setShowGenerator] = useState(false);
@@ -195,10 +209,28 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     const [returnPolicy, setReturnPolicy] = useState('exchange_7d');
     const [isEditing, setIsEditing] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const [archivedLinks, setArchivedLinks] = useState<LinkItem[]>([
-        { id: 4, name: "Old Summer Collection", views: 500, clicks: 200, sales: 5, revenue: 15000, img: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&auto=format&fit=crop&q=60" },
-        { id: 5, name: "Flash Sale Banner", views: 300, clicks: 100, sales: 2, revenue: 6000, img: "https://images.unsplash.com/photo-1520006403909-838d6b92c22e?w=800&auto=format&fit=crop&q=60" },
-    ]);
+
+    // Filter links
+    const activeLinks = links.filter(l => l.status !== 'archived');
+    const archivedLinks = links.filter(l => l.status === 'archived');
+
+    // Stats calculations
+    const totalViews = links.reduce((sum, item) => sum + (item.views || 0), 0);
+    const totalClicks = links.reduce((sum, item) => sum + (item.clicks || 0), 0);
+    
+    const safeOrders = orders || [];
+    const inHoldAmount = safeOrders
+        .filter(o => ['pending', 'shipping'].includes(o.status))
+        .reduce((sum, o) => sum + (o.amount || 0), 0);
+        
+    const payoutAmount = safeOrders
+        .filter(o => o.status === 'completed')
+        .reduce((sum, o) => sum + (o.amount || 0), 0);
+
+    const totalSalesAmount = safeOrders
+        .filter(o => o.status !== 'cancelled')
+        .reduce((sum, o) => sum + (o.amount || 0), 0);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleCreateNewLink = () => {
@@ -214,7 +246,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
         setShowGenerator(true);
     };
 
-    const handleGenerate = () => {
+    const handleGenerate = async () => {
         if (files.length === 0 && !isEditing) {
             alert("Please upload at least one media file.");
             return;
@@ -224,39 +256,45 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
             return;
         }
 
-        // Archive Logic
-        if (isEditing && selectedLink) {
-            // Just update mock logic or API call
+        try {
+            if (isEditing && selectedLink) {
+                // TODO: specific update product action
+                alert("Update logic not fully implemented yet.");
+            } else {
+                if (!user?.id) return;
+
+                await storeCreateProduct({
+                    name: productName,
+                    price: parseFloat(price),
+                    sellerId: user.id,
+                    sellerName: profileData.shopName,
+                    description: '',
+                    // Add other fields as needed
+                }, files);
+
+                alert("SokoSnap Link Generated Successfully!");
+            }
+            setShowGenerator(false);
+            setIsEditing(false);
+
+            // Reset form
+            setFiles([]);
+            setPreviews([]);
+            setProductName('');
+            setPrice('');
+            setQty('');
+            setReturnPolicy('exchange_7d');
+        } catch (err) {
+            alert("Failed to create product. Please try again.");
+            console.error(err);
         }
-
-        // Success Logic (mock)
-        // In a real app, this would call an API
-        alert(isEditing ? "Link Updated Successfully!" : "SokoSnap Link Generated Successfully!");
-        setShowGenerator(false);
-        setIsEditing(false);
-
-        // Reset form
-        setFiles([]);
-        setPreviews([]);
-        setProductName('');
-        setPrice('');
-        setQty('');
-        setReturnPolicy('exchange_7d');
     };
 
-    const handleArchiveProduct = () => {
+    const handleArchiveProduct = async () => {
         if (!selectedLink) return;
 
         if (confirm('Are you sure you want to archive this product? It will be moved to the Archived tab.')) {
-            // Remove from active links (mock - in real app this is an API call)
-            const linkToArchive = selectedLink;
-
-            // Add to archived links
-            setArchivedLinks(prev => [linkToArchive, ...prev]);
-
-            // We can't modify the const MOCK_LINKS directly in this scope easily without state, 
-            // but visually we accept the action. In a real app, refetch data.
-
+            await storeArchiveProduct(selectedLink.id.toString());
             alert("Product archived successfully.");
             setShowGenerator(false);
             setView('hub');
@@ -266,7 +304,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     const handleEditLink = () => {
         if (!selectedLink) return;
         setProductName(selectedLink.name);
-        setPrice(((selectedLink.revenue / (selectedLink.sales || 1))).toFixed(0));
+        setPrice((selectedLink.price || 0).toString());
         setQty("50"); // Mock
         setReturnPolicy('exchange_7d');
         setPreviews([selectedLink.img]);
@@ -316,25 +354,15 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
         setPreviews(prev => prev.filter((_, i) => i !== index));
     };
 
-    const MOCK_LINKS: LinkItem[] = [
-        { id: 1, name: "Vintage Denim Jacket", views: 1240, clicks: 850, sales: 42, revenue: 126000, img: "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=800&auto=format&fit=crop&q=60" },
-        { id: 2, name: "Leather Chelsea Boots", views: 890, clicks: 420, sales: 18, revenue: 84000, img: "https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?w=800&auto=format&fit=crop&q=60" },
-        { id: 3, name: "Promotional Reel", views: 2400, clicks: 1100, sales: 65, revenue: 195000, img: "https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-1232-large.mp4" },
-    ];
+    const filteredOrders = orders.filter(o => {
+        const matchesFilter = ordersFilter
+            ? o.items.some(i => String(i.product.id) === String(ordersFilter))
+            : true;
 
-    const MOCK_ORDERS: Order[] = [
-        { id: "992", customer: "Alice Murugi", product: "Vintage Denim Jacket", amount: 4500, status: 'pending', date: "just now", linkId: 1, img: MOCK_LINKS[0]!.img },
-        { id: "991", customer: "John Doe", product: "Leather Chelsea Boots", amount: 8500, status: 'shipping', date: "2h ago", linkId: 2, img: MOCK_LINKS[1]!.img },
-        { id: "988", customer: "Sarah K.", product: "Vintage Denim Jacket", amount: 4500, status: 'completed', date: "Yesterday", linkId: 1, img: MOCK_LINKS[0]!.img },
-        { id: "985", customer: "Michael B.", product: "Promotional Reel", amount: 3000, status: 'completed', date: "2 days ago", linkId: 3, img: MOCK_LINKS[2]!.img },
-        { id: "982", customer: "Kevin H.", product: "Vintage Denim Jacket", amount: 4500, status: 'cancelled', date: "Last week", linkId: 1, img: MOCK_LINKS[0]!.img },
-    ];
-
-    const filteredOrders = MOCK_ORDERS.filter(o => {
-        const matchesFilter = ordersFilter ? o.linkId === ordersFilter : true;
         const matchesTab = activeOrderTab === 'ongoing'
             ? ['pending', 'shipping'].includes(o.status)
             : ['completed', 'cancelled'].includes(o.status);
+
         return matchesFilter && matchesTab;
     });
 
@@ -513,7 +541,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                     <div>
                         <h2 className="text-lg font-black text-slate-900 mb-4">Active</h2>
                         <div className="space-y-3">
-                            {MOCK_LINKS.map(item => (
+                            {activeLinks.map(item => (
                                 <LinkCard
                                     key={item.id}
                                     item={item}
@@ -540,7 +568,8 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 if (confirm('Delete this archived link permanently?')) {
-                                                    setArchivedLinks(prev => prev.filter(l => l.id !== item.id));
+                                                    // setArchivedLinks(prev => prev.filter(l => l.id !== item.id));
+                                                    console.warn('Delete not implemented yet');
                                                 }
                                             }}
                                             className="bg-red-100 p-2 rounded-xl text-red-600 mt-1 hover:bg-red-200 transition-colors"
@@ -791,9 +820,27 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                     </div>
 
                     <button
-                        onClick={() => {
-                            // In real app, save to backend
-                            alert('Profile Updated Successfully!');
+                        onClick={async () => {
+                            if (user?.id) {
+                                await updateUser({
+                                    shopName: profileData.shopName,
+                                    shopLocation: profileData.locationName,
+                                    contactPerson: profileData.contactName,
+                                    contactPhone: profileData.contactPhone,
+                                    email: profileData.email,
+                                    kraPin: profileData.kraPin,
+                                    mpesaType: profileData.mpesaType as 'personal' | 'till' | 'paybill',
+                                    mpesaNumber: profileData.mpesaNumber,
+                                    tillNumber: profileData.tillNumber,
+                                    paybillNumber: profileData.paybillNumber,
+                                    accountNumber: profileData.accountNumber,
+                                    whatsapp: profileData.whatsapp,
+                                    instagram: profileData.instagram,
+                                    facebook: profileData.facebook,
+                                    tiktok: profileData.tiktok
+                                });
+                                alert('Profile Updated Successfully!');
+                            }
                         }}
                         className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-lg hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20 active:scale-95"
                     >
@@ -830,7 +877,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         <button onClick={() => setView(selectedLink ? 'edit-link' : 'hub')} className="p-2 -ml-2 rounded-full hover:bg-slate-50"><ArrowLeft size={20} /></button>
                         <div>
                             <h1 className="text-xl font-black text-slate-900 leading-none">Order History</h1>
-                            {ordersFilter && <p className="text-[10px] font-bold text-slate-400 mt-1">Filtering by: #{MOCK_LINKS.find(l => l.id === ordersFilter)?.name}</p>}
+                            {ordersFilter && <p className="text-[10px] font-bold text-slate-400 mt-1">Filtering by: #{links.find(l => String(l.id) === String(ordersFilter))?.name}</p>}
                         </div>
                     </div>
 
@@ -840,7 +887,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                             onClick={() => setActiveOrderTab('ongoing')}
                             className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${activeOrderTab === 'ongoing' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}
                         >
-                            Ongoing ({MOCK_ORDERS.filter(o => ['pending', 'shipping'].includes(o.status) && (ordersFilter ? o.linkId === ordersFilter : true)).length})
+                            Ongoing ({orders.filter(o => ['pending', 'shipping'].includes(o.status)).length})
                         </button>
                         <button
                             onClick={() => setActiveOrderTab('completed')}
@@ -927,7 +974,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                             icon={<Package size={20} />}
                             color="green"
                             onClick={() => {
-                                setOrdersFilter(selectedLink.id);
+                                setOrdersFilter(String(selectedLink.id));
                                 setView('orders');
                             }}
                         />
@@ -1035,7 +1082,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         </div>
                         <div>
                             <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Total Payout</p>
-                            <h3 className="font-black text-xl text-slate-900">KES 405k</h3>
+                            <h3 className="font-black text-xl text-slate-900">KES {formatCompactNumber(payoutAmount)}</h3>
                         </div>
                     </div>
                 </div>
@@ -1053,7 +1100,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                     <div className="grid grid-cols-3 gap-2 px-1">
                         <StatCard
                             label="In Hold"
-                            value="KES 45k"
+                            value={`KES ${formatCompactNumber(inHoldAmount)}`}
                             sub="Pending"
                             icon={<Lock size={64} />}
                             color="blue"
@@ -1065,15 +1112,15 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         />
                         <StatCard
                             label="Clicks"
-                            value="8,920"
-                            sub="36% Conv"
+                            value={formatCompactNumber(totalClicks)}
+                            sub={`${totalViews > 0 ? ((links.reduce((a, b) => a + (b.sales || 0), 0) / totalViews) * 100).toFixed(1) : 0}% Conv`}
                             icon={<MousePointer2 size={64} />}
                             color="purple"
                         />
                         <StatCard
                             label="Sales"
-                            value="KES 1.2m"
-                            sub="Target: 1.5m"
+                            value={`KES ${formatCompactNumber(totalSalesAmount)}`}
+                            sub="Revenue"
                             icon={<TrendingUp size={64} />}
                             color="green"
                             onClick={() => {
@@ -1092,7 +1139,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                     </div>
 
                     <div className="space-y-3">
-                        {MOCK_LINKS.map(item => (
+                        {activeLinks.map(item => (
                             <LinkCard
                                 key={item.id}
                                 item={item}
