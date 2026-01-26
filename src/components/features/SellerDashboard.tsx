@@ -217,12 +217,12 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     // Stats calculations
     const totalViews = links.reduce((sum, item) => sum + (item.views || 0), 0);
     const totalClicks = links.reduce((sum, item) => sum + (item.clicks || 0), 0);
-    
+
     const safeOrders = orders || [];
     const inHoldAmount = safeOrders
         .filter(o => ['pending', 'shipping'].includes(o.status))
         .reduce((sum, o) => sum + (o.amount || 0), 0);
-        
+
     const payoutAmount = safeOrders
         .filter(o => o.status === 'completed')
         .reduce((sum, o) => sum + (o.amount || 0), 0);
