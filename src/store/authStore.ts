@@ -178,9 +178,9 @@ export const useAuthStore = create<AuthState>()(
                             if (authMode === 'login') {
                                 // REQUIREMENT: Prevent login if not signed up
                                 await signOut(auth);
-                                set({ 
-                                    user: null, 
-                                    isAuthenticated: false, 
+                                set({
+                                    user: null,
+                                    isAuthenticated: false,
                                     isLoading: false,
                                     error: "No account found. Please sign up first.",
                                     authMode: 'register', // Switch to register mode
@@ -215,14 +215,14 @@ export const useAuthStore = create<AuthState>()(
 
                     } catch (error: any) {
                         console.error('Google Sign in failed', error);
-                        
+
                         let errorMessage = 'Google Sign in failed';
                         if (error.message?.includes('offline')) {
                             errorMessage = 'Network error: Cannot verify account. Please check your internet connection.';
                         } else if (error.code === 'auth/popup-closed-by-user') {
                             errorMessage = 'Sign in cancelled';
                         }
-                        
+
                         set({ error: errorMessage, isLoading: false });
                     }
                 },
