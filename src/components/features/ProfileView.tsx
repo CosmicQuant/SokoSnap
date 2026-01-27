@@ -3,7 +3,7 @@
  * User profile with login, seller upgrade, and account management
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
     User,
     ShieldCheck,
@@ -16,10 +16,9 @@ import {
     Camera,
     CreditCard,
 } from 'lucide-react';
-import { Button, Input } from '../common';
+import { Button } from '../common';
 import { useAuthStore } from '../../store';
 import { formatCurrency, getInitials } from '../../utils/formatters';
-import { loginSchema, getErrorMessages } from '../../utils/validators';
 
 interface ProfileViewProps {
     onBack: () => void;
@@ -30,21 +29,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     onBack,
     onNavigateToDashboard,
 }) => {
-    const { user, login, logout, becomeSeller, isLoading } = useAuthStore();
-    const [phone, setPhone] = useState('');
-    const [error, setError] = useState<string | null>(null);
-
-    const handleLogin = async () => {
-        const result = loginSchema.safeParse({ phone });
-        if (!result.success) {
-            const errors = getErrorMessages(result.error);
-            setError(errors.phone || 'Invalid phone number');
-            return;
-        }
-
-        setError(null);
-        await login(result.data.phone);
-    };
+    const { user, logout, becomeSeller, isLoading, openAuthModal } = useAuthStore();
 
     const handleBecomeSeller = async () => {
         if (user) {
@@ -87,27 +72,21 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     </p>
 
                     <div className="w-full space-y-4">
-                        <Input
-                            type="tel"
-                            label="Mobile Number"
-                            placeholder="07XX XXX XXX"
-                            value={phone}
-                            onChange={(e) => {
-                                setPhone(e.target.value);
-                                setError(null);
-                            }}
-                            error={error || undefined}
-                        />
-
                         <Button
-                            onClick={handleLogin}
+                            onClick={() => openAuthModal('login')}
                             variant="primary"
                             size="lg"
                             fullWidth
-                            isLoading={isLoading}
-                            disabled={!phone}
                         >
-                            Continue with Phone
+                            Sign In
+                        </Button>
+                        <Button
+                            onClick={() => openAuthModal('register')}
+                            variant="secondary"
+                            size="lg"
+                            fullWidth
+                        >
+                            Create Account
                         </Button>
                     </div>
                 </div>

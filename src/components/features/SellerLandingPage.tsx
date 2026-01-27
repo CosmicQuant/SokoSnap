@@ -22,7 +22,8 @@ import {
     Mail,
     Phone,
     FileText,
-    Search
+    Search,
+    LogOut
 } from 'lucide-react';
 import { LocationPickerModal } from '../common/LocationPickerModal';
 import { AuthModal } from './AuthModal';
@@ -99,27 +100,26 @@ const SellerLandingPage = () => {
         const params = new URLSearchParams(window.location.search);
         return params.get('view') || 'hero';
     });
-    const { user, openAuthModal, becomeSeller } = useAuthStore();
+    const { user, isAuthenticated, isInitialized, initialize, logout, openAuthModal, becomeSeller } = useAuthStore();
 
-    // Check if user is seller or if needs to register
+    // Initialize Firebase auth listener on mount
     useEffect(() => {
-        // [TESTING ONLY] Bypass URL Protection
-        // if (step === 'dashboard' && !user) {
-        //     setStep('hero');
-        //     openAuthModal('login');
-        //     return;
-        // }
+        const unsubscribe = initialize();
+        return () => unsubscribe();
+    }, [initialize]);
 
-        if (!user) return; // Do nothing if not logged in
+    // Handle initial redirect Logic (Once only)
+    useEffect(() => {
+        if (!isInitialized) return;
 
-        if (user.type === 'verified_merchant') {
-            // Already a seller, go to dashboard
-            if (step === 'register' || step === 'hero') setStep('dashboard');
-        } else {
-            // If buyer tries to access dashboard, redirect to register
-            if (step === 'dashboard') setStep('register');
+        if (isAuthenticated && user) {
+            if (user.type === 'verified_merchant' && step === 'hero') {
+                setStep('dashboard');
+            } else if (user.type !== 'verified_merchant' && step === 'dashboard') {
+                setStep('register');
+            }
         }
-    }, [user, step]);
+    }, [isInitialized, isAuthenticated, user, step]); // Be careful with dependencies
 
     // Auth State Check
     const [showAuthWarning, setShowAuthWarning] = useState(false);
@@ -159,6 +159,16 @@ const SellerLandingPage = () => {
         facebook: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Initial Loading State
+    if (!isInitialized || (isAuthenticated && !user)) {
+        return (
+            <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+                <Loader2 className="animate-spin text-yellow-500" size={48} />
+                <p className="ml-4 text-white text-lg">Loading Profile...</p>
+            </div>
+        );
+    }
 
     const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
         setFormData(prev => ({
@@ -238,18 +248,21 @@ const SellerLandingPage = () => {
                         <span className="font-black italic text-2xl tracking-tighter text-slate-900">SokoSnap</span>
                     </div>
                     <div className="flex items-center gap-3">
-                        {/* [TESTING ONLY] Bypass Button */}
                         <button
-                            onClick={() => setStep('dashboard')}
-                            className="text-[10px] font-bold text-red-500 bg-red-50 px-3 py-2 rounded-lg hover:bg-red-100 transition-colors uppercase tracking-wider"
-                        >
-                            Test Dash
-                        </button>
-                        <button
-                            onClick={() => openAuthModal('login')}
+                            onClick={() => {
+                                if (user) {
+                                    if (user.type === 'verified_merchant') {
+                                        setStep('dashboard');
+                                    } else {
+                                        setStep('register');
+                                    }
+                                } else {
+                                    openAuthModal('login');
+                                }
+                            }}
                             className="text-xs font-bold text-black border-2 border-black px-6 py-2.5 rounded-full hover:bg-black hover:text-white transition-all uppercase tracking-widest"
                         >
-                            Seller Login
+                            Seller Dashboard
                         </button>
                     </div>
                 </nav>
@@ -791,9 +804,22 @@ const SellerLandingPage = () => {
 
                     </form>
 
-                    <button onClick={() => setStep('hero')} className="w-full text-center mt-8 text-slate-400 text-xs font-bold uppercase tracking-widest hover:text-black transition-colors">
-                        Back to Home
-                    </button>
+                    <div className="flex flex-col gap-4 mt-8">
+                        <button onClick={() => setStep('hero')} className="w-full text-center text-slate-400 text-xs font-bold uppercase tracking-widest hover:text-black transition-colors">
+                            Back to Home
+                        </button>
+                        {user && (
+                            <button
+                                onClick={async () => {
+                                    await logout();
+                                    setStep('hero');
+                                }}
+                                className="w-full text-center text-red-400 text-xs font-bold uppercase tracking-widest hover:text-red-600 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <LogOut size={14} /> Spec Sign Out
+                            </button>
+                        )}
+                    </div>
                 </div>
             )}
 

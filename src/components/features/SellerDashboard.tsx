@@ -163,7 +163,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     const [activeOrderTab, setActiveOrderTab] = useState<'ongoing' | 'completed'>('ongoing');
 
     // Store Hooks
-    const { user, updateUser } = useAuthStore();
+    const { user, updateUser, logout } = useAuthStore();
     const {
         links,
         orders,
@@ -180,6 +180,9 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
         }
         return () => stopListening();
     }, [user?.id]);
+
+    // Check verification status
+    const isShopVerified = user?.isVerified === true;
 
     // Profile State
     const [profileData, setProfileData] = useState({
@@ -234,6 +237,11 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleCreateNewLink = () => {
+        if (!isShopVerified) {
+            alert("Verification Pending \n\nYour shop is currently under review. Link generation will be enabled once your account is verified.");
+            return;
+        }
+
         // Reset all form state
         setFiles([]);
         setPreviews([]);
@@ -1047,21 +1055,42 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         <Package size={20} />
                     </div>
                     <div>
-                        <h1 className="text-xl font-black text-slate-900 leading-none">Eastleigh Kicks</h1>
-                        <p className="text-[10px] font-bold text-yellow-600 uppercase tracking-wide mt-1">Verified Merchant</p>
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-xl font-black text-slate-900 leading-none">{user?.shopName || 'My Shop'}</h1>
+                            {!isShopVerified && (
+                                <span className="bg-yellow-100 text-yellow-700 text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase">Pending</span>
+                            )}
+                        </div>
+                        <p className="text-[10px] font-bold text-yellow-600 uppercase tracking-wide mt-1">{user?.type === 'verified_merchant' ? 'Verified Merchant' : 'Seller'}</p>
                     </div>
                 </div>
             </div>
+
+            {/* Verification Banner */}
+            {!isShopVerified && (
+                <div className="bg-yellow-50 mx-6 mt-6 p-4 rounded-2xl border border-yellow-100 flex gap-3">
+                    <div className="bg-yellow-100 text-yellow-700 p-2 rounded-xl h-fit">
+                        <Lock size={16} />
+                    </div>
+                    <div>
+                        <h4 className="font-black text-sm text-yellow-900 mb-1">Account Under Review</h4>
+                        <p className="text-xs text-yellow-800 font-medium leading-relaxed">
+                            We are verifying your shop details. You can set up your profile, but <span className="underline decoration-yellow-600/50">link generation is disabled</span> until verification is complete.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             <div className="flex-1 overflow-y-auto p-6 pb-24 space-y-8 scrollbar-hide">
                 {/* Actions Grid */}
                 <div className="grid grid-cols-2 gap-4">
                     <button
                         onClick={handleCreateNewLink}
-                        className="bg-slate-900 text-white p-5 rounded-3xl flex flex-col justify-between h-32 shadow-xl shadow-slate-200 relative overflow-hidden group active:scale-[0.98] transition-all"
+                        disabled={!isShopVerified}
+                        className={`bg-slate-900 text-white p-5 rounded-3xl flex flex-col justify-between h-32 shadow-xl shadow-slate-200 relative overflow-hidden group transition-all ${!isShopVerified ? 'opacity-50 grayscale cursor-not-allowed' : 'active:scale-[0.98]'}`}
                     >
                         <div className="bg-white/10 w-10 h-10 rounded-full flex items-center justify-center group-hover:bg-yellow-500 group-hover:text-slate-900 transition-colors">
-                            <Plus size={24} />
+                            {isShopVerified ? <Plus size={24} /> : <Lock size={20} />}
                         </div>
                         <div className="text-left relative z-10">
                             <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">New Product</p>
@@ -1209,7 +1238,10 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         </div>
 
                         <button
-                            onClick={onBack}
+                            onClick={async () => {
+                                await logout();
+                                onBack();
+                            }}
                             className="flex items-center gap-4 p-4 rounded-2xl font-bold text-red-500 hover:bg-red-50 transition-colors mt-auto"
                         >
                             <LogOut size={20} />

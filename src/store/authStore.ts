@@ -1,10 +1,16 @@
 /**
  * Zustand Store - Authentication State Management
- * Handles user authentication, session management, and auth-related UI state
+ * Industry-grade authentication with Firebase
+ * 
+ * Features:
+ * - Email/Password + Google Sign-in
+ * - Secure persistence handling
+ * - Automatic profile creation for Google users
+ * - Robust error handling
  */
 
 import { create } from 'zustand';
-import { persist, devtools, createJSONStorage, StateStorage } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User } from '../types';
 import { auth, db, googleProvider } from '../lib/firebase';
 import {
@@ -12,62 +18,62 @@ import {
     createUserWithEmailAndPassword,
     signInWithPopup,
     signOut,
-    updateProfile
+    onAuthStateChanged,
+    sendPasswordResetEmail,
+    updateProfile,
+    browserLocalPersistence,
+    setPersistence,
+    type User as FirebaseUser
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import {
+    doc,
+    getDoc,
+    setDoc,
+    serverTimestamp,
+    updateDoc
+} from 'firebase/firestore';
 
-// Safe storage wrapper for environments where localStorage is blocked (e.g. strict privacy settings)
-const safeLocalStorage: StateStorage = {
-    getItem: (name: string): string | null => {
-        try {
-            return window.localStorage.getItem(name);
-        } catch (e) {
-            return null;
-        }
-    },
-    setItem: (name: string, value: string): void => {
-        try {
-            window.localStorage.setItem(name, value);
-        } catch (e) {
-            // Ignore write errors in restricted environments
-        }
-    },
-    removeItem: (name: string): void => {
-        try {
-            window.localStorage.removeItem(name);
-        } catch (e) {
-            // Ignore
-        }
-    }
-};
-
+// ============================================
+// Types
+// ============================================
 interface AuthState {
     // State
     user: User | null;
     isAuthenticated: boolean;
     isLoading: boolean;
+    isInitialized: boolean;
     error: string | null;
+    successMessage: string | null;
+
+    // UI State
     isAuthModalOpen: boolean;
-    authMode: 'login' | 'register' | null;
+    authMode: 'login' | 'register' | 'forgot' | null;
 
     // Actions
-    login: (identifier: string, password?: string) => Promise<void>;
+    initialize: () => () => void;
+    login: (email: string, password: string) => Promise<void>;
     loginWithGoogle: () => Promise<void>;
-    logout: () => void;
     register: (data: RegisterData) => Promise<void>;
+    logout: () => Promise<void>;
+    forgotPassword: (email: string) => Promise<void>;
+    resendVerificationEmail: () => Promise<void>;
+
+    // Updates
     becomeSeller: (data: SellerData) => Promise<void>;
-    clearError: () => void;
-    openAuthModal: (mode: 'login' | 'register') => void;
+    updateUser: (updates: Partial<User>) => Promise<void>;
+
+    // UI Actions
+    openAuthModal: (mode: 'login' | 'register' | 'forgot') => void;
     closeAuthModal: () => void;
-    setLoading: (loading: boolean) => void;
-    updateUser: (updates: Partial<User>) => void;
+    clearError: () => void;
+    clearSuccess: () => void;
 }
 
 interface RegisterData {
+    name: string;
+    email: string;
+    password: string;
     phone: string;
-    email?: string;
-    showPassword?: string;
-    name?: string;
 }
 
 interface SellerData {
@@ -78,292 +84,369 @@ interface SellerData {
     refundPolicy?: string;
 }
 
-/**
- * Authentication Store
- * Uses Zustand with persistence and devtools middleware
- */
+// ============================================
+// Store Implementation
+// ============================================
 export const useAuthStore = create<AuthState>()(
-    devtools(
-        persist(
-            (set, get) => ({
-                // Initial State
-                user: null,
-                isAuthenticated: false,
-                isLoading: false,
-                error: null,
-                isAuthModalOpen: false,
-                authMode: null,
+    persist(
+        (set, get) => ({
+            // Initial State
+            user: null,
+            isAuthenticated: false,
+            isLoading: true, // Start loading
+            isInitialized: false,
+            error: null,
+            successMessage: null,
+            isAuthModalOpen: false,
+            authMode: null,
 
-                // Login action
-                login: async (identifier: string, password?: string) => {
-                    set({ isLoading: true, error: null });
+            // ============================================
+            // Actions
+            // ============================================
 
-                    try {
-                        if (!password) throw new Error('Password is required');
+            /**
+             * Initialize Auth Listener
+             * This is the single source of truth for auth state
+             */
+            initialize: () => {
+                console.log('[Auth] Initializing listener...');
 
-                        // 1. Sign in with Firebase Auth
-                        const userCredential = await signInWithEmailAndPassword(auth, identifier, password);
-                        const firebaseUser = userCredential.user;
+                // Set persistence to local (survives browser restart)
+                setPersistence(auth, browserLocalPersistence).catch(err =>
+                    console.error('[Auth] Persistence error:', err)
+                );
 
-                        // 2. Fetch User Data from Firestore
-                        const docRef = doc(db, 'users', firebaseUser.uid);
-                        const docSnap = await getDoc(docRef);
+                const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+                    if (firebaseUser) {
+                        try {
+                            // Fetch user profile from Firestore
+                            const docRef = doc(db, 'users', firebaseUser.uid);
+                            const docSnap = await getDoc(docRef);
 
-                        let userData: User;
-
-                        if (docSnap.exists()) {
-                            // Convert Firestore Timestamp to Date if needed, assuming direct mapping for now
-                            // but ensuring dates are Dates
-                            const data = docSnap.data();
-                            userData = {
-                                ...data,
-                                id: firebaseUser.uid,
-                                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
-                                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date()
-                            } as User;
-                        } else {
-                            // Fallback if doc doesn't exist (shouldn't happen for registered users but good safety)
-                            userData = {
+                            if (docSnap.exists()) {
+                                const userData = docSnap.data() as User;
+                                set({
+                                    user: { ...userData, id: firebaseUser.uid },
+                                    isAuthenticated: true,
+                                    isLoading: false,
+                                    isInitialized: true
+                                });
+                            } else {
+                                // Valid auth but no profile - rare, but handled (Auto-heal)
+                                console.warn('[Auth] No profile found for authenticated user. Creating default...');
+                                const newUser = await createDefaultUser(firebaseUser);
+                                set({
+                                    user: newUser,
+                                    isAuthenticated: true,
+                                    isLoading: false,
+                                    isInitialized: true
+                                });
+                            }
+                        } catch (error) {
+                            console.error('[Auth] Profile fetch error:', error);
+                            // Keep the user logged in but show error? Or fallback to basic profile?
+                            // Fallback to basic profile to prevent loop
+                            const basicUser: User = {
                                 id: firebaseUser.uid,
                                 name: firebaseUser.displayName || 'User',
-                                email: firebaseUser.email || identifier,
+                                email: firebaseUser.email || '',
                                 phone: '',
                                 type: 'verified_buyer',
+                                isEmailVerified: firebaseUser.emailVerified,
+                                isVerified: false,
                                 createdAt: new Date(),
                                 updatedAt: new Date()
                             };
-                            // Create it so next time it exists
-                            await setDoc(docRef, userData);
+                            set({
+                                user: basicUser,
+                                isAuthenticated: true,
+                                isLoading: false,
+                                isInitialized: true,
+                                error: 'Could not load complete profile. Some features may be unavailable.'
+                            });
                         }
-
-                        set({
-                            user: userData,
-                            isAuthenticated: true,
-                            isLoading: false,
-                            isAuthModalOpen: false,
-                            authMode: null,
-                        });
-                    } catch (error) {
-                        console.error('Login error:', error);
-                        set({
-                            error: error instanceof Error ? error.message : 'Login failed',
-                            isLoading: false,
-                        });
-                    }
-                },
-
-                loginWithGoogle: async () => {
-                    set({ isLoading: true, error: null });
-                    try {
-                        const { authMode } = get();
-                        const result = await signInWithPopup(auth, googleProvider);
-                        const firebaseUser = result.user;
-
-                        // Check Firestore
-                        const docRef = doc(db, 'users', firebaseUser.uid);
-                        const docSnap = await getDoc(docRef);
-
-                        let userData: User;
-
-                        if (docSnap.exists()) {
-                            const data = docSnap.data();
-                            userData = {
-                                ...data,
-                                id: firebaseUser.uid,
-                                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
-                                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date()
-                            } as User;
-                        } else {
-                            // User document does not exist
-                            if (authMode === 'login') {
-                                // REQUIREMENT: Prevent login if not signed up
-                                await signOut(auth);
-                                set({
-                                    user: null,
-                                    isAuthenticated: false,
-                                    isLoading: false,
-                                    error: "No account found. Please sign up first.",
-                                    authMode: 'register', // Switch to register mode
-                                    isAuthModalOpen: true
-                                });
-                                return;
-                            }
-
-                            // Create new user doc for Google Sign In (Register Mode)
-                            userData = {
-                                id: firebaseUser.uid,
-                                name: firebaseUser.displayName || 'Google User',
-                                email: firebaseUser.email || '',
-                                phone: '', // Missing initially, will prompt user later
-                                avatar: firebaseUser.photoURL || undefined,
-                                type: 'verified_buyer',
-                                isEmailVerified: true,
-                                createdAt: new Date(),
-                                updatedAt: new Date(),
-                            };
-                            await setDoc(docRef, userData);
-                        }
-
-                        set({
-                            user: userData,
-                            isAuthenticated: true,
-                            isLoading: false,
-                            // If phone is missing, keep modal open (or logic elsewhere handles it)
-                            // But here we just close it generally, relying on the 'Start Selling' check logic
-                            isAuthModalOpen: false,
-                        });
-
-                    } catch (error: any) {
-                        console.error('Google Sign in failed', error);
-
-                        let errorMessage = 'Google Sign in failed';
-                        if (error.message?.includes('offline')) {
-                            errorMessage = 'Network error: Cannot verify account. Please check your internet connection.';
-                        } else if (error.code === 'auth/popup-closed-by-user') {
-                            errorMessage = 'Sign in cancelled';
-                        }
-
-                        set({ error: errorMessage, isLoading: false });
-                    }
-                },
-
-                // Logout action
-                logout: async () => {
-                    try {
-                        await signOut(auth);
+                    } else {
+                        console.log('[Auth] No user signed in.');
                         set({
                             user: null,
                             isAuthenticated: false,
-                            error: null,
-                            isAuthModalOpen: false,
-                            authMode: null,
+                            isLoading: false,
+                            isInitialized: true
                         });
-                    } catch (error) {
-                        console.error('Logout failed', error);
                     }
-                },
+                });
 
-                register: async (data) => {
-                    set({ isLoading: true, error: null });
+                return unsubscribe;
+            },
+
+            login: async (email, password) => {
+                set({ isLoading: true, error: null });
+                try {
+                    await setPersistence(auth, browserLocalPersistence);
+                    await signInWithEmailAndPassword(auth, email, password);
+                    set({ isAuthModalOpen: false });
+                } catch (error: any) {
+                    console.error('[Auth] Login error:', error);
+                    set({
+                        error: getFriendlyErrorMessage(error),
+                        isLoading: false
+                    });
+                }
+            },
+
+            loginWithGoogle: async () => {
+                set({ isLoading: true, error: null });
+                try {
+                    // Ensure persistence
+                    await setPersistence(auth, browserLocalPersistence);
+
+                    // Use Popup
+                    let result;
                     try {
-                        if (!data.email || !data.showPassword) {
-                            throw new Error("Email and password required");
+                        result = await signInWithPopup(auth, googleProvider);
+                    } catch (popupError: any) {
+                        if (popupError.code === 'auth/popup-blocked' || popupError.code === 'auth/popup-closed-by-user') {
+                            console.warn('[Auth] Popup blocked/closed');
+                            set({
+                                error: "Sign-in popup was closed or blocked. Please allow popups for this site and try again.",
+                                isLoading: false
+                            });
+                            return;
                         }
-
-                        // 1. Create Auth User
-                        const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.showPassword);
-                        const firebaseUser = userCredential.user;
-
-                        // 2. Update Profile Name
-                        if (data.name) {
-                            await updateProfile(firebaseUser, { displayName: data.name });
-                        }
-
-                        // 3. Create Firestore Doc
-                        const newUser: User = {
-                            id: firebaseUser.uid,
-                            name: data.name || 'New User',
-                            phone: data.phone,
-                            email: data.email,
-                            type: 'verified_buyer',
-                            isEmailVerified: false,
-                            createdAt: new Date(),
-                            updatedAt: new Date(),
-                        };
-
-                        await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-
-                        set({ user: newUser, isAuthenticated: true, isLoading: false, isAuthModalOpen: false });
-                    } catch (error: any) {
-                        console.error('Registration failed:', error);
-                        let msg = 'Registration failed';
-                        if (error.code === 'auth/email-already-in-use') msg = 'Email already in use';
-                        if (error.code === 'auth/weak-password') msg = 'Password should be at least 6 characters';
-                        set({ isLoading: false, error: msg });
+                        throw popupError;
                     }
-                },
 
-                becomeSeller: async (data: SellerData) => {
-                    set({ isLoading: true });
+                    const firebaseUser = result.user;
+
+                    // Check if new user or existing
+                    const docRef = doc(db, 'users', firebaseUser.uid);
                     try {
-                        const currentUser = get().user;
-                        if (!currentUser) throw new Error('Not authenticated');
-
-                        const updatedUser: User = {
-                            ...currentUser,
-                            type: 'verified_merchant',
-                            ...data,
-                            updatedAt: new Date()
-                        };
-
-                        // Update Firestore
-                        const docRef = doc(db, 'users', currentUser.id);
-                        await updateDoc(docRef, {
-                            type: 'verified_merchant',
-                            ...data,
-                            updatedAt: new Date()
-                        });
-
-                        set({ user: updatedUser, isLoading: false });
-                    } catch (e) {
-                        console.error('Become seller failed:', e);
-                        set({ isLoading: false, error: 'Failed to upgrade to seller' });
-                    }
-                },
-
-                clearError: () => set({ error: null }),
-
-                updateUser: async (updates) => {
-                    const currentUser = get().user;
-                    if (currentUser) {
-                        // Optimistic update
-                        const updatedUser = { ...currentUser, ...updates };
-                        set({ user: updatedUser });
-
-                        // Fire and forget update to DB (or await if critical)
-                        try {
-                            const docRef = doc(db, 'users', currentUser.id);
-                            await updateDoc(docRef, { ...updates, updatedAt: new Date() });
-                        } catch (err) {
-                            console.error("Failed to sync user update", err);
+                        const docSnap = await getDoc(docRef);
+                        if (!docSnap.exists()) {
+                            await createDefaultUser(firebaseUser);
                         }
+                    } catch (fsError) {
+                        // If firestore fails, we rely on initialize's auto-handler or basic fallback
+                        console.error("Firestore check failed during login", fsError);
                     }
-                },
 
+                    set({ isAuthModalOpen: false });
+                    // onAuthStateChanged will update the store
+                } catch (error: any) {
+                    console.error('[Auth] Google Sign In error:', error);
+                    set({
+                        error: "Sign in failed. " + getFriendlyErrorMessage(error),
+                        isLoading: false
+                    });
+                }
+            },
 
+            register: async (data) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, data.email, data.password);
 
+                    // Update Display Name
+                    await updateProfile(firebaseUser, { displayName: data.name });
 
-                // Open auth modal
-                openAuthModal: (mode) => set({ isAuthModalOpen: true, authMode: mode }),
+                    // Create Profile
+                    const newUser: User = {
+                        id: firebaseUser.uid,
+                        name: data.name,
+                        email: data.email,
+                        phone: data.phone,
+                        type: 'verified_buyer', // Default role
+                        isEmailVerified: false,
+                        isVerified: false,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
 
-                // Close auth modal
-                closeAuthModal: () => set({ isAuthModalOpen: false, authMode: null }),
+                    await setDoc(doc(db, 'users', firebaseUser.uid), {
+                        ...newUser,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp()
+                    });
 
-                // Set loading state
-                setLoading: (loading) => set({ isLoading: loading }),
-            }),
-            {
-                name: 'sokosnap-auth',
-                // Use safe storage to prevent crashes in restricted environments
-                storage: createJSONStorage(() => safeLocalStorage),
-                // Only persist essential data
-                partialize: (state) => ({
-                    user: state.user,
-                    isAuthenticated: state.isAuthenticated,
-                }),
-            }
-        ),
-        { name: 'AuthStore' }
+                    // Success
+                    set({
+                        isAuthModalOpen: false,
+                        successMessage: "Account created successfully!"
+                    });
+                } catch (error: any) {
+                    console.error('[Auth] Register error:', error);
+                    set({
+                        error: getFriendlyErrorMessage(error),
+                        isLoading: false
+                    });
+                }
+            },
+
+            logout: async () => {
+                set({ isLoading: true });
+                try {
+                    await signOut(auth);
+                    set({
+                        user: null,
+                        isAuthenticated: false,
+                        isLoading: false,
+                        authMode: null,
+                        isAuthModalOpen: false
+                    });
+                    // Clear local storage for safety if needed
+                    localStorage.removeItem('sokosnap-auth');
+                } catch (error) {
+                    console.error('[Auth] Logout error:', error);
+                    set({ isLoading: false });
+                }
+            },
+
+            forgotPassword: async (email) => {
+                set({ isLoading: true, error: null });
+                try {
+                    await sendPasswordResetEmail(auth, email);
+                    set({
+                        isLoading: false,
+                        successMessage: 'Password reset email sent! Check your inbox.'
+                    });
+                } catch (error: any) {
+                    set({
+                        isLoading: false,
+                        error: getFriendlyErrorMessage(error)
+                    });
+                }
+            },
+
+            becomeSeller: async (data) => {
+                set({ isLoading: true, error: null });
+                const currentUser = get().user;
+
+                if (!currentUser) return;
+
+                try {
+                    // Update Profile with Seller Data
+                    const sellerUpdates = {
+                        type: 'verified_merchant', // Or pending_merchant if you want approval flow
+                        isVerified: false, // Needs admin approval by default? Or true?
+                        shopName: data.shopName,
+                        shopLocation: data.shopLocation,
+                        contactPerson: data.contactPerson || currentUser.name,
+                        contactPhone: data.contactPhone || currentUser.phone
+                    };
+
+                    const docRef = doc(db, 'users', currentUser.id);
+                    await updateDoc(docRef, {
+                        ...sellerUpdates,
+                        updatedAt: serverTimestamp()
+                    });
+
+                    // Update Local State based on logic
+                    // Fetch fresh to be sure? No, optimistic is cleaner for UI
+                    set((state) => ({
+                        user: state.user ? { ...state.user, ...sellerUpdates } as User : null,
+                        isLoading: false,
+                        successMessage: "Seller profile activated!"
+                    }));
+
+                } catch (error: any) {
+                    console.error('[Auth] Become Seller error:', error);
+                    set({
+                        isLoading: false,
+                        error: "Failed to update seller profile. Try again."
+                    });
+                }
+            },
+
+            updateUser: async (updates) => {
+                const currentUser = get().user;
+                if (!currentUser) return;
+
+                try {
+                    await updateDoc(doc(db, 'users', currentUser.id), {
+                        ...updates,
+                        updatedAt: serverTimestamp()
+                    });
+
+                    set((state) => ({
+                        user: state.user ? { ...state.user, ...updates } : null
+                    }));
+                } catch (error) {
+                    console.error('Update failed', error);
+                    throw error;
+                }
+            },
+
+            // UI Helpers
+            openAuthModal: (mode) => set({ isAuthModalOpen: true, authMode: mode, error: null, successMessage: null }),
+            closeAuthModal: () => set({ isAuthModalOpen: false, authMode: null }),
+            clearError: () => set({ error: null }),
+            clearSuccess: () => set({ successMessage: null }),
+
+            // Legacy/Unused dummy to satisfy types if needed or re-implement
+            resendVerificationEmail: async () => { console.log("Verification email resend not implemented in V2"); }
+        }),
+        {
+            name: 'sokosnap-auth',
+            storage: createJSONStorage(() => localStorage),
+            partialize: (state) => ({
+                user: state.user,
+                isAuthenticated: state.isAuthenticated
+            })
+        }
     )
 );
 
-/**
- * Selector hooks for optimized re-renders
- */
+// ============================================
+// Selector Hooks
+// ============================================
 export const useUser = () => useAuthStore((state) => state.user);
 export const useIsAuthenticated = () => useAuthStore((state) => state.isAuthenticated);
 export const useAuthLoading = () => useAuthStore((state) => state.isLoading);
 export const useAuthError = () => useAuthStore((state) => state.error);
 export const useIsAuthModalOpen = () => useAuthStore((state) => state.isAuthModalOpen);
+export const useAuthInitialized = () => useAuthStore((state) => state.isInitialized);
 
 export default useAuthStore;
+
+async function createDefaultUser(firebaseUser: FirebaseUser): Promise<User> {
+    const newUser: User = {
+        id: firebaseUser.uid,
+        name: firebaseUser.displayName || 'User',
+        email: firebaseUser.email || '',
+        phone: '',
+        avatar: firebaseUser.photoURL || undefined,
+        type: 'verified_buyer',
+        isEmailVerified: firebaseUser.emailVerified,
+        isVerified: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+    };
+
+    await setDoc(doc(db, 'users', firebaseUser.uid), {
+        ...newUser,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    });
+
+    return newUser;
+}
+
+function getFriendlyErrorMessage(error: any): string {
+    const code = error.code;
+    switch (code) {
+        case 'auth/user-not-found':
+            return 'No account found with this email.';
+        case 'auth/wrong-password':
+            return 'Incorrect password.';
+        case 'auth/email-already-in-use':
+            return 'This email is already registered.';
+        case 'auth/weak-password':
+            return 'Password should be at least 6 characters.';
+        case 'auth/network-request-failed':
+            return 'Network error. Please check your connection.';
+        case 'auth/popup-closed-by-user':
+            return 'Sign in cancelled.';
+        default:
+            return error.message || 'An authentication error occurred.';
+    }
+}

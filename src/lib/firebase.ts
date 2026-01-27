@@ -1,6 +1,11 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth';
+import {
+    initializeFirestore,
+    persistentLocalCache,
+    persistentMultipleTabManager,
+    CACHE_SIZE_UNLIMITED
+} from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 
@@ -20,9 +25,34 @@ const app = initializeApp(firebaseConfig);
 // Initialize Services
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
-export const db = getFirestore(app);
+
+// Initialize Firestore with modern persistence API
+// This replaces the deprecated enableIndexedDbPersistence
+export const db = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+        cacheSizeBytes: CACHE_SIZE_UNLIMITED
+    })
+});
+
 export const storage = getStorage(app);
 
+// Email verification helper
+export const sendVerificationEmail = async () => {
+    const user = auth.currentUser;
+    if (user && !user.emailVerified) {
+        await sendEmailVerification(user);
+        return true;
+    }
+    return false;
+};
+
+// Password reset helper
+export const sendPasswordReset = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+};
+
+// Analytics (lazy loaded with support check)
 let analyticsInstance = null;
 if (typeof window !== 'undefined') {
     import('firebase/analytics').then(({ isSupported, getAnalytics }) => {

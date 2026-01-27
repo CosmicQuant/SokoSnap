@@ -30,11 +30,15 @@ const PageLoader = () => (
 const App = () => {
     // Store
     const { products, fetchProducts, loading: productsLoading } = useProductStore();
+    const { initialize } = useAuthStore();
 
-    // Initial Fetch
+    // Initialize auth and fetch products on mount
     useEffect(() => {
         fetchProducts();
-    }, [fetchProducts]);
+        // Initialize Firebase auth listener
+        const unsubscribe = initialize();
+        return () => unsubscribe();
+    }, [fetchProducts, initialize]);
 
     // Checkout Mode State (for shared checkout links)
     const [isCheckoutMode, setIsCheckoutMode] = useState(false);
