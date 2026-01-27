@@ -155,6 +155,7 @@ export const useAuthStore = create<AuthState>()(
                 loginWithGoogle: async () => {
                     set({ isLoading: true, error: null });
                     try {
+                        const { authMode } = get();
                         const result = await signInWithPopup(auth, googleProvider);
                         const firebaseUser = result.user;
 
@@ -173,7 +174,22 @@ export const useAuthStore = create<AuthState>()(
                                 updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date()
                             } as User;
                         } else {
-                            // Create new user doc for Google Sign In
+                            // User document does not exist
+                            if (authMode === 'login') {
+                                // REQUIREMENT: Prevent login if not signed up
+                                await signOut(auth);
+                                set({ 
+                                    user: null, 
+                                    isAuthenticated: false, 
+                                    isLoading: false,
+                                    error: "No account found. Please sign up first.",
+                                    authMode: 'register', // Switch to register mode
+                                    isAuthModalOpen: true
+                                });
+                                return;
+                            }
+
+                            // Create new user doc for Google Sign In (Register Mode)
                             userData = {
                                 id: firebaseUser.uid,
                                 name: firebaseUser.displayName || 'Google User',
@@ -197,9 +213,17 @@ export const useAuthStore = create<AuthState>()(
                             isAuthModalOpen: false,
                         });
 
-                    } catch (error) {
+                    } catch (error: any) {
                         console.error('Google Sign in failed', error);
-                        set({ error: 'Google Sign in failed', isLoading: false });
+                        
+                        let errorMessage = 'Google Sign in failed';
+                        if (error.message?.includes('offline')) {
+                            errorMessage = 'Network error: Cannot verify account. Please check your internet connection.';
+                        } else if (error.code === 'auth/popup-closed-by-user') {
+                            errorMessage = 'Sign in cancelled';
+                        }
+                        
+                        set({ error: errorMessage, isLoading: false });
                     }
                 },
 
