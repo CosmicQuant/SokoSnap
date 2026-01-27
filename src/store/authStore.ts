@@ -16,6 +16,31 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
+// Safe storage wrapper for environments where localStorage is blocked (e.g. strict privacy settings)
+const safeLocalStorage: StateStorage = {
+    getItem: (name: string): string | null => {
+        try {
+            return window.localStorage.getItem(name);
+        } catch (e) {
+            return null;
+        }
+    },
+    setItem: (name: string, value: string): void => {
+        try {
+            window.localStorage.setItem(name, value);
+        } catch (e) {
+            // Ignore write errors in restricted environments
+        }
+    },
+    removeItem: (name: string): void => {
+        try {
+            window.localStorage.removeItem(name);
+        } catch (e) {
+            // Ignore
+        }
+    }
+};
+
 interface AuthState {
     // State
     user: User | null;
@@ -295,6 +320,8 @@ export const useAuthStore = create<AuthState>()(
             }),
             {
                 name: 'sokosnap-auth',
+                // Use safe storage to prevent crashes in restricted environments
+                storage: createJSONStorage(() => safeLocalStorage),
                 // Only persist essential data
                 partialize: (state) => ({
                     user: state.user,

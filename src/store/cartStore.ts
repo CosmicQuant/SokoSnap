@@ -151,7 +151,9 @@ export const useCartStore = create<CartState>()(
                 storage: {
                     getItem: (name) => {
                         try {
-                            const str = localStorage.getItem(name);
+                            // Check if localStorage is accessible
+                            const storage = window.localStorage;
+                            const str = storage.getItem(name);
                             if (!str) return null;
                             const parsed = JSON.parse(str);
                             // Rehydrate Date objects
@@ -163,24 +165,24 @@ export const useCartStore = create<CartState>()(
                             }
                             return parsed;
                         } catch (e) {
-                            console.warn('Failed to load cart from local storage:', e);
+                            // console.warn('Failed to load cart from local storage:', e);
                             return null;
                         }
                     },
                     setItem: (name, value) => {
                         try {
-                            localStorage.setItem(name, JSON.stringify(value));
+                            window.localStorage.setItem(name, JSON.stringify(value));
                         } catch (e) {
-                            console.warn('Failed to save cart to local storage:', e);
+                            // console.warn('Failed to save cart to local storage:', e);
                         }
                     },
                     removeItem: (name) => {
                         try {
-                            localStorage.removeItem(name);
+                            window.localStorage.removeItem(name);
                         } catch (e) {
-                            console.warn('Failed to remove cart from local storage:', e);
+                            // Ignore
                         }
-                    },
+                    }
                 },
             }
         ),
