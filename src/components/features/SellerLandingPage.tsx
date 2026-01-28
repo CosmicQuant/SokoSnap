@@ -260,7 +260,7 @@ const SellerLandingPage = () => {
                                     openAuthModal('login');
                                 }
                             }}
-                            className="text-xs font-bold text-black border-2 border-black px-6 py-2.5 rounded-full hover:bg-black hover:text-white transition-all uppercase tracking-widest"
+                            className="text-[10px] sm:text-xs font-bold text-black border-2 border-black px-3 sm:px-6 py-2 sm:py-2.5 rounded-full hover:bg-black hover:text-white transition-all uppercase tracking-widest whitespace-nowrap"
                         >
                             Seller Dashboard
                         </button>
@@ -272,26 +272,26 @@ const SellerLandingPage = () => {
             {step === 'hero' && (
                 <>
                     {/* HERO SECTION */}
-                    <div className="max-w-7xl mx-auto px-6 pt-6 pb-12 relative z-10">
+                    <div className="max-w-7xl mx-auto px-6 pt-2 pb-4 relative z-10">
                         <div className="grid lg:grid-cols-2 gap-8 items-center">
 
                             {/* Left Content */}
                             <div className="text-left animate-in slide-in-from-left duration-700">
-                                <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-full px-4 py-1.5 mb-4">
+                                <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-full px-4 py-1.5 mb-2">
                                     <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-700">THE UNIVERSAL CHECKOUT LINK</span>
                                 </div>
 
                                 {/* Fixed Header with extra padding for italics */}
-                                <h1 className="text-5xl md:text-7xl font-black italic uppercase tracking-tighter leading-none mb-4 text-slate-900 py-2">
+                                <h1 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter leading-none mb-3 text-slate-900 py-2">
                                     SELL ON <br />
-                                    TIKTOK, <br />
-                                    <span className="text-[#E1306C]">INSTAGRAM,</span> <br />
+                                    <span className="bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] bg-clip-text text-transparent">INSTAGRAM,</span> <br />
+                                    <span className="text-[#000000] drop-shadow-sm">TIKTOK,</span> <br />
                                     <span className="text-[#25D366]">WHATSAPP</span> <br />
                                     <span className="text-[#1877F2]">& FACEBOOK.</span>
                                 </h1>
 
-                                <p className="text-slate-500 text-lg font-medium max-w-lg mb-6 leading-relaxed">
+                                <p className="text-slate-500 text-lg font-medium max-w-lg mb-4 leading-relaxed">
                                     Stop losing sales in the DMs. Get a secure <span className="font-bold text-slate-800">M-Pesa Checkout Link</span> that works on every single platform. We handle the payment and the delivery for you.
                                 </p>
 
