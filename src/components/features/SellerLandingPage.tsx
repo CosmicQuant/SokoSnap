@@ -36,7 +36,7 @@ import { useAuthStore } from '../../store';
 const StepCard = ({ step, title, desc, icon, bgClass }: { step: string, title: string, desc: string, icon: React.ReactNode, bgClass: string }) => (
     <div className={`${bgClass} p-8 rounded-[2.5rem] hover:shadow-2xl hover:scale-105 transition-all duration-300 group h-full border-none`}>
         <div className="flex justify-between items-start mb-6">
-            <span className="text-6xl font-black italic tracking-tighter select-none opacity-40 text-white mix-blend-overlay">{step}</span>
+            <span className="text-6xl font-black italic tracking-tighter select-none opacity-40 text-white mix-blend-screen">{step}</span>
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 group-hover:rotate-12 transition-transform bg-white/20 backdrop-blur-md border border-white/20">
                 {icon}
             </div>
@@ -279,17 +279,20 @@ const SellerLandingPage = () => {
                             <div className="text-left animate-in slide-in-from-left duration-700">
                                 <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-full px-4 py-1.5 mb-4">
                                     <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-700">Sell on Any Platform</span>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-700">THE UNIVERSAL CHECKOUT LINK</span>
                                 </div>
 
                                 {/* Fixed Header with extra padding for italics */}
                                 <h1 className="text-5xl md:text-7xl font-black italic uppercase tracking-tighter leading-none mb-4 text-slate-900 py-2">
-                                    Turn <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-yellow-600 pr-6 pb-2">Any Social Post</span> <br />
-                                    Into A Sale.
+                                    SELL ON <br />
+                                    TIKTOK, <br />
+                                    <span className="text-[#E1306C]">INSTAGRAM,</span> <br />
+                                    <span className="text-[#25D366]">WHATSAPP</span> <br />
+                                    <span className="text-[#1877F2]">& FACEBOOK.</span>
                                 </h1>
 
                                 <p className="text-slate-500 text-lg font-medium max-w-lg mb-6 leading-relaxed">
-                                    One link to rule them all. The #1 M-Pesa Checkout for <span className="font-black text-black">TikTok</span>, <span className="font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500">Instagram</span>, <span className="font-black text-[#25D366]">WhatsApp</span> & <span className="font-black text-[#1877F2]">Facebook</span>. We handle the payments and delivery so you can focus on posting and selling more online.
+                                    Stop losing sales in the DMs. Get a secure <span className="font-bold text-slate-800">M-Pesa Checkout Link</span> that works on every single platform. We handle the payment and the delivery for you.
                                 </p>
 
                                 <div className="flex flex-col sm:flex-row gap-4 items-start">
@@ -372,7 +375,7 @@ const SellerLandingPage = () => {
                         <div className="max-w-7xl mx-auto px-6">
                             <div className="text-center mb-16">
                                 <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-4 text-slate-900">How SokoSnap Works</h2>
-                                <p className="text-slate-500 font-medium">Simple steps to turn followers into customers.</p>
+                                <p className="text-slate-500 font-medium">From "Price?" to "Paid" in 3 steps.</p>
                             </div>
 
                             <div className="grid md:grid-cols-3 gap-8">
@@ -387,7 +390,7 @@ const SellerLandingPage = () => {
                                     step="02"
                                     bgClass="bg-black"
                                     title="Share Everywhere"
-                                    desc="Post the link on your WhatsApp Status & Catalog, TikTok Bio, Facebook Groups, or send via DM."
+                                    desc="Post the link on your WhatsApp Status & Catalog, TikTok Bio, Instagram, Facebook, or anywhere else online."
                                     icon={<Share2Icon />}
                                 />
                                 <StepCard
@@ -415,7 +418,7 @@ const SellerLandingPage = () => {
                                     With SokoSnap's <b>Buyer Protection Badge</b>, buyers pay with confidence knowing their money is held securely until delivery.
                                 </p>
                                 <button className="text-yellow-500 font-black uppercase tracking-widest text-xs flex items-center gap-2 hover:translate-x-2 transition-transform">
-                                    Learn about TumaFast Black <ArrowRight size={16} />
+                                    Learn about TumaFast Delivery <ArrowRight size={16} />
                                 </button>
                             </div>
                             <div className="bg-white/10 backdrop-blur-md border border-white/10 p-8 rounded-[2.5rem]">
