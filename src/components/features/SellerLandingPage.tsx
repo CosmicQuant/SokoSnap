@@ -15,7 +15,8 @@ import {
     Navigation,
     LogOut,
     Instagram,
-    MessageCircle
+    MessageCircle,
+    Share2 as Share2Icon
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { LocationPickerModal } from '../common/LocationPickerModal';
@@ -74,6 +75,12 @@ export const FacebookLogo = ({ size = 24 }: { size?: number }) => (
 const TikTokLogo = ({ size = 24 }: { size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M19.5898 9.99986C18.9959 10.0097 18.4116 10.1601 17.8931 10.4363C17.3745 10.7125 16.9395 11.1049 16.6301 11.5755V0H12.9248V17.0734C12.8711 17.817 12.6074 18.52 12.1643 19.1021C11.7212 19.6841 11.1165 20.122 10.4199 20.3653C9.72318 20.6087 8.96265 20.6476 8.22557 20.4777C7.48849 20.3079 6.80496 19.9362 6.25368 19.4055C5.70241 18.8748 5.30571 18.2069 5.10931 17.4785C4.91292 16.75 4.92472 15.9904 5.14336 15.2868C5.362 14.5832 5.77864 13.9642 6.34538 13.5015C6.91212 13.0388 7.6057 12.7512 8.3458 12.6718V8.92723C6.67134 9.07065 5.09349 9.77883 3.86475 10.9382C2.63601 12.0975 1.82672 13.6403 1.56497 15.3204C1.30321 17.0006 1.60417 18.7208 2.41968 20.2076C3.23519 21.6946 4.51817 22.8617 6.06202 23.5218C7.60588 24.1818 9.32039 24.2965 10.9329 23.8475C12.5453 23.3985 13.962 22.4116 14.9568 21.0439C15.9515 19.6762 16.4673 18.0054 16.4216 16.297V6.09549C17.4897 6.86423 18.7845 7.2798 20.1011 7.27649V3.53503C18.6672 3.53503 17.2917 2.96425 16.2778 1.94828C15.2638 0.932306 14.6942 -0.445902 14.6942 -1.88247H18.4285C18.4285 -0.902266 18.8172 0.0378618 19.5085 0.730335C20.1997 1.42281 21.1374 1.81156 22.1162 1.81156V5.553C21.2847 5.5492 20.4571 5.42065 19.6738 5.17409C18.2711 6.30239 17.5191 8.08339 17.5936 9.88242" fill="black" />
+    </svg>
+);
+
+const YoutubeLogo = ({ size = 24 }: { size?: number }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M23.498 6.186C23.225 5.145 22.411 4.331 21.371 4.058C19.505 3.558 12.001 3.558 12.001 3.558C12.001 3.558 4.497 3.558 2.631 4.058C1.59 4.331 0.776 5.145 0.503 6.186C0 8.053 0 12 0 12C0 12 0 15.947 0.503 17.814C0.776 18.855 1.59 19.669 2.631 19.942C4.497 20.442 12.001 20.442 12.001 20.442C12.001 20.442 19.505 20.442 21.371 19.942C22.411 19.669 23.225 18.855 23.498 17.814C24 15.947 24 12 24 12C24 12 24 8.053 23.498 6.186ZM9.544 15.568V8.432L15.819 12L9.544 15.568Z" fill="#ff0000" />
     </svg>
 );
 
@@ -185,6 +192,7 @@ const InteractiveSolutions = () => {
                 </div>
 
                 <div className="grid lg:grid-cols-2 gap-16 items-center">
+                    {/* Desktop: Feature List */}
                     <div className="hidden lg:block space-y-4">
                         {features.map((feature, idx) => (
                             <div
@@ -208,43 +216,62 @@ const InteractiveSolutions = () => {
                         ))}
                     </div>
 
-                    <div className="flex flex-col items-center">
-                        <div className="relative flex justify-center items-center h-[500px] lg:h-[600px] perspective-1000">
-                            <div className="relative w-[280px] lg:w-[300px] h-[540px] lg:h-[580px] bg-slate-900 rounded-[3rem] border-8 border-slate-900 shadow-2xl overflow-hidden transform rotate-y-12 transition-all duration-500">
-                                <div className={`absolute inset-0 flex items-center justify-center transition-colors duration-500 ${features[activeFeature]?.screenColor}`}>
-                                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 key={activeFeature}">
+                    <div className="flex flex-col items-center w-full relative">
+                        <div className="relative flex justify-center items-center h-[540px] lg:h-[600px] perspective-1000 w-full px-4 overflow-visible">
+                            {/* Phone Container: Thinner on Mobile, Rotated Left on Desktop */}
+                            <div className="relative w-[240px] lg:w-[300px] h-[500px] lg:h-[580px] bg-slate-900 rounded-[2.5rem] lg:rounded-[3rem] border-[6px] lg:border-8 border-slate-900 shadow-2xl overflow-hidden transition-all duration-500 lg:-rotate-y-12 dark-phone-shadow z-10 group">
+                                {/* SCREEN CONTENT */}
+                                <div className={`flex absolute inset-0 items-center justify-center transition-colors duration-500 ${features[activeFeature]?.screenColor}`}>
+                                    {/* VISIBLE ON BOTH MOBILE AND DESKTOP */}
+                                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 origin-center lg:transform-none transform scale-90">
                                         {features[activeFeature]?.screenContent}
                                     </div>
-
-                                    {/* Mobile Glass Overlay Content */}
-                                    <div className="absolute bottom-4 left-4 right-4 bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl text-left lg:hidden z-10 animate-in slide-in-from-bottom-2">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <div className="text-yellow-500">{features[activeFeature]?.icon}</div>
-                                            <p className="text-white font-black uppercase text-sm tracking-wide">{features[activeFeature]?.title}</p>
-                                        </div>
-                                        <p className="text-[10px] text-slate-100 font-medium leading-relaxed opacity-90">{features[activeFeature]?.desc}</p>
-                                    </div>
                                 </div>
-                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-20" />
-                                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none" />
-                            </div>
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-yellow-500/20 blur-[100px] -z-10" />
-                        </div>
 
-                        {/* Mobile Horizontal Tabs/Controls */}
-                        <div className="flex lg:hidden w-[100vw] overflow-x-auto gap-3 pb-6 pt-4 px-6 no-scrollbar snap-x -mx-6">
-                            {features.map((feature, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => { setActiveFeature(idx); setIsPaused(true); }}
-                                    className={`flex-none px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all snap-center whitespace-nowrap ${activeFeature === idx
-                                        ? 'bg-slate-900 text-white border-slate-900 shadow-lg scale-105'
-                                        : 'bg-white text-slate-400 border-slate-200'
-                                        }`}
-                                >
-                                    {feature.title}
-                                </button>
-                            ))}
+                                {/* BEZEL REFLECTIONS */}
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 lg:w-32 h-5 lg:h-6 bg-black rounded-b-2xl z-20 pointer-events-none" />
+                                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent pointer-events-none z-30" />
+                            </div>
+
+                            {/* Background Glow */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-yellow-500/20 blur-[100px] -z-10" />
+
+                            {/* MOBILE FLOATING FEATURES - Zig-Zag Layout */}
+                            <div className="lg:hidden absolute inset-0 z-20 pointer-events-none">
+                                {features.map((feature, idx) => {
+                                    const isRight = idx % 2 !== 0; // 0: Left, 1: Right, 2: Left, 3: Right
+                                    const topOffset = 2 + (idx * 23); // Spaced vertically: 2%, 25%, 48%, 71%
+
+                                    return (
+                                        <div
+                                            key={idx}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveFeature(idx);
+                                                setIsPaused(true);
+                                            }}
+                                            className={`absolute w-[35%] flex flex-col gap-1 transition-all duration-500 cursor-pointer pointer-events-auto ${isRight ? 'right-0 items-end text-right' : 'left-0 items-start text-left'
+                                                }`}
+                                            style={{ top: `${topOffset}%` }}
+                                        >
+                                            <div className={`
+                                                p-2 rounded-xl backdrop-blur-md border shadow-lg transition-all duration-300
+                                                ${activeFeature === idx
+                                                    ? 'bg-slate-900/90 border-yellow-500 text-yellow-500 scale-110 z-30'
+                                                    : 'bg-slate-900/60 border-white/10 text-slate-400 z-10'}
+                                            `}>
+                                                {React.cloneElement(feature.icon as React.ReactElement<any>, { size: 18 })}
+                                            </div>
+                                            <div className={`mt-1 ${activeFeature === idx ? 'opacity-100' : 'opacity-80'}`}>
+                                                <h3 className="font-black text-slate-800 text-[9px] uppercase italic tracking-wider leading-none bg-white/90 px-1.5 py-1 rounded shadow-sm inline-block max-w-full">
+                                                    {feature.title}
+                                                </h3>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -476,8 +503,9 @@ const SellerLandingPage = () => {
                     >
                         {/* HERO SECTION */}
                         <div className="max-w-7xl mx-auto px-6 pt-4 pb-12 relative z-10">
-                            <div className="grid lg:grid-cols-2 gap-16 items-center">
-                                <div className="text-left animate-in slide-in-from-left duration-700">
+                            <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+                                {/* Mobile: Occupy full viewport height minus header to push image down */}
+                                <div className="text-left animate-in slide-in-from-left duration-700 pt-8 lg:min-h-0 lg:block">
 
                                     {/* --- TOP BADGE --- */}
                                     <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-full px-4 py-1.5 mb-6">
@@ -487,7 +515,7 @@ const SellerLandingPage = () => {
 
                                     {/* --- DYNAMIC BRANDED HEADLINE (FIXED 'FOR') --- */}
                                     <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic uppercase tracking-tighter leading-none mb-4 text-slate-900 py-2">
-                                        The #1 <img src="/M-PESA_LOGO-01.svg.png" alt="M-PESA" className="inline-block h-16 md:h-24 -mt-4 ml-2 align-middle object-contain" /> <br />
+                                        The #1 <img src="/M-PESA_LOGO-01.svg.png" alt="M-PESA" className="inline-block h-16 sm:h-20 md:h-32 -mt-3 sm:-mt-6 ml-2 align-middle object-contain" /> <br />
                                         Secure Checkout For <br />
                                         <span className={`inline-block pr-4 transition-all duration-500 ${platforms[platformIndex]?.color}`}>
                                             {platforms[platformIndex]?.name}.
@@ -496,7 +524,7 @@ const SellerLandingPage = () => {
 
                                     {/* --- REFINED SUB-HEADLINE: FOCUSING ON TRUST & FRICTION REMOVAL --- */}
                                     <p className="text-slate-500 text-sm font-medium max-w-lg mb-6 leading-relaxed">
-                                        Give your customers the <span className="font-bold text-slate-900">absolute confidence</span> to buy instantly without the fear of scams. Eliminate <span className="font-bold text-slate-900">repetitive price and delivery questions</span> with a <span className="font-bold text-slate-900 bg-yellow-100 px-1 rounded">Verified Secure M-Pesa Checkout</span> across all social apps. We handle the logistics across Kenya so you can grow and earn more.
+                                        Sell more, faster & securely by giving your customers the <span className="font-bold text-slate-900">absolute confidence</span> to buy instantly. Eliminate <span className="font-bold text-slate-900">repetitive price and delivery questions</span> with a <span className="font-bold text-slate-900 bg-yellow-100 px-1 rounded">Verified Secure M-Pesa Checkout</span> across all social apps that also handles delivery for you.
                                     </p>
 
                                     <div className="flex flex-col sm:flex-row gap-4 items-start">
@@ -516,6 +544,9 @@ const SellerLandingPage = () => {
                                             <p className="text-[9px] font-bold text-slate-500 leading-tight uppercase tracking-wide">Trusted by 500+ <br />Kenyan Merchants</p>
                                         </div>
                                     </div>
+
+                                    {/* Spacer for Mobile to push image below fold */}
+                                    <div className="h-[20vh] lg:hidden"></div>
                                 </div>
 
                                 <div className="relative animate-in slide-in-from-right duration-1000 delay-200">
@@ -564,7 +595,9 @@ const SellerLandingPage = () => {
             @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
             .animate-marquee { animation: marquee 25s linear infinite; }
             .perspective-1000 { perspective: 1000px; }
-            .rotate-y-12 { transform: rotateY(-12deg) rotateX(5deg); }
+            @media (min-width: 1024px) {
+                .rotate-y-12 { transform: rotateY(-12deg) rotateX(5deg); }
+            }
           `}</style>
 
 
@@ -572,43 +605,99 @@ const SellerLandingPage = () => {
 
                         {/* CTA SECTION (REMOVED) */}
 
-                        {/* HOW IT WORKS (3-STEP) */}
-                        <div className="py-24 bg-white border-y border-slate-100">
-                            <div className="max-w-7xl mx-auto px-6 text-center">
-                                <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-slate-900 mb-16">
-                                    Sell in 3 Simple Steps
-                                </h2>
+                        {/* HOW IT WORKS (3-STEP - REFINED) */}
+                        <div className="py-32 bg-slate-50 relative overflow-hidden">
+                            {/* Animated Background Elements */}
+                            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                            <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
 
-                                <div className="grid md:grid-cols-3 gap-12 relative">
-                                    {/* Connecting Line (Desktop) */}
-                                    <div className="hidden md:block absolute top-12 left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-slate-200 via-yellow-400 to-slate-200" />
+                            <div className="max-w-7xl mx-auto px-6 relative z-10">
+                                <div className="text-center max-w-3xl mx-auto mb-20">
+                                    <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-slate-900 mb-6">
+                                        Start Selling in <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-orange-600">Minutes, Not Days.</span>
+                                    </h2>
+                                    <p className="text-slate-500 font-medium text-lg">
+                                        Skip the DMs. Skip the "how much is delivery". Just paste your link and get paid.
+                                    </p>
+                                </div>
 
-                                    <div className="relative group">
-                                        <div className="w-24 h-24 bg-slate-50 border-4 border-white shadow-xl rounded-[2rem] mx-auto mb-8 flex items-center justify-center relative z-10 group-hover:scale-110 transition-transform duration-300">
-                                            <span className="absolute -top-3 -right-3 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center font-black text-sm">1</span>
-                                            <div className="text-yellow-500"><Sparkles size={32} /></div>
+                                <div className="grid md:grid-cols-3 gap-8">
+                                    {/* Step 1: Generate Link */}
+                                    <motion.div
+                                        whileHover={{ y: -10 }}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: 0.1 }}
+                                        className="bg-white p-2 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 group"
+                                    >
+                                        <div className="bg-slate-50 rounded-[2rem] p-8 h-full flex flex-col items-center text-center relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-100 rounded-bl-[4rem] -mr-8 -mt-8 opacity-50 group-hover:scale-110 transition-transform duration-500" />
+
+                                            <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-lg shadow-yellow-500/10 mb-8 relative z-10 group-hover:rotate-3 transition-transform duration-300">
+                                                <div className="absolute inset-0 bg-yellow-500/10 rounded-2xl blur-xl" />
+                                                <Sparkles size={32} className="text-yellow-500 relative z-10" />
+                                                <span className="absolute -top-3 -right-3 w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center font-black text-sm border-4 border-white">1</span>
+                                            </div>
+
+                                            <h3 className="font-black text-xl text-slate-900 uppercase italic mb-3">Create Link</h3>
+                                            <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                                                Upload product details. We instantly generate a <span className="font-bold text-slate-900">secure checkout link</span> that calculates delivery automatically.
+                                            </p>
                                         </div>
-                                        <h3 className="font-black text-xl italic uppercase mb-3">Generate Checkout Link</h3>
-                                        <p className="text-sm font-medium text-slate-500 px-8">In your Seller Dashboard click Generate Link, Upload photos, videos, name & price. We instantly generate your secure checkout link.</p>
-                                    </div>
+                                    </motion.div>
 
-                                    <div className="relative group">
-                                        <div className="w-24 h-24 bg-slate-50 border-4 border-white shadow-xl rounded-[2rem] mx-auto mb-8 flex items-center justify-center relative z-10 group-hover:scale-110 transition-transform duration-300">
-                                            <span className="absolute -top-3 -right-3 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center font-black text-sm">2</span>
-                                            <div className="text-green-500"><MessageCircle size={32} /></div>
-                                        </div>
-                                        <h3 className="font-black text-xl italic uppercase mb-3">Share Link</h3>
-                                        <p className="text-sm font-medium text-slate-500 px-8">Post the link on your WhatsApp Status, TikTok bio, or Instagram Stories.</p>
-                                    </div>
+                                    {/* Step 2: Share Link */}
+                                    <motion.div
+                                        whileHover={{ y: -10 }}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: 0.2 }}
+                                        className="bg-white p-2 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 group"
+                                    >
+                                        <div className="bg-slate-50 rounded-[2rem] p-8 h-full flex flex-col items-center text-center relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-bl-[4rem] -mr-8 -mt-8 opacity-50 group-hover:scale-110 transition-transform duration-500" />
 
-                                    <div className="relative group">
-                                        <div className="w-24 h-24 bg-slate-50 border-4 border-white shadow-xl rounded-[2rem] mx-auto mb-8 flex items-center justify-center relative z-10 group-hover:scale-110 transition-transform duration-300">
-                                            <span className="absolute -top-3 -right-3 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center font-black text-sm">3</span>
-                                            <div className="text-blue-500"><ShieldCheck size={32} /></div>
+                                            <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/10 mb-8 relative z-10 group-hover:-rotate-3 transition-transform duration-300">
+                                                <div className="absolute inset-0 bg-blue-500/10 rounded-2xl blur-xl" />
+                                                <Share2Icon className="text-blue-500" size={32} />
+                                                <span className="absolute -top-3 -right-3 w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center font-black text-sm border-4 border-white">2</span>
+                                            </div>
+
+                                            <h3 className="font-black text-xl text-slate-900 uppercase italic mb-3">Share Anywhere</h3>
+                                            <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                                                Paste the link on <span className="font-bold text-blue-600">WhatsApp Status</span>, TikTok Bio, or Instagram Stories. Turn views into sales.
+                                            </p>
                                         </div>
-                                        <h3 className="font-black text-xl italic uppercase mb-3">Get Paid</h3>
-                                        <p className="text-sm font-medium text-slate-500 px-8">Customer pays to Secure Hold. We auto-dispatch a rider. You receive payment instantly upon verified delivery.</p>
-                                    </div>
+                                    </motion.div>
+
+                                    {/* Step 3: Get Paid */}
+                                    <motion.div
+                                        whileHover={{ y: -10 }}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: 0.3 }}
+                                        className="bg-white p-2 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 group"
+                                    >
+                                        <div className="bg-[#4CAF50] rounded-[2rem] p-8 h-full flex flex-col items-center text-center relative overflow-hidden text-white">
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-bl-[4rem] -mr-8 -mt-8 opacity-20 group-hover:scale-110 transition-transform duration-500" />
+
+                                            <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-lg shadow-black/20 mb-8 relative z-10 group-hover:scale-110 transition-transform duration-300 ring-1 ring-white/20">
+                                                <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl" />
+                                                <ShieldCheck size={32} className="text-white" />
+                                                <span className="absolute -top-3 -right-3 w-8 h-8 bg-white text-[#4CAF50] rounded-full flex items-center justify-center font-black text-sm">3</span>
+                                            </div>
+
+                                            <h3 className="font-black text-xl text-white uppercase italic mb-3 flex items-center justify-center gap-2">
+                                                Get Paid <span className="bg-white/20 text-[10px] px-2 py-0.5 rounded-full border border-white/20 font-bold tracking-tight">M-PESA</span>
+                                            </h3>
+                                            <p className="text-sm text-white/90 font-medium leading-relaxed">
+                                                Funds are held securely. Rider is dispatched <span className="text-white font-bold underline decoration-wavy decoration-white/50">instantly</span>. You get paid upon delivery.
+                                            </p>
+                                        </div>
+                                    </motion.div>
                                 </div>
                             </div>
                         </div>
@@ -629,6 +718,7 @@ const SellerLandingPage = () => {
                         <InfiniteMarquee speed={25}>
                             <div className="flex items-center gap-3 text-2xl font-black text-slate-800 transition-all duration-300 cursor-default"><InstagramLogo /> INSTAGRAM</div>
                             <div className="flex items-center gap-3 text-2xl font-black text-slate-800 transition-all duration-300 cursor-default"><TikTokLogo /> TIKTOK</div>
+                            <div className="flex items-center gap-3 text-2xl font-black text-slate-800 transition-all duration-300 cursor-default"><YoutubeLogo /> YOUTUBE</div>
                             <div className="flex items-center gap-3 text-2xl font-black text-slate-800 transition-all duration-300 cursor-default"><WhatsAppLogo /> WHATSAPP</div>
                             <div className="flex items-center gap-3 text-2xl font-black text-slate-800 transition-all duration-300 cursor-default"><FacebookLogo /> FACEBOOK</div>
                             <div className="flex items-center gap-3 text-2xl font-black text-slate-800 transition-all duration-300 cursor-default"><Store className="text-rose-500" size={28} /> ONLINE SHOPS</div>
@@ -636,49 +726,48 @@ const SellerLandingPage = () => {
                         </InfiniteMarquee>
                     </div>
 
-                    <footer className="bg-white border-t border-slate-100 py-3">
-                        <div className="max-w-7xl mx-auto px-6">
-                            <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-2">
+                    <footer className="bg-white border-t border-slate-100 py-12 relative overflow-hidden">
+                        <div className="max-w-7xl mx-auto px-6 relative z-10">
+                            <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-12">
                                 {/* Brand Block */}
                                 <div className="max-w-sm">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center transform -rotate-3">
-                                            <Store className="text-black" size={16} />
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <div className="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center transform -rotate-3 shadow-lg shadow-yellow-500/20">
+                                            <Store className="text-black" size={20} />
                                         </div>
-                                        <span className="font-black italic text-xl tracking-tighter text-slate-900">SokoSnap</span>
+                                        <span className="font-black italic text-2xl tracking-tighter text-slate-900">SokoSnap</span>
                                     </div>
-                                    <p className="text-slate-400 text-xs font-medium leading-relaxed mb-4">
+                                    <p className="text-slate-500 text-sm font-medium leading-relaxed mb-6">
                                         The secure social commerce platform for African sellers. Powered by TumaFast Logistics.
                                     </p>
                                 </div>
 
                                 {/* Horizontal Links */}
                                 <div className="flex flex-col md:items-end gap-6">
-                                    <div className="flex flex-wrap md:justify-end gap-x-8 gap-y-4 max-w-lg text-[10px] font-bold uppercase tracking-widest text-slate-500 cursor-pointer">
-                                        <span onClick={() => setStep('about')} className="hover:text-black transition-colors">About SokoSnap</span>
-                                        <span onClick={() => setStep('terms')} className="hover:text-black transition-colors">Terms of Service</span>
-                                        <span onClick={() => setStep('privacy')} className="hover:text-black transition-colors">Privacy Policy</span>
-                                        <span onClick={() => setStep('cookies')} className="hover:text-black transition-colors">Cookie Policy</span>
-                                        <span onClick={() => setStep('merchant')} className="hover:text-black transition-colors">Merchant Agreement</span>
-                                        <span onClick={() => setStep('contact')} className="hover:text-black transition-colors">Contact Us</span>
-                                        <span onClick={() => setStep('faq')} className="hover:text-black transition-colors">FAQs</span>
+                                    <div className="flex flex-wrap md:justify-end gap-x-8 gap-y-4 max-w-lg text-xs font-bold uppercase tracking-widest text-slate-400 cursor-pointer">
+                                        <span onClick={() => setStep('about')} className="hover:text-slate-900 transition-colors">About</span>
+                                        <span onClick={() => setStep('terms')} className="hover:text-slate-900 transition-colors">Terms</span>
+                                        <span onClick={() => setStep('privacy')} className="hover:text-slate-900 transition-colors">Privacy</span>
+                                        <span onClick={() => setStep('merchant')} className="hover:text-slate-900 transition-colors">Merchant Agreement</span>
+                                        <span onClick={() => setStep('contact')} className="hover:text-slate-900 transition-colors">Contact</span>
+                                        <span onClick={() => setStep('faq')} className="hover:text-slate-900 transition-colors">FAQs</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Bottom Bar: Location Left, Socials Right, Copyright Below */}
-                            <div className="border-t border-slate-100 pt-2 flex flex-col gap-2">
-                                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nairobi, KE</span>
+                            <div className="border-t border-slate-100 pt-8 flex flex-col gap-6">
+                                <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full">Nairobi, KE</span>
 
                                     <div className="flex gap-4">
-                                        <a href="#" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"><InstagramLogo size={16} /></a>
-                                        <a href="#" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"><WhatsAppLogo size={16} /></a>
-                                        <a href="#" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"><FacebookLogo size={16} /></a>
+                                        <a href="#" className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-colors text-slate-900"><InstagramLogo size={18} /></a>
+                                        <a href="#" className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-colors text-slate-900"><WhatsAppLogo size={18} /></a>
+                                        <a href="#" className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-colors text-slate-900"><FacebookLogo size={18} /></a>
                                     </div>
                                 </div>
 
-                                <p className="text-[10px] text-slate-400 font-medium text-center">© 2026 TumaFast Ltd. All rights reserved.</p>
+                                <p className="text-[10px] text-slate-400 font-bold text-center uppercase tracking-widest">© 2026 TumaFast Ltd. All rights reserved.</p>
                             </div>
                         </div>
                     </footer>
