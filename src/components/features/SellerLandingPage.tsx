@@ -4,60 +4,45 @@ import {
     ArrowRight,
     ShieldCheck,
     Zap,
-    Smartphone,
     Store,
-    Instagram,
     Loader2,
     Lock,
     ChevronRight,
-    MessageCircle,
-    Facebook,
-    Video,
     Globe,
-    Building2,
-    CreditCard,
+    Sparkles,
+    TrendingUp,
     MapPin,
     Navigation,
-    User as UserIcon,
-    Mail,
-    Phone,
-    FileText,
-    Search,
-    LogOut
+    LogOut,
+    Instagram,
+    MessageCircle
 } from 'lucide-react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { LocationPickerModal } from '../common/LocationPickerModal';
 import { AuthModal } from './AuthModal';
 import { SellerDashboard } from './SellerDashboard';
 import { SellerInfoPages } from './SellerInfoPages';
 import { useAuthStore } from '../../store';
 
-// --- HELPER COMPONENTS (Defined at top to prevent errors) ---
+// --- HELPER COMPONENTS ---
 
-const StepCard = ({ step, title, desc, icon, bgClass }: { step: string, title: string, desc: string, icon: React.ReactNode, bgClass: string }) => (
-    <div className={`${bgClass} p-8 rounded-[2.5rem] hover:shadow-2xl hover:scale-105 transition-all duration-300 group h-full border-none`}>
-        <div className="flex justify-between items-start mb-6">
-            <span className="text-6xl font-black italic tracking-tighter select-none opacity-40 text-white mix-blend-screen">{step}</span>
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 group-hover:rotate-12 transition-transform bg-white/20 backdrop-blur-md border border-white/20">
-                {icon}
-            </div>
+const InfiniteMarquee = ({ children, direction = "left", speed = 20 }: { children: React.ReactNode, direction?: "left" | "right", speed?: number }) => {
+    return (
+        <div className="overflow-hidden flex w-full relative">
+            <motion.div
+                className="flex gap-16 min-w-full items-center shrink-0 py-4 px-4"
+                initial={{ x: direction === "left" ? 0 : "-100%" }}
+                animate={{ x: direction === "left" ? "-100%" : 0 }}
+                transition={{ duration: speed, repeat: Infinity, ease: "linear" }}
+            >
+                {children}
+                {children}
+            </motion.div>
+            <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
         </div>
-        <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-4 text-white drop-shadow-sm">{title}</h3>
-        <p className="text-sm text-white/90 font-medium leading-relaxed">{desc}</p>
-    </div>
-);
-
-const TrustItem = ({ text }: { text: string }) => (
-    <div className="flex items-center gap-3">
-        <CheckCircle2 className="text-blue-500" size={18} />
-        <span className="text-sm font-bold text-white">{text}</span>
-    </div>
-);
-
-const Share2Icon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-        <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /><line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
-    </svg>
-);
+    );
+};
 
 // --- SOCIAL ICONS (REAL LOGOS) ---
 
@@ -92,6 +77,228 @@ const TikTokLogo = ({ size = 24 }: { size?: number }) => (
     </svg>
 );
 
+// --- TRUST BAR COMPONENT (REMOVED) ---
+// const TrustBar = () => ...
+
+// --- INTERACTIVE PHONE SIMULATOR ---
+const InteractiveSolutions = () => {
+    const [activeFeature, setActiveFeature] = useState(0);
+    const [isPaused, setIsPaused] = useState(false);
+
+    const features = [
+        {
+            title: "Universal Link",
+            desc: "One bio link for TikTok, WhatsApp, IG & Facebook. No more 'DM for details'.",
+            icon: <Globe size={20} />,
+            screenColor: "bg-blue-600",
+            screenContent: (
+                <div className="text-center p-6 text-white">
+                    <div className="bg-white/20 w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center backdrop-blur-md">
+                        <Globe size={32} />
+                    </div>
+                    <h3 className="font-black text-2xl italic mb-2">BIO LINK</h3>
+                    <div className="space-y-2">
+                        <div className="bg-white/10 p-3 rounded-xl text-xs font-bold flex items-center gap-2"><Instagram size={14} /> Shop on IG</div>
+                        <div className="bg-white/10 p-3 rounded-xl text-xs font-bold flex items-center gap-2"><MessageCircle size={14} /> Shop on WhatsApp</div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            title: "Secure Mpesa Payments",
+            desc: "We hold the buyer's money safely. You get paid instantly upon delivery verification.",
+            icon: <ShieldCheck size={20} />,
+            screenColor: "bg-black",
+            screenContent: (
+                <div className="text-center p-6 text-white">
+                    <div className="bg-green-500/20 w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center border-2 border-green-500">
+                        <Lock size={32} className="text-green-500" />
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-green-500 mb-1">SECURE HOLD</p>
+                    <h3 className="font-black text-3xl italic mb-1">KES 4,500</h3>
+                    <p className="text-xs opacity-60">Locked in Vault</p>
+                </div>
+            )
+        },
+        {
+            title: "Verified Logistics",
+            desc: "TumaFast riders are dispatched automatically the moment a customer pays.",
+            icon: <Zap size={20} />,
+            screenColor: "bg-yellow-500",
+            screenContent: (
+                <div className="text-center p-6 text-black">
+                    <div className="bg-black/10 w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <Zap size={32} fill="currentColor" />
+                    </div>
+                    <h3 className="font-black text-2xl italic mb-2">RIDER ACTIVE</h3>
+                    <div className="bg-black text-white p-3 rounded-xl flex items-center gap-3 text-left">
+                        <div className="w-8 h-8 bg-slate-800 rounded-full shadow-inner" />
+                        <div>
+                            <p className="text-[10px] font-bold">Courier #294</p>
+                            <p className="text-[8px] opacity-60">Arriving in 12m</p>
+                        </div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            title: "Smart Analytics",
+            desc: "Understand your customers with deep insights into views, clicks, and conversion rates.",
+            icon: <TrendingUp size={20} />,
+            screenColor: "bg-blue-600",
+            screenContent: (
+                <div className="text-center p-6 text-white">
+                    <div className="bg-white/20 w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <TrendingUp size={32} className="text-white" />
+                    </div>
+                    <h3 className="font-black text-2xl italic mb-4">GROWTH</h3>
+                    <div className="flex gap-2 justify-center items-end h-24 pb-2">
+                        <div className="w-4 bg-white/30 h-[40%] rounded-t-lg"></div>
+                        <div className="w-4 bg-white/50 h-[60%] rounded-t-lg"></div>
+                        <div className="w-4 bg-white/70 h-[50%] rounded-t-lg"></div>
+                        <div className="w-4 bg-white h-[85%] rounded-t-lg shadow-[0_0_15px_rgba(255,255,255,0.5)]"></div>
+                        <div className="w-4 bg-white/40 h-[70%] rounded-t-lg"></div>
+                    </div>
+                </div>
+            )
+        }
+    ];
+
+    useEffect(() => {
+        if (isPaused) return;
+        const interval = setInterval(() => {
+            setActiveFeature((prev) => (prev + 1) % features.length);
+        }, 4000);
+        return () => clearInterval(interval);
+    }, [isPaused, features.length]);
+
+    return (
+        <div className="py-24 bg-slate-50 border-y border-slate-200">
+            <div className="max-w-6xl mx-auto px-6">
+                <div className="text-center mb-16 space-y-6 max-w-3xl mx-auto">
+                    <h2 className="text-3xl sm:text-4xl font-black italic uppercase tracking-tighter text-slate-900 leading-none">
+                        Everything you need <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-yellow-500">to run your store online.</span>
+                    </h2>
+                    <div className="inline-flex items-center gap-2 mb-2 px-3 py-1">
+                        <span className="text-sm font-medium text-slate-500">Simple enough for a side-hustle. Powerful enough for an enterprise.</span>
+                    </div>
+                </div>
+
+                <div className="grid lg:grid-cols-2 gap-16 items-center">
+                    <div className="hidden lg:block space-y-4">
+                        {features.map((feature, idx) => (
+                            <div
+                                key={idx}
+                                onMouseEnter={() => { setActiveFeature(idx); setIsPaused(true); }}
+                                onMouseLeave={() => setIsPaused(false)}
+                                onClick={() => { setActiveFeature(idx); setIsPaused(true); }}
+                                className={`p-6 rounded-3xl cursor-pointer transition-all duration-300 border ${activeFeature === idx
+                                    ? 'bg-white border-slate-200 shadow-xl scale-105'
+                                    : 'bg-transparent border-transparent opacity-60 hover:opacity-100'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className={`p-2 rounded-lg ${activeFeature === idx ? 'bg-yellow-500 text-black' : 'bg-slate-200 text-slate-500'}`}>
+                                        {feature.icon}
+                                    </div>
+                                    <h3 className="font-black text-lg uppercase italic tracking-tight">{feature.title}</h3>
+                                </div>
+                                <p className="text-sm font-medium text-slate-500 pl-11">{feature.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex flex-col items-center">
+                        <div className="relative flex justify-center items-center h-[500px] lg:h-[600px] perspective-1000">
+                            <div className="relative w-[280px] lg:w-[300px] h-[540px] lg:h-[580px] bg-slate-900 rounded-[3rem] border-8 border-slate-900 shadow-2xl overflow-hidden transform rotate-y-12 transition-all duration-500">
+                                <div className={`absolute inset-0 flex items-center justify-center transition-colors duration-500 ${features[activeFeature]?.screenColor}`}>
+                                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 key={activeFeature}">
+                                        {features[activeFeature]?.screenContent}
+                                    </div>
+
+                                    {/* Mobile Glass Overlay Content */}
+                                    <div className="absolute bottom-4 left-4 right-4 bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl text-left lg:hidden z-10 animate-in slide-in-from-bottom-2">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <div className="text-yellow-500">{features[activeFeature]?.icon}</div>
+                                            <p className="text-white font-black uppercase text-sm tracking-wide">{features[activeFeature]?.title}</p>
+                                        </div>
+                                        <p className="text-[10px] text-slate-100 font-medium leading-relaxed opacity-90">{features[activeFeature]?.desc}</p>
+                                    </div>
+                                </div>
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-20" />
+                                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none" />
+                            </div>
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-yellow-500/20 blur-[100px] -z-10" />
+                        </div>
+
+                        {/* Mobile Horizontal Tabs/Controls */}
+                        <div className="flex lg:hidden w-[100vw] overflow-x-auto gap-3 pb-6 pt-4 px-6 no-scrollbar snap-x -mx-6">
+                            {features.map((feature, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => { setActiveFeature(idx); setIsPaused(true); }}
+                                    className={`flex-none px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all snap-center whitespace-nowrap ${activeFeature === idx
+                                        ? 'bg-slate-900 text-white border-slate-900 shadow-lg scale-105'
+                                        : 'bg-white text-slate-400 border-slate-200'
+                                        }`}
+                                >
+                                    {feature.title}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- POSITIVE EARNING CALCULATOR ---
+const RevenueCalculator = ({ onAction }: { onAction: () => void }) => {
+    const [commentCount, setCommentCount] = useState(15);
+    const avgPrice = 4500;
+    const conversionRate = 0.25;
+    const potentialRevenue = commentCount * avgPrice * conversionRate * 30;
+
+    return (
+        <div className="bg-slate-900 text-white py-24 relative overflow-hidden">
+            <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
+                <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter mb-4">How Much Could You <span className="text-green-500">Earn?</span></h2>
+                <p className="text-slate-400 mb-12">Drag the slider to match your daily <b>Price Comments</b>.</p>
+
+                <div className="bg-white/5 backdrop-blur-md border border-white/10 p-8 rounded-[2.5rem] max-w-2xl mx-auto">
+                    <div className="mb-8">
+                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">
+                            <span>5 Comments</span>
+                            <span>100+ Comments</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="5" max="100"
+                            value={commentCount}
+                            onChange={(e) => setCommentCount(Number(e.target.value))}
+                            className="w-full h-3 bg-slate-700 rounded-full appearance-none cursor-pointer accent-green-500"
+                        />
+                        <p className="text-center mt-6 font-black text-green-500 text-2xl">{commentCount} Price Comments / Day</p>
+                    </div>
+
+                    <div className="border-t border-white/10 pt-8">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Estimated Monthly Revenue</p>
+                        <p className="text-5xl md:text-6xl font-black text-white italic tracking-tighter transition-all duration-300">KES {potentialRevenue.toLocaleString()}</p>
+                        <p className="text-xs text-green-400 font-bold mt-4 flex items-center justify-center gap-2">
+                            <TrendingUp size={16} /> Unlocked via SokoSnap Checkout
+                        </p>
+                    </div>
+                </div>
+
+                <button onClick={onAction} className="mt-12 px-12 py-5 bg-green-500 text-black rounded-full font-black text-sm uppercase tracking-widest hover:scale-105 transition-transform shadow-xl shadow-green-500/20 flex items-center gap-2 mx-auto">
+                    <Sparkles size={16} fill="currentColor" /> Start Earning More Now
+                </button>
+            </div>
+        </div>
+    );
+};
+
 // --- MAIN COMPONENT ---
 
 const SellerLandingPage = () => {
@@ -101,6 +308,9 @@ const SellerLandingPage = () => {
         return params.get('view') || 'hero';
     });
     const { user, isAuthenticated, isInitialized, initialize, logout, openAuthModal, becomeSeller } = useAuthStore();
+    const { scrollY } = useScroll();
+    const navBackground = useTransform(scrollY, [0, 50], ["rgba(255, 255, 255, 0)", "rgba(255, 255, 255, 0.8)"]);
+    const navBackdrop = useTransform(scrollY, [0, 50], ["blur(0px)", "blur(12px)"]);
 
     // Initialize Firebase auth listener on mount
     useEffect(() => {
@@ -108,7 +318,7 @@ const SellerLandingPage = () => {
         return () => unsubscribe();
     }, [initialize]);
 
-    // Handle initial redirect Logic (Once only)
+    // Handle initial redirect Logic
     useEffect(() => {
         if (!isInitialized) return;
 
@@ -119,64 +329,52 @@ const SellerLandingPage = () => {
                 setStep('register');
             }
         }
-    }, [isInitialized, isAuthenticated, user, step]); // Be careful with dependencies
+    }, [isInitialized, isAuthenticated, user, step]);
 
-    // Auth State Check
+    // Auth & Form State
     const [showAuthWarning, setShowAuthWarning] = useState(false);
-
-    // Location State
     const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
-
-    // Payment Method State
-    const [mpesaType, setMpesaType] = useState('personal'); // 'personal', 'till', 'paybill'
+    const [mpesaType, setMpesaType] = useState('personal');
 
     const [formData, setFormData] = useState({
-        // Shop Details
-        shopName: '',
-        locationRequest: '', // The user's input/search
-        locationName: '', // Confirmed address
-        latitude: null as number | null,
-        longitude: null as number | null,
-
-        // Contact Person
-        contactName: '',
-        contactPhone: '',
-        email: '',
-
-        // Legal
-        kraPin: '',
-
-        // Payment
-        mpesaNumber: '',
-        tillNumber: '',
-        paybillNumber: '',
-        accountNumber: '',
-
-        // Socials
-        whatsapp: '',
-        instagram: '',
-        tiktok: '',
-        facebook: ''
+        shopName: '', locationRequest: '', locationName: '', latitude: null as number | null, longitude: null as number | null,
+        contactName: '', contactPhone: '', email: '', kraPin: '',
+        mpesaNumber: '', tillNumber: '', paybillNumber: '', accountNumber: '',
+        whatsapp: '', instagram: '', tiktok: '', facebook: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // --- NEW STATE & LOGIC ---
+    const [platformIndex, setPlatformIndex] = useState(0);
+
+    // Platform Brand Colors & Gradients
+    const platforms = [
+        { name: 'Instagram', color: 'text-transparent bg-clip-text bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045]' },
+        { name: 'TikTok', color: 'text-black [text-shadow:-2px_0_#25F4EE,2px_0_#FE2C55]' },
+        { name: 'WhatsApp', color: 'text-[#25D366]' },
+        { name: 'Facebook', color: 'text-[#1877F2]' },
+        { name: 'Online Shops', color: 'text-yellow-500' }
+    ];
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setPlatformIndex((prev) => (prev + 1) % platforms.length);
+        }, 1000);
+        return () => clearInterval(interval);
+    }, []);
 
     // Initial Loading State
     if (!isInitialized || (isAuthenticated && !user)) {
         return (
-            <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-                <Loader2 className="animate-spin text-yellow-500" size={48} />
-                <p className="ml-4 text-white text-lg">Loading Profile...</p>
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <Loader2 className="animate-spin text-slate-900" size={48} />
             </div>
         );
     }
 
     const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
         setFormData(prev => ({
-            ...prev,
-            locationName: location.address,
-            locationRequest: location.address, // Update input with selected address
-            latitude: location.lat,
-            longitude: location.lng
+            ...prev, locationName: location.address, locationRequest: location.address, latitude: location.lat, longitude: location.lng
         }));
     };
 
@@ -184,43 +382,23 @@ const SellerLandingPage = () => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    // In a real app, reverse geocode here
                     setFormData(prev => ({
-                        ...prev,
-                        locationName: "Current Device Location",
-                        locationRequest: "Current Device Location",
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
+                        ...prev, locationName: "Current Device Location", locationRequest: "Current Device Location", latitude: position.coords.latitude, longitude: position.coords.longitude
                     }));
                 },
-                () => {
-                    alert('Unable to retrieve location. Please check browser permissions.');
-                }
+                () => alert('Unable to retrieve location. Please check browser permissions.')
             );
         }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleSubmit = async (e: any) => {
         e.preventDefault();
-
-        // NEW: Auth Check
-        if (!user) {
-            setShowAuthWarning(true);
-            return;
-        }
-
+        if (!user) { setShowAuthWarning(true); return; }
         setIsSubmitting(true);
-
         try {
-            // Register the user as a seller with their shop information
             await becomeSeller({
-                shopName: formData.shopName,
-                shopLocation: formData.locationName,
-                contactPerson: formData.contactName,
-                contactPhone: formData.contactPhone,
+                shopName: formData.shopName, shopLocation: formData.locationName, contactPerson: formData.contactName, contactPhone: formData.contactPhone,
             });
-
             setIsSubmitting(false);
             setStep('success');
         } catch (error) {
@@ -235,232 +413,262 @@ const SellerLandingPage = () => {
         setShowAuthWarning(false);
     };
 
+    const handleCallToAction = () => {
+        if (isAuthenticated && user) {
+            if (user.type === 'verified_merchant') {
+                setStep('dashboard');
+            } else {
+                setStep('register');
+            }
+        } else {
+            openAuthModal('register');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-yellow-200 overflow-x-hidden">
 
+
+            {/* --- IMMERSIVE BACKGROUND --- */}
+            {step === 'hero' && (
+                <div className="fixed inset-0 z-0 pointer-events-none">
+                    <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-100/40 blur-[120px]" />
+                    <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-yellow-100/40 blur-[120px]" />
+                    <div className="absolute top-[30%] left-[30%] w-[40%] h-[40%] rounded-full bg-pink-100/30 blur-[150px]" />
+                </div>
+            )}
+
             {/* --- NAVBAR --- */}
             {step !== 'dashboard' && (
-                <nav className="flex justify-between items-center p-6 max-w-7xl mx-auto sticky top-0 bg-white/90 backdrop-blur-md z-50 border-b border-slate-100">
-                    <div className="flex items-center gap-2" onClick={() => setStep('hero')} style={{ cursor: 'pointer' }}>
-                        <div className="w-9 h-9 bg-yellow-500 rounded-xl flex items-center justify-center shadow-lg shadow-yellow-500/20 transform -rotate-3">
-                            <Store className="text-black" size={20} />
+                <motion.nav
+                    style={{ backgroundColor: navBackground, backdropFilter: navBackdrop, borderBottom: "1px solid rgba(241, 245, 249, 0.5)" }}
+                    className="flex justify-between items-center p-6 max-w-7xl mx-auto sticky top-0 z-50 transition-all rounded-b-[2rem]"
+                >
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => setStep('hero')}>
+                        <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg shadow-slate-900/20 transform -rotate-3 hover:rotate-0 transition-all">
+                            <Store className="text-yellow-500" size={20} />
                         </div>
                         <span className="font-black italic text-2xl tracking-tighter text-slate-900">SokoSnap</span>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div>
                         <button
                             onClick={() => {
                                 if (user) {
-                                    if (user.type === 'verified_merchant') {
-                                        setStep('dashboard');
-                                    } else {
-                                        setStep('register');
-                                    }
-                                } else {
-                                    openAuthModal('login');
-                                }
+                                    if (user.type === 'verified_merchant') { setStep('dashboard'); } else { setStep('register'); }
+                                } else { openAuthModal('login'); }
                             }}
-                            className="text-[10px] sm:text-xs font-bold text-black border-2 border-black px-3 sm:px-6 py-2 sm:py-2.5 rounded-full hover:bg-black hover:text-white transition-all uppercase tracking-widest whitespace-nowrap"
+                            className="bg-slate-900 text-white text-[10px] sm:text-xs font-bold px-5 py-2.5 rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl shadow-slate-200"
                         >
-                            Seller Dashboard
+                            SELLER DASHBOARD
                         </button>
                     </div>
-                </nav>
+                </motion.nav>
             )}
 
-            {/* --- MAIN CONTENT SWITCHER --- */}
+            <AnimatePresence mode="wait">
+                {step === 'hero' && (
+                    <motion.div
+                        key="hero"
+                        initial="hidden"
+                        animate="visible"
+                        exit={{ opacity: 0, y: -20 }}
+                        className="relative z-10"
+                    >
+                        {/* HERO SECTION */}
+                        <div className="max-w-7xl mx-auto px-6 pt-4 pb-12 relative z-10">
+                            <div className="grid lg:grid-cols-2 gap-16 items-center">
+                                <div className="text-left animate-in slide-in-from-left duration-700">
+
+                                    {/* --- TOP BADGE --- */}
+                                    <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-full px-4 py-1.5 mb-6">
+                                        <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse shadow-[0_0_8px_#ffd400]" />
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-700">The Universal Checkout Link</span>
+                                    </div>
+
+                                    {/* --- DYNAMIC BRANDED HEADLINE (FIXED 'FOR') --- */}
+                                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic uppercase tracking-tighter leading-none mb-4 text-slate-900 py-2">
+                                        The #1 <img src="/M-PESA_LOGO-01.svg.png" alt="M-PESA" className="inline-block h-16 md:h-24 -mt-4 ml-2 align-middle object-contain" /> <br />
+                                        Secure Checkout For <br />
+                                        <span className={`inline-block pr-4 transition-all duration-500 ${platforms[platformIndex]?.color}`}>
+                                            {platforms[platformIndex]?.name}.
+                                        </span>
+                                    </h1>
+
+                                    {/* --- REFINED SUB-HEADLINE: FOCUSING ON TRUST & FRICTION REMOVAL --- */}
+                                    <p className="text-slate-500 text-sm font-medium max-w-lg mb-6 leading-relaxed">
+                                        Give your customers the <span className="font-bold text-slate-900">absolute confidence</span> to buy instantly without the fear of scams. Eliminate <span className="font-bold text-slate-900">repetitive price and delivery questions</span> with a <span className="font-bold text-slate-900 bg-yellow-100 px-1 rounded">Verified Secure M-Pesa Checkout</span> across all social apps. We handle the logistics across Kenya so you can grow and earn more.
+                                    </p>
+
+                                    <div className="flex flex-col sm:flex-row gap-4 items-start">
+                                        <button onClick={handleCallToAction} className="px-10 py-5 bg-black text-white rounded-[2rem] font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-3 shadow-2xl shadow-black/20">
+                                            Get Secure Checkout Link <ArrowRight size={16} strokeWidth={3} className="text-yellow-500" />
+                                        </button>
+
+                                        {/* Social Proof Badge */}
+                                        <div className="flex items-center gap-2 mt-4 sm:mt-0 sm:ml-4 bg-slate-50 px-4 py-3 rounded-[2rem] border border-slate-100 shadow-sm">
+                                            <div className="flex -space-x-3">
+                                                {[1, 2, 3].map(i => (
+                                                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
+                                                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=user${i}`} alt="user" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <p className="text-[9px] font-bold text-slate-500 leading-tight uppercase tracking-wide">Trusted by 500+ <br />Kenyan Merchants</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="relative animate-in slide-in-from-right duration-1000 delay-200">
+                                    <div className="absolute inset-0 bg-yellow-400 rounded-[4rem] rotate-6 opacity-20 blur-2xl" />
+
+                                    {/* HERO IMAGE: Kenyan Seller Celebrating */}
+                                    <video
+                                        src="/sokosnap.mp4"
+                                        autoPlay
+                                        muted
+                                        loop
+                                        playsInline
+                                        className="relative rounded-[3rem] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.3)] border-4 border-white object-cover h-[500px] w-full"
+                                    />
+
+                                    {/* TOP FLOATING CARD */}
+                                    <div className="absolute -left-4 top-12 bg-white p-4 rounded-[2rem] shadow-2xl border border-green-100 flex items-center gap-3 animate-bounce delay-700 z-20 scale-90">
+                                        <div className="bg-[#4CAF50] p-2.5 rounded-2xl text-white shadow-lg shadow-green-500/30">
+                                            <MessageCircle size={24} fill="currentColor" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5 leading-none">M-PESA SECURED</p>
+                                            <p className="text-lg font-black text-slate-900 tracking-tight leading-none mt-0.5">KES 14,500.00</p>
+                                        </div>
+                                    </div>
+
+                                    {/* BOTTOM FLOATING CARD: UNIVERSAL LINKS */}
+                                    <div className="absolute -right-4 -bottom-6 bg-yellow-500 text-black p-4 rounded-[2rem] shadow-xl flex items-center gap-3 animate-pulse delay-1000 z-20 border-4 border-white scale-90">
+                                        <div className="bg-black p-2.5 rounded-2xl text-yellow-500 shadow-xl">
+                                            <Globe size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] font-black text-black/60 uppercase tracking-widest mb-0.5">UNIVERSAL LINKS</p>
+                                            <p className="text-xl font-black text-black italic tracking-tighter leading-none">WORKS EVERYWHERE</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <InteractiveSolutions />
+
+                        {/* STICKY BOTTOM CTA (REMOVED) */}
+
+                        <style>{`
+            @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+            .animate-marquee { animation: marquee 25s linear infinite; }
+            .perspective-1000 { perspective: 1000px; }
+            .rotate-y-12 { transform: rotateY(-12deg) rotateX(5deg); }
+          `}</style>
+
+
+                        {/* BENTO GRID FEATURES - MODERN (REMOVED) */}
+
+                        {/* CTA SECTION (REMOVED) */}
+
+                        {/* HOW IT WORKS (3-STEP) */}
+                        <div className="py-24 bg-white border-y border-slate-100">
+                            <div className="max-w-7xl mx-auto px-6 text-center">
+                                <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-slate-900 mb-16">
+                                    Sell in 3 Simple Steps
+                                </h2>
+
+                                <div className="grid md:grid-cols-3 gap-12 relative">
+                                    {/* Connecting Line (Desktop) */}
+                                    <div className="hidden md:block absolute top-12 left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-slate-200 via-yellow-400 to-slate-200" />
+
+                                    <div className="relative group">
+                                        <div className="w-24 h-24 bg-slate-50 border-4 border-white shadow-xl rounded-[2rem] mx-auto mb-8 flex items-center justify-center relative z-10 group-hover:scale-110 transition-transform duration-300">
+                                            <span className="absolute -top-3 -right-3 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center font-black text-sm">1</span>
+                                            <div className="text-yellow-500"><Sparkles size={32} /></div>
+                                        </div>
+                                        <h3 className="font-black text-xl italic uppercase mb-3">Generate Checkout Link</h3>
+                                        <p className="text-sm font-medium text-slate-500 px-8">In your Seller Dashboard click Generate Link, Upload photos, videos, name & price. We instantly generate your secure checkout link.</p>
+                                    </div>
+
+                                    <div className="relative group">
+                                        <div className="w-24 h-24 bg-slate-50 border-4 border-white shadow-xl rounded-[2rem] mx-auto mb-8 flex items-center justify-center relative z-10 group-hover:scale-110 transition-transform duration-300">
+                                            <span className="absolute -top-3 -right-3 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center font-black text-sm">2</span>
+                                            <div className="text-green-500"><MessageCircle size={32} /></div>
+                                        </div>
+                                        <h3 className="font-black text-xl italic uppercase mb-3">Share Link</h3>
+                                        <p className="text-sm font-medium text-slate-500 px-8">Post the link on your WhatsApp Status, TikTok bio, or Instagram Stories.</p>
+                                    </div>
+
+                                    <div className="relative group">
+                                        <div className="w-24 h-24 bg-slate-50 border-4 border-white shadow-xl rounded-[2rem] mx-auto mb-8 flex items-center justify-center relative z-10 group-hover:scale-110 transition-transform duration-300">
+                                            <span className="absolute -top-3 -right-3 w-8 h-8 bg-black text-white rounded-full flex items-center justify-center font-black text-sm">3</span>
+                                            <div className="text-blue-500"><ShieldCheck size={32} /></div>
+                                        </div>
+                                        <h3 className="font-black text-xl italic uppercase mb-3">Get Paid</h3>
+                                        <p className="text-sm font-medium text-slate-500 px-8">Customer pays to Secure Hold. We auto-dispatch a rider. You receive payment instantly upon verified delivery.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <RevenueCalculator onAction={handleCallToAction} />
+
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {step === 'hero' && (
                 <>
-                    {/* HERO SECTION */}
-                    <div className="max-w-7xl mx-auto px-6 pt-2 pb-4 relative z-10">
-                        <div className="grid lg:grid-cols-2 gap-8 items-center">
-
-                            {/* Left Content */}
-                            <div className="text-left animate-in slide-in-from-left duration-700">
-                                <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-full px-4 py-1.5 mb-2">
-                                    <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-700">THE UNIVERSAL CHECKOUT LINK</span>
-                                </div>
-
-                                {/* Fixed Header with extra padding for italics */}
-                                <h1 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter leading-none mb-3 text-slate-900 py-2">
-                                    SELL ON <br />
-                                    <span className="bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] bg-clip-text text-transparent">INSTAGRAM,</span> <br />
-                                    <span className="text-[#000000] drop-shadow-sm">TIKTOK,</span> <br />
-                                    <span className="text-[#25D366]">WHATSAPP</span> <br />
-                                    <span className="text-[#1877F2]">& FACEBOOK.</span>
-                                </h1>
-
-                                <p className="text-slate-500 text-lg font-medium max-w-lg mb-4 leading-relaxed">
-                                    Stop losing sales in the DMs. Get a secure <span className="font-bold text-slate-800">M-Pesa Checkout Link</span> that works on every single platform. We handle the payment and the delivery for you.
-                                </p>
-
-                                <div className="flex flex-col sm:flex-row gap-4 items-start">
-                                    <button
-                                        onClick={() => {
-                                            if (user) {
-                                                if (user.type === 'verified_merchant') {
-                                                    setStep('dashboard');
-                                                } else {
-                                                    setStep('register');
-                                                }
-                                            } else {
-                                                openAuthModal('register');
-                                            }
-                                        }}
-                                        className="px-10 py-5 bg-black text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-3 shadow-2xl shadow-black/20"
-                                    >
-                                        Start Selling Everywhere <ArrowRight size={18} strokeWidth={3} className="text-yellow-500" />
-                                    </button>
-                                    <div className="flex items-center gap-2 mt-4 sm:mt-0 sm:ml-4">
-                                        <div className="flex -space-x-3">
-                                            <div className="w-10 h-10 rounded-full border-2 border-white bg-slate-200 overflow-hidden"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="user" /></div>
-                                            <div className="w-10 h-10 rounded-full border-2 border-white bg-slate-300 overflow-hidden"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" alt="user" /></div>
-                                            <div className="w-10 h-10 rounded-full border-2 border-white bg-slate-400 overflow-hidden"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=John" alt="user" /></div>
-                                        </div>
-                                        <p className="text-xs font-bold text-slate-500 leading-tight">Join 500+ <br />Kenya Sellers</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Right Visual (High Energy) */}
-                            <div className="relative animate-in slide-in-from-right duration-1000 delay-200">
-                                <div className="absolute inset-0 bg-yellow-500 rounded-[3rem] rotate-6 opacity-20 blur-xl" />
-                                <img
-                                    src="/seller.png"
-                                    alt="Kenyan Seller on Phone"
-                                    className="relative rounded-[2.5rem] shadow-2xl border-4 border-white object-cover h-[500px] w-full"
-                                />
-
-                                {/* Floating Badge 1 (The M-Pesa Bounce) - Repositioned higher to avoid covering face */}
-                                <div className="absolute left-2 md:-left-8 top-8 md:top-12 bg-white p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-2xl border border-green-100 flex items-center gap-2 md:gap-3 animate-bounce delay-700 z-20">
-                                    <div className="bg-[#4CAF50] p-2 md:p-2.5 rounded-lg md:rounded-xl text-white shadow-lg shadow-green-500/30">
-                                        <MessageCircle size={18} className="md:w-6 md:h-6" fill="currentColor" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">M-PESA CONFIRMED</p>
-                                        <p className="text-base md:text-lg font-black text-slate-900 tracking-tight leading-none">KES 4,500.00</p>
-                                        <p className="text-[7px] md:text-[8px] font-bold text-slate-400 mt-0.5 md:mt-1">Ref: SG829...</p>
-                                    </div>
-                                </div>
-
-                                {/* Floating Badge 2 (Universal Link) - Lowered Position */}
-                                <div className="absolute -right-8 bottom-12 md:bottom-16 bg-black text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-pulse delay-1000 z-20 border border-white/10">
-                                    <div className="bg-blue-600 p-3 rounded-xl text-white shadow-lg shadow-blue-600/40">
-                                        <Globe size={24} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-0.5">Universal Link</p>
-                                        <p className="text-base font-black text-white leading-none">Works Everywhere</p>
-                                    </div>
-                                </div>
-                            </div>
-
+                    {/* MARQUEE SECTION MOVED HERE - ABOVE FOOTER */}
+                    <div className="border-y border-slate-100 bg-slate-50/50 py-10 relative overflow-hidden backdrop-blur-sm">
+                        <div className="flex justify-center mb-8">
+                            <h3 className="text-xl font-black uppercase italic tracking-tighter text-slate-400">Sell Securely Online</h3>
                         </div>
+                        <InfiniteMarquee speed={25}>
+                            <div className="flex items-center gap-3 text-2xl font-black text-slate-800 transition-all duration-300 cursor-default"><InstagramLogo /> INSTAGRAM</div>
+                            <div className="flex items-center gap-3 text-2xl font-black text-slate-800 transition-all duration-300 cursor-default"><TikTokLogo /> TIKTOK</div>
+                            <div className="flex items-center gap-3 text-2xl font-black text-slate-800 transition-all duration-300 cursor-default"><WhatsAppLogo /> WHATSAPP</div>
+                            <div className="flex items-center gap-3 text-2xl font-black text-slate-800 transition-all duration-300 cursor-default"><FacebookLogo /> FACEBOOK</div>
+                            <div className="flex items-center gap-3 text-2xl font-black text-slate-800 transition-all duration-300 cursor-default"><Store className="text-rose-500" size={28} /> ONLINE SHOPS</div>
+                            <div className="flex items-center gap-3 text-2xl font-black text-slate-800 transition-all duration-300 cursor-default"><Globe className="text-blue-500" size={28} /> WEBSITES</div>
+                        </InfiniteMarquee>
                     </div>
 
-                    {/* PLATFORM STRIP (Subtle Universal Proof) */}
-                    <div className="border-y border-slate-100 bg-slate-50 overflow-hidden">
-                        <div className="max-w-7xl mx-auto py-8 px-6 flex flex-wrap justify-center gap-8 md:gap-16 opacity-100 grayscale-0 transition-all duration-500">
-                            <div className="flex items-center gap-2 text-xl font-bold text-slate-600"><InstagramLogo /> Instagram</div>
-                            <div className="flex items-center gap-2 text-xl font-bold text-slate-600"><TikTokLogo /> TikTok</div>
-                            <div className="flex items-center gap-2 text-xl font-bold text-slate-600"><WhatsAppLogo /> WhatsApp</div>
-                            <div className="flex items-center gap-2 text-xl font-bold text-slate-600"><FacebookLogo /> Facebook</div>
-                            <div className="flex items-center gap-2 text-xl font-bold text-slate-400"><Globe /> & More</div>
-                        </div>
-                    </div>
-
-                    {/* HOW IT WORKS (Value Prop) */}
-                    <div id="how-it-works" className="bg-white py-24">
+                    <footer className="bg-white border-t border-slate-100 py-3">
                         <div className="max-w-7xl mx-auto px-6">
-                            <div className="text-center mb-16">
-                                <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-4 text-slate-900">How SokoSnap Works</h2>
-                                <p className="text-slate-500 font-medium">From "Price?" to "Paid" in 3 steps.</p>
-                            </div>
-
-                            <div className="grid md:grid-cols-3 gap-8">
-                                <StepCard
-                                    step="01"
-                                    bgClass="bg-gradient-to-br from-yellow-400 via-orange-500 to-pink-500"
-                                    title="Generate Link"
-                                    desc="Upload your product photo or video, name, and price. We create a secure checkout link instantly."
-                                    icon={<Zap className="text-white" size={28} strokeWidth={3} />}
-                                />
-                                <StepCard
-                                    step="02"
-                                    bgClass="bg-black"
-                                    title="Share Everywhere"
-                                    desc="Post the link on your WhatsApp Status & Catalog, TikTok Bio, Instagram, Facebook, or anywhere else online."
-                                    icon={<Share2Icon />}
-                                />
-                                <StepCard
-                                    step="03"
-                                    bgClass="bg-[#25D366]"
-                                    title="Get Paid Instantly"
-                                    desc="Customer pays via M-Pesa. TumaFast delivers the item. Funds hit your phone instantly."
-                                    icon={<ShieldCheck className="text-white" size={28} strokeWidth={3} />}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* TRUST SECTION */}
-                    <div className="bg-slate-900 text-white py-24 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/20 blur-[150px] rounded-full" />
-                        <div className="max-w-7xl mx-auto px-6 relative z-10 grid md:grid-cols-2 gap-16 items-center">
-                            <div>
-                                <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter mb-6 leading-none">
-                                    Safety for You & <br /> Your Buyers.
-                                </h2>
-                                <p className="text-slate-400 text-lg mb-8 leading-relaxed">
-                                    The biggest killer of sales online is trust. "Tuma deposit" scares buyers away.
-                                    <br /><br />
-                                    With SokoSnap's <b>Buyer Protection Badge</b>, buyers pay with confidence knowing their money is held securely until delivery.
-                                </p>
-                                <button className="text-yellow-500 font-black uppercase tracking-widest text-xs flex items-center gap-2 hover:translate-x-2 transition-transform">
-                                    Learn about TumaFast Delivery <ArrowRight size={16} />
-                                </button>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-md border border-white/10 p-8 rounded-[2.5rem]">
-                                <div className="flex items-center gap-4 mb-6">
-                                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-                                        <ShieldCheck className="text-yellow-500" size={32} />
+                            <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-2">
+                                {/* Brand Block */}
+                                <div className="max-w-sm">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center transform -rotate-3">
+                                            <Store className="text-black" size={16} />
+                                        </div>
+                                        <span className="font-black italic text-xl tracking-tighter text-slate-900">SokoSnap</span>
                                     </div>
-                                    <div>
-                                        <h3 className="text-xl font-black uppercase italic">Gold Verified Badge</h3>
-                                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Included with Account</p>
+                                    <p className="text-slate-400 text-xs font-medium leading-relaxed mb-4">
+                                        The secure social commerce platform for African sellers. Powered by TumaFast Logistics.
+                                    </p>
+                                </div>
+
+                                {/* Horizontal Links */}
+                                <div className="flex flex-col md:items-end gap-6">
+                                    <div className="flex flex-wrap md:justify-end gap-x-8 gap-y-4 max-w-lg text-[10px] font-bold uppercase tracking-widest text-slate-500 cursor-pointer">
+                                        <span onClick={() => setStep('about')} className="hover:text-black transition-colors">About SokoSnap</span>
+                                        <span onClick={() => setStep('terms')} className="hover:text-black transition-colors">Terms of Service</span>
+                                        <span onClick={() => setStep('privacy')} className="hover:text-black transition-colors">Privacy Policy</span>
+                                        <span onClick={() => setStep('cookies')} className="hover:text-black transition-colors">Cookie Policy</span>
+                                        <span onClick={() => setStep('merchant')} className="hover:text-black transition-colors">Merchant Agreement</span>
+                                        <span onClick={() => setStep('contact')} className="hover:text-black transition-colors">Contact Us</span>
+                                        <span onClick={() => setStep('faq')} className="hover:text-black transition-colors">FAQs</span>
                                     </div>
                                 </div>
-                                <div className="space-y-4">
-                                    <TrustItem text="Identity Verified Seller" />
-                                    <TrustItem text="M-Pesa Integration" />
-                                    <TrustItem text="Store Analytics" />
-                                    <TrustItem text="TumaFast Delivery" />
-                                </div>
                             </div>
-                        </div>
-                    </div>
-                </>
-            )}
 
-            {/* --- FOOTER --- */}
-            {step === 'hero' && (
-                <footer className="bg-white border-t border-slate-100 py-6">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <div className="flex flex-col md:flex-row justify-between items-start gap-12">
-                            {/* Brand Block - Restored & Minimal */}
-                            <div className="max-w-sm">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center transform -rotate-3">
-                                        <Store className="text-black" size={16} />
-                                    </div>
-                                    <span className="font-black italic text-xl tracking-tighter text-slate-900">SokoSnap</span>
-                                </div>
-                                <p className="text-slate-400 text-xs font-medium leading-relaxed mb-4">
-                                    The secure social commerce platform for African sellers. Powered by TumaFast Logistics.
-                                </p>
-
-                                <div className="flex flex-col gap-4">
+                            {/* Bottom Bar: Location Left, Socials Right, Copyright Below */}
+                            <div className="border-t border-slate-100 pt-2 flex flex-col gap-2">
+                                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nairobi, KE</span>
 
                                     <div className="flex gap-4">
@@ -468,418 +676,241 @@ const SellerLandingPage = () => {
                                         <a href="#" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"><WhatsAppLogo size={16} /></a>
                                         <a href="#" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"><FacebookLogo size={16} /></a>
                                     </div>
-
-                                    <p className="text-[10px] text-slate-400 font-medium">© 2026 TumaFast Ltd. All rights reserved.</p>
                                 </div>
-                            </div>
 
-                            {/* Horizontal Links - Smaller Font */}
-                            <div className="flex flex-wrap md:justify-end gap-x-8 gap-y-4 max-w-lg text-[10px] font-bold uppercase tracking-widest text-slate-500 pt-2 cursor-pointer">
-                                <span onClick={() => setStep('about')} className="hover:text-black transition-colors">About SokoSnap</span>
-                                <span onClick={() => setStep('terms')} className="hover:text-black transition-colors">Terms of Service</span>
-                                <span onClick={() => setStep('privacy')} className="hover:text-black transition-colors">Privacy Policy</span>
-                                <span onClick={() => setStep('cookies')} className="hover:text-black transition-colors">Cookie Policy</span>
-                                <span onClick={() => setStep('merchant')} className="hover:text-black transition-colors">Merchant Agreement</span>
-                                <span onClick={() => setStep('contact')} className="hover:text-black transition-colors">Contact Us</span>
+                                <p className="text-[10px] text-slate-400 font-medium text-center">© 2026 TumaFast Ltd. All rights reserved.</p>
                             </div>
                         </div>
-                    </div>
-                </footer>
+                    </footer>
+                </>
             )}
 
-            {/* --- REGISTRATION FORM --- */}
+            {/* --- REGISTRATION FORM (Enhanced) --- */}
             {step === 'register' && (
-                <div className="w-full max-w-2xl mx-auto px-6 pt-16 pb-20 animate-in slide-in-from-bottom-8 duration-500">
+                <motion.div
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 50 }}
+                    className="w-full max-w-2xl mx-auto px-6 pt-16 pb-20"
+                >
                     <div className="text-center mb-10">
+                        <div className="flex justify-between items-center mb-6 px-4">
+                            <button onClick={() => setStep('hero')} className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">
+                                <ArrowRight className="rotate-180" size={14} /> Back Home
+                            </button>
+                            {user && (
+                                <button onClick={() => { logout(); setStep('hero'); }} className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-red-400 hover:text-red-900 transition-colors">
+                                    <LogOut size={14} /> Sign Out
+                                </button>
+                            )}
+                        </div>
                         <h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-900">Claim Your Link</h2>
-                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2">Join the Elite Merchants</p>
+                        <p className="text-slate-500 font-medium mt-2">Join the elite merchants on SokoSnap.</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 md:p-12 rounded-[2.5rem] shadow-2xl shadow-slate-200 border border-slate-100">
+                    <form onSubmit={handleSubmit} className="space-y-8 bg-white p-8 md:p-12 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500" />
 
-                        {/* AUTH WARNING */}
                         {showAuthWarning && (
-                            <div className="rounded-2xl bg-red-50 border border-red-100 p-4 animate-in slide-in-from-top-2">
-                                <div className="flex gap-3">
-                                    <div className="bg-white p-2 rounded-full h-fit text-red-500 shadow-sm">
-                                        <Lock size={16} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h4 className="text-sm font-black text-slate-900 mb-1">Account Required</h4>
-                                        <p className="text-xs text-slate-500 font-medium mb-3">You must be signed in to google to create a shop.</p>
-                                        <button
-                                            type="button"
-                                            onClick={handleGoogleSignIn}
-                                            className="text-xs font-bold bg-white border border-slate-200 shadow-sm px-4 py-2 rounded-lg text-slate-900 hover:bg-slate-50"
-                                        >
-                                            Sign In / Register with Google
-                                        </button>
-                                    </div>
+                            <div className="rounded-2xl bg-red-50 border border-red-100 p-4 flex gap-4 items-center">
+                                <div className="bg-white p-2 rounded-full text-red-500"><Lock size={16} /></div>
+                                <div>
+                                    <p className="text-sm font-bold text-red-900">Authentication Required</p>
+                                    <button type="button" onClick={handleGoogleSignIn} className="text-xs font-bold underline mt-1">Sign in with Google</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* SHOP DETAILS SECTION */}
-                        <div className="space-y-4">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Shop Name</label>
-                                <div className="relative">
-                                    <Store className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                    <input
-                                        required
-                                        type="text"
-                                        placeholder="e.g. Eastleigh Kicks"
-                                        value={formData.shopName}
-                                        onChange={(e) => setFormData({ ...formData, shopName: e.target.value })}
-                                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-4 pl-12 pr-4 font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-yellow-500 focus:bg-white transition-all"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* LOCATION PICKER */}
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Shop Location</label>
-                                <div className="flex flex-col gap-2">
-                                    <div className="relative">
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                        <input
-                                            type="text"
-                                            placeholder="Search Google Places (e.g. Moi Avenue)"
-                                            value={formData.locationRequest}
-                                            onChange={(e) => setFormData({ ...formData, locationRequest: e.target.value })}
-                                            className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-4 pl-12 pr-4 font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-yellow-500 focus:bg-white transition-all"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={handleCurrentLocation}
-                                            className="flex items-center justify-center gap-2 py-3 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-black hover:text-white transition-colors"
-                                        >
-                                            <Navigation size={14} /> Use Current GPS
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsLocationPickerOpen(true)}
-                                            className="flex items-center justify-center gap-2 py-3 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-black hover:text-white transition-colors"
-                                        >
-                                            <MapPin size={14} /> Pin on Map
-                                        </button>
-                                    </div>
-                                    {formData.locationName && (
-                                        <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-100 rounded-xl">
-                                            <MapPin size={14} className="text-green-600 mt-0.5 shrink-0" />
-                                            <div>
-                                                <p className="text-[10px] font-bold text-green-700 uppercase tracking-wide">Confirmed Location</p>
-                                                <p className="text-xs font-medium text-green-900 leading-tight">{formData.locationName}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <p className="text-[9px] text-slate-400 font-medium ml-1">This helps customers and riders find you.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* CONTACT PERSON SECTION */}
-                        <div className="space-y-4 pt-4 border-t border-slate-100">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Shop Admin Contact</label>
-                            <div className="grid md:grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <div className="relative">
-                                        <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                        <input
-                                            required
-                                            type="text"
-                                            placeholder="Contact Person Name"
-                                            value={formData.contactName}
-                                            onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                                            className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 pl-12 pr-4 font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-yellow-500 focus:bg-white transition-all text-sm"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <div className="relative">
-                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                        <input
-                                            required
-                                            type="tel"
-                                            placeholder="Contact Phone"
-                                            value={formData.contactPhone}
-                                            onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                                            className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 pl-12 pr-4 font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-yellow-500 focus:bg-white transition-all text-sm"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="space-y-1.5">
-                                <div className="relative">
-                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                    <input
-                                        required
-                                        type="email"
-                                        placeholder="Business Email Address"
-                                        value={formData.email}
-                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 pl-12 pr-4 font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-yellow-500 focus:bg-white transition-all text-sm"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* KRA PIN SECTION */}
-                        <div className="space-y-1.5 pt-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Verification</label>
-                            <div className="relative">
-                                <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                        <div className="space-y-6">
+                            <div className="group">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1 group-focus-within:text-slate-900 transition-colors">Shop Name</label>
                                 <input
                                     required
-                                    type="text"
-                                    placeholder="KRA PIN (Mandatory)"
-                                    value={formData.kraPin}
-                                    onChange={(e) => setFormData({ ...formData, kraPin: e.target.value })}
-                                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-4 pl-12 pr-4 font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-yellow-500 focus:bg-white transition-all uppercase"
+                                    className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border-2 border-transparent focus:border-slate-900 rounded-2xl py-4 px-6 font-bold text-lg outline-none transition-all"
+                                    placeholder="e.g. Rare Kicks V2"
+                                    value={formData.shopName}
+                                    onChange={e => setFormData({ ...formData, shopName: e.target.value })}
                                 />
                             </div>
-                            <p className="text-[9px] text-slate-400 font-medium ml-1">For compliance and business verification purposes.</p>
-                        </div>
 
-                        {/* M-PESA CONFIGURATION SECTION */}
-                        <div className="space-y-3 pt-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Receive Payments Via</label>
-
-                            <div className="grid grid-cols-3 gap-2 bg-slate-50 p-1 rounded-2xl border border-slate-200">
-                                <button
-                                    type="button"
-                                    onClick={() => setMpesaType('personal')}
-                                    className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${mpesaType === 'personal' ? 'bg-black text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
-                                >
-                                    Personal
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setMpesaType('till')}
-                                    className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${mpesaType === 'till' ? 'bg-black text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
-                                >
-                                    Till No.
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setMpesaType('paybill')}
-                                    className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${mpesaType === 'paybill' ? 'bg-black text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
-                                >
-                                    Paybill
-                                </button>
-                            </div>
-
-                            {/* Conditional M-Pesa Inputs */}
-                            <div className="relative animate-in fade-in slide-in-from-top-2 duration-300">
-
-                                {mpesaType === 'personal' && (
+                            <div className="group">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Location</label>
+                                <div className="space-y-2">
                                     <div className="relative">
-                                        <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                         <input
-                                            required
-                                            type="tel"
-                                            placeholder="07XX XXX XXX"
-                                            value={formData.mpesaNumber}
-                                            onChange={(e) => setFormData({ ...formData, mpesaNumber: e.target.value })}
-                                            className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-4 pl-12 pr-4 font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-yellow-500 focus:bg-white transition-all"
+                                            className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border-2 border-transparent focus:border-slate-900 rounded-2xl py-4 px-6 font-bold outline-none transition-all"
+                                            placeholder="Search Location..."
+                                            value={formData.locationRequest}
+                                            onChange={e => setFormData({ ...formData, locationRequest: e.target.value })}
                                         />
-                                    </div>
-                                )}
-
-                                {mpesaType === 'till' && (
-                                    <div className="relative">
-                                        <Store className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                        <input
-                                            required
-                                            type="number"
-                                            placeholder="Enter Till Number"
-                                            value={formData.tillNumber}
-                                            onChange={(e) => setFormData({ ...formData, tillNumber: e.target.value })}
-                                            className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-4 pl-12 pr-4 font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-yellow-500 focus:bg-white transition-all"
-                                        />
-                                    </div>
-                                )}
-
-                                {mpesaType === 'paybill' && (
-                                    <div className="space-y-2">
-                                        <div className="relative">
-                                            <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                            <input
-                                                required
-                                                type="number"
-                                                placeholder="Business Number (Paybill)"
-                                                value={formData.paybillNumber}
-                                                onChange={(e) => setFormData({ ...formData, paybillNumber: e.target.value })}
-                                                className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-4 pl-12 pr-4 font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-yellow-500 focus:bg-white transition-all"
-                                            />
-                                        </div>
-                                        <div className="relative">
-                                            <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                            <input
-                                                required
-                                                type="text"
-                                                placeholder="Account Number"
-                                                value={formData.accountNumber}
-                                                onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-                                                className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-4 pl-12 pr-4 font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-yellow-500 focus:bg-white transition-all"
-                                            />
+                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                                            <button type="button" onClick={handleCurrentLocation} className="p-2 bg-white rounded-xl shadow-sm hover:bg-slate-900 hover:text-white transition-colors"><Navigation size={18} /></button>
+                                            <button type="button" onClick={() => setIsLocationPickerOpen(true)} className="p-2 bg-white rounded-xl shadow-sm hover:bg-slate-900 hover:text-white transition-colors"><MapPin size={18} /></button>
                                         </div>
                                     </div>
-                                )}
-
-                                <p className="text-[9px] text-slate-400 ml-1 font-medium mt-1">Funds will be settled to this account after delivery verification.</p>
+                                    {formData.locationName && (
+                                        <div className="flex gap-2 items-center text-[10px] font-bold text-green-600 bg-green-50 p-2 rounded-lg">
+                                            <CheckCircle2 size={12} /> Confirmed: {formData.locationName}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Social Links Section - Full Capture */}
-                        <div className="space-y-3 pt-4 border-t border-slate-100">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Social Storefronts</label>
-
-                            <div className="grid gap-3">
-                                <div className="relative">
-                                    <MessageCircle className="absolute left-4 top-1/2 -translate-y-1/2 text-[#25D366]" size={18} />
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div className="group">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Admin Contact</label>
                                     <input
+                                        required
+                                        className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border-2 border-transparent focus:border-slate-900 rounded-2xl py-4 px-6 font-bold outline-none transition-all"
+                                        placeholder="Full Name"
+                                        value={formData.contactName}
+                                        onChange={e => setFormData({ ...formData, contactName: e.target.value })}
+                                    />
+                                </div>
+                                <div className="group">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Phone</label>
+                                    <input
+                                        required
                                         type="tel"
-                                        placeholder="WhatsApp Number"
-                                        value={formData.whatsapp}
-                                        onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 pl-12 pr-4 font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#25D366] focus:bg-white transition-all text-sm"
-                                    />
-                                </div>
-
-                                <div className="relative">
-                                    <Instagram className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-500" size={18} />
-                                    <input
-                                        type="text"
-                                        placeholder="Instagram Handle (@shop)"
-                                        value={formData.instagram}
-                                        onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
-                                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 pl-12 pr-4 font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-pink-500 focus:bg-white transition-all text-sm"
-                                    />
-                                </div>
-
-                                <div className="relative">
-                                    <Video className="absolute left-4 top-1/2 -translate-y-1/2 text-black" size={18} />
-                                    <input
-                                        type="text"
-                                        placeholder="TikTok Handle (@shop)"
-                                        value={formData.tiktok}
-                                        onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })}
-                                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 pl-12 pr-4 font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-black focus:bg-white transition-all text-sm"
-                                    />
-                                </div>
-
-                                <div className="relative">
-                                    <Facebook className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600" size={18} />
-                                    <input
-                                        type="text"
-                                        placeholder="Facebook Page Name/Link"
-                                        value={formData.facebook}
-                                        onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
-                                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 pl-12 pr-4 font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-600 focus:bg-white transition-all text-sm"
+                                        className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border-2 border-transparent focus:border-slate-900 rounded-2xl py-4 px-6 font-bold outline-none transition-all"
+                                        placeholder="07XX XXX XXX"
+                                        value={formData.contactPhone}
+                                        onChange={e => setFormData({ ...formData, contactPhone: e.target.value })}
                                     />
                                 </div>
                             </div>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div className="group">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Email Address</label>
+                                    <input
+                                        type="email"
+                                        className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border-2 border-transparent focus:border-slate-900 rounded-2xl py-4 px-6 font-bold outline-none transition-all"
+                                        placeholder="shop@example.com"
+                                        value={formData.email}
+                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    />
+                                </div>
+                                <div className="group">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">KRA PIN (Optional)</label>
+                                    <input
+                                        className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border-2 border-transparent focus:border-slate-900 rounded-2xl py-4 px-6 font-bold outline-none transition-all"
+                                        placeholder="A00..."
+                                        value={formData.kraPin}
+                                        onChange={e => setFormData({ ...formData, kraPin: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 pt-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Social Media Links (Optional)</label>
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><InstagramLogo size={18} /></div>
+                                        <input
+                                            className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border-2 border-transparent focus:border-slate-900 rounded-2xl py-3 pl-12 pr-6 font-medium outline-none transition-all"
+                                            placeholder="Instagram Username"
+                                            value={formData.instagram}
+                                            onChange={e => setFormData({ ...formData, instagram: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><TikTokLogo size={18} /></div>
+                                        <input
+                                            className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border-2 border-transparent focus:border-slate-900 rounded-2xl py-3 pl-12 pr-6 font-medium outline-none transition-all"
+                                            placeholder="TikTok Username"
+                                            value={formData.tiktok}
+                                            onChange={e => setFormData({ ...formData, tiktok: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><FacebookLogo size={18} /></div>
+                                        <input
+                                            className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border-2 border-transparent focus:border-slate-900 rounded-2xl py-3 pl-12 pr-6 font-medium outline-none transition-all"
+                                            placeholder="Facebook Page"
+                                            value={formData.facebook}
+                                            onChange={e => setFormData({ ...formData, facebook: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><WhatsAppLogo size={18} /></div>
+                                        <input
+                                            className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border-2 border-transparent focus:border-slate-900 rounded-2xl py-3 pl-12 pr-6 font-medium outline-none transition-all"
+                                            placeholder="WhatsApp Number"
+                                            value={formData.whatsapp}
+                                            onChange={e => setFormData({ ...formData, whatsapp: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="group">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Payment Method</label>
+                                <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-4">
+                                    {['personal', 'till', 'paybill'].map(type => (
+                                        <button
+                                            key={type}
+                                            type="button"
+                                            onClick={() => setMpesaType(type)}
+                                            className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${mpesaType === type ? 'bg-white shadow-md text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            {type}
+                                        </button>
+                                    ))}
+                                </div>
+                                {(mpesaType === 'personal' || mpesaType === 'till') && (
+                                    <input
+                                        required
+                                        type="number"
+                                        className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border-2 border-transparent focus:border-slate-900 rounded-2xl py-4 px-6 font-bold outline-none transition-all"
+                                        placeholder={mpesaType === 'personal' ? 'M-Pesa Number' : 'Till Number'}
+                                        value={mpesaType === 'personal' ? formData.mpesaNumber : formData.tillNumber}
+                                        onChange={e => setFormData({ ...formData, [mpesaType === 'personal' ? 'mpesaNumber' : 'tillNumber']: e.target.value })}
+                                    />
+                                )}
+                                {mpesaType === 'paybill' && (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <input placeholder="Paybill No." className="w-full bg-slate-50 rounded-2xl py-4 px-6 font-bold outline-none" onChange={e => setFormData({ ...formData, paybillNumber: e.target.value })} />
+                                        <input placeholder="Account No." className="w-full bg-slate-50 rounded-2xl py-4 px-6 font-bold outline-none" onChange={e => setFormData({ ...formData, accountNumber: e.target.value })} />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="pt-4 pb-2">
+                                <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl cursor-pointer hover:bg-slate-100 transition-colors">
+                                    <input type="checkbox" required className="w-5 h-5 rounded border-slate-300 text-black focus:ring-black" />
+                                    <span className="text-xs font-medium text-slate-500">I agree to the <span className="text-slate-900 font-bold underline">Merchant Terms</span> & Privacy Policy.</span>
+                                </label>
+                            </div>
+
                         </div>
 
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full py-5 bg-black text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 mt-8 shadow-xl shadow-slate-300"
+                            className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-900/20"
                         >
-                            {isSubmitting ? (
-                                <>
-                                    <Loader2 size={18} className="animate-spin text-yellow-500" />
-                                    Creating Shop...
-                                </>
-                            ) : (
-                                <>
-                                    Launch Shop <ChevronRight size={18} strokeWidth={3} className="text-yellow-500" />
-                                </>
-                            )}
+                            {isSubmitting ? <Loader2 className="animate-spin" /> : <>Launch Shop <ChevronRight size={18} /></>}
                         </button>
-
-                        <div className="flex items-center justify-center gap-2 mt-6 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                            <Lock size={12} className="text-blue-500" /> Secured by TumaFast Black
-                        </div>
 
                     </form>
-
-                    <div className="flex flex-col gap-4 mt-8">
-                        <button onClick={() => setStep('hero')} className="w-full text-center text-slate-400 text-xs font-bold uppercase tracking-widest hover:text-black transition-colors">
-                            Back to Home
-                        </button>
-                        {user && (
-                            <button
-                                onClick={async () => {
-                                    await logout();
-                                    setStep('hero');
-                                }}
-                                className="w-full text-center text-red-400 text-xs font-bold uppercase tracking-widest hover:text-red-600 transition-colors flex items-center justify-center gap-2"
-                            >
-                                <LogOut size={14} /> Spec Sign Out
-                            </button>
-                        )}
-                    </div>
-                </div>
+                </motion.div>
             )}
 
             {/* --- SUCCESS STATE --- */}
             {step === 'success' && (
-                <div className="min-h-[80vh] flex flex-col items-center justify-center px-6 text-center animate-in zoom-in-95 duration-500">
-                    <div className="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 mb-8 shadow-xl shadow-yellow-100/50">
-                        <Loader2 size={48} className="animate-spin" />
-                    </div>
-                    <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter mb-4 text-slate-900">Application Received</h2>
-                    <p className="text-slate-500 text-sm font-medium max-w-xs mx-auto mb-10 leading-relaxed">
-                        Your shop creation request is <b>Pending Verification</b>. <br />
-                        We will manually review your details shortly. You will be notified via SMS or Email once approved.
-                    </p>
-
-                    <div className="bg-slate-50 border border-slate-200 p-6 rounded-3xl w-full max-w-sm mb-8 shadow-sm opacity-50 select-none grayscale">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Pending Shop Link</p>
-                        <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-inner">
-                            <span className="text-slate-400 font-mono text-sm font-bold">tmft.me/{formData.shopName.toLowerCase().replace(/\s/g, '')}</span>
-                            <Lock size={18} className="text-slate-300" />
-                        </div>
-                    </div>
-
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="px-8 py-3 bg-white border-2 border-slate-200 text-slate-600 rounded-full font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-colors"
-                    >
-                        Refresh Status
-                    </button>
-
-                    <button onClick={() => setStep('hero')} className="mt-6 text-slate-400 text-[10px] font-bold uppercase tracking-widest hover:text-black">
-                        Back to Home
-                    </button>
-                </div>
+                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-slate-50">
+                    <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-8 animate-bounce"><CheckCircle2 size={48} /></div>
+                    <h2 className="text-4xl font-black text-slate-900 mb-4">You're In!</h2>
+                    <p className="text-slate-500 mb-8 max-w-md">Your shop <b>{formData.shopName}</b> is pending verification. We'll text you shortly.</p>
+                    <button onClick={() => window.location.reload()} className="px-8 py-3 bg-white border-2 border-slate-200 rounded-full font-bold text-slate-600 hover:border-slate-900 hover:text-slate-900 transition-all">Refresh Status</button>
+                </motion.div>
             )}
 
-            {/* --- DASHBOARD VIEW --- */}
-            {step === 'dashboard' && (
-                <SellerDashboard onBack={() => setStep('hero')} />
-            )}
-
-            {/* --- INFO PAGES --- */}
-            {['about', 'terms', 'privacy', 'cookies', 'merchant', 'contact'].includes(step) && (
-                <SellerInfoPages page={step} onBack={() => setStep('hero')} onNavigate={(page) => setStep(page)} />
-            )}
-
-            {/* --- MODALS --- */}
-            <LocationPickerModal
-                isOpen={isLocationPickerOpen}
-                onClose={() => setIsLocationPickerOpen(false)}
-                onSelectLocation={(loc) => {
-                    handleLocationSelect(loc);
-                    setIsLocationPickerOpen(false);
-                }}
-            />
+            {step === 'dashboard' && <SellerDashboard onBack={() => setStep('hero')} />}
+            {['about', 'terms', 'privacy', 'cookies', 'merchant', 'contact', 'faq'].includes(step) && <SellerInfoPages page={step} onBack={() => setStep('hero')} onNavigate={setStep} />}
+            <LocationPickerModal isOpen={isLocationPickerOpen} onClose={() => setIsLocationPickerOpen(false)} onSelectLocation={(loc) => { handleLocationSelect(loc); setIsLocationPickerOpen(false); }} />
             <AuthModal />
-
         </div>
     );
 };

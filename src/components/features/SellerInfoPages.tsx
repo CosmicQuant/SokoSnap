@@ -295,6 +295,123 @@ export const SellerInfoPages: React.FC<InfoPageProps> = ({ page, onBack, onNavig
                         </div>
                     </div>
                 );
+            case 'faq':
+                return (
+                    <div className="space-y-8 animate-in slide-in-from-right duration-500 text-slate-600">
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600">
+                                <MessageSquare size={32} />
+                            </div>
+                            <div>
+                                <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-slate-900">Frequently Asked Questions</h1>
+                                <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mt-1">Everything you need to know</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-12">
+                            <div>
+                                <h2 className="text-xl font-black uppercase text-slate-900 mb-6 flex items-center gap-2">
+                                    <span className="w-8 h-1 bg-yellow-500 rounded-full" /> General Questions
+                                </h2>
+                                <div className="grid gap-4">
+                                    <details className="group bg-slate-50 border border-slate-100 rounded-2xl open:bg-white open:shadow-lg transition-all duration-300">
+                                        <summary className="font-bold text-slate-900 cursor-pointer p-6 list-none flex justify-between items-center bg-transparent">
+                                            What exactly is SokoSnap?
+                                            <span className="block w-6 h-6 rounded-full bg-slate-200 group-open:bg-yellow-500 group-open:text-white flex items-center justify-center transition-colors text-slate-500">
+                                                <ArrowRight size={14} className="group-open:rotate-90 transition-transform" />
+                                            </span>
+                                        </summary>
+                                        <div className="px-6 pb-6 text-sm leading-relaxed">
+                                            SokoSnap is a social commerce platform that adds a layer of trust to buying and selling on social media (Instagram, TikTok, WhatsApp). We provide a <b>Secure Checkout Link</b> that handles payments (via M-Pesa Escrow) and automated delivery via TumaFast logistics.
+                                        </div>
+                                    </details>
+
+                                    <details className="group bg-slate-50 border border-slate-100 rounded-2xl open:bg-white open:shadow-lg transition-all duration-300">
+                                        <summary className="font-bold text-slate-900 cursor-pointer p-6 list-none flex justify-between items-center bg-transparent">
+                                            Is it free to join?
+                                            <span className="block w-6 h-6 rounded-full bg-slate-200 group-open:bg-yellow-500 group-open:text-white flex items-center justify-center transition-colors text-slate-500">
+                                                <ArrowRight size={14} className="group-open:rotate-90 transition-transform" />
+                                            </span>
+                                        </summary>
+                                        <div className="px-6 pb-6 text-sm leading-relaxed">
+                                            <b>Yes!</b> Joining SokoSnap is 100% free. There are no monthly subscriptions. We only charge a small transaction fee when you successfully make a sale. If you don't sell, you don't pay.
+                                        </div>
+                                    </details>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h2 className="text-xl font-black uppercase text-slate-900 mb-6 flex items-center gap-2">
+                                    <span className="w-8 h-1 bg-green-500 rounded-full" /> For Sellers
+                                </h2>
+                                <div className="grid gap-4">
+                                    <details className="group bg-slate-50 border border-slate-100 rounded-2xl open:bg-white open:shadow-lg transition-all duration-300">
+                                        <summary className="font-bold text-slate-900 cursor-pointer p-6 list-none flex justify-between items-center bg-transparent">
+                                            How do I get paid?
+                                            <span className="block w-6 h-6 rounded-full bg-slate-200 group-open:bg-yellow-500 group-open:text-white flex items-center justify-center transition-colors text-slate-500">
+                                                <ArrowRight size={14} className="group-open:rotate-90 transition-transform" />
+                                            </span>
+                                        </summary>
+                                        <div className="px-6 pb-6 text-sm leading-relaxed">
+                                            When a customer pays, the funds are held securely in our Escrow Vault. Once the TumaFast rider delivers the item and the customer accepts it, the funds are <b>instantly released</b> to your registered M-Pesa number, Till, or Paybill.
+                                        </div>
+                                    </details>
+
+                                    <details className="group bg-slate-50 border border-slate-100 rounded-2xl open:bg-white open:shadow-lg transition-all duration-300">
+                                        <summary className="font-bold text-slate-900 cursor-pointer p-6 list-none flex justify-between items-center bg-transparent">
+                                            Do I need to organize my own delivery rider?
+                                            <span className="block w-6 h-6 rounded-full bg-slate-200 group-open:bg-yellow-500 group-open:text-white flex items-center justify-center transition-colors text-slate-500">
+                                                <ArrowRight size={14} className="group-open:rotate-90 transition-transform" />
+                                            </span>
+                                        </summary>
+                                        <div className="px-6 pb-6 text-sm leading-relaxed">
+                                            <b>No.</b> We have integrated directly with TumaFast's fleet. When you get an order, a rider is automatically assigned to pick it up from your location. You just need to hand over the package.
+                                        </div>
+                                    </details>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h2 className="text-xl font-black uppercase text-slate-900 mb-6 flex items-center gap-2">
+                                    <span className="w-8 h-1 bg-blue-500 rounded-full" /> Trust & Security
+                                </h2>
+                                <div className="grid gap-4">
+                                    <details className="group bg-slate-50 border border-slate-100 rounded-2xl open:bg-white open:shadow-lg transition-all duration-300">
+                                        <summary className="font-bold text-slate-900 cursor-pointer p-6 list-none flex justify-between items-center bg-transparent">
+                                            What is "Secure Hold"?
+                                            <span className="block w-6 h-6 rounded-full bg-slate-200 group-open:bg-yellow-500 group-open:text-white flex items-center justify-center transition-colors text-slate-500">
+                                                <ArrowRight size={14} className="group-open:rotate-90 transition-transform" />
+                                            </span>
+                                        </summary>
+                                        <div className="px-6 pb-6 text-sm leading-relaxed">
+                                            Secure Hold (or Escrow) means the buyer's money is safe with us until they get the product, and same applies for the seller. We protect the seller from "payment reversed" scams and the buyer from "goods not sent" scams. It ensures 100% trust.
+                                        </div>
+                                    </details>
+
+                                    <details className="group bg-slate-50 border border-slate-100 rounded-2xl open:bg-white open:shadow-lg transition-all duration-300">
+                                        <summary className="font-bold text-slate-900 cursor-pointer p-6 list-none flex justify-between items-center bg-transparent">
+                                            What if a customer claims an item is fake?
+                                            <span className="block w-6 h-6 rounded-full bg-slate-200 group-open:bg-yellow-500 group-open:text-white flex items-center justify-center transition-colors text-slate-500">
+                                                <ArrowRight size={14} className="group-open:rotate-90 transition-transform" />
+                                            </span>
+                                        </summary>
+                                        <div className="px-6 pb-6 text-sm leading-relaxed">
+                                            We have a strict anti-counterfeit policy. If a buyer raises a dispute regarding authenticity, the funds remain frozen. We investigate the claim (requiring photo/video evidence). If the item is proven fake, the money is refunded to the buyer. If the claim is false, the money is released to you.
+                                        </div>
+                                    </details>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-900 p-8 rounded-[2rem] text-center text-white mt-12">
+                            <h3 className="text-2xl font-black italic uppercase mb-2">Still have questions?</h3>
+                            <p className="text-slate-400 mb-6 text-sm">Our support team is available on WhatsApp 24/7.</p>
+                            <button className="bg-green-500 text-black px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs hover:scale-105 transition-transform flex items-center mx-auto gap-2">
+                                <WhatsAppLogo size={16} /> Chat Support
+                            </button>
+                        </div>
+                    </div>
+                );
             case 'contact':
                 return (
                     <div className="space-y-12 animate-in slide-in-from-right duration-500">
