@@ -250,20 +250,20 @@ const InteractiveSolutions = () => {
                                                 setActiveFeature(idx);
                                                 setIsPaused(true);
                                             }}
-                                            className={`absolute w-[35%] flex flex-col gap-1 transition-all duration-500 cursor-pointer pointer-events-auto ${isRight ? 'right-0 items-end text-right' : 'left-0 items-start text-left'
+                                            className={`absolute w-[45%] flex flex-col gap-1.5 transition-all duration-500 cursor-pointer pointer-events-auto ${isRight ? 'right-0 items-end text-right' : 'left-0 items-start text-left'
                                                 }`}
                                             style={{ top: `${topOffset}%` }}
                                         >
                                             <div className={`
-                                                p-2 rounded-xl backdrop-blur-md border shadow-lg transition-all duration-300
+                                                p-2.5 rounded-xl backdrop-blur-md border shadow-lg transition-all duration-300
                                                 ${activeFeature === idx
-                                                    ? 'bg-slate-900/90 border-yellow-500 text-yellow-500 scale-110 z-30'
-                                                    : 'bg-slate-900/60 border-white/10 text-slate-400 z-10'}
+                                                    ? 'bg-slate-900/95 border-yellow-500 text-yellow-500 scale-110 z-30 shadow-yellow-500/20'
+                                                    : 'bg-slate-900/80 border-white/10 text-slate-300 z-10'}
                                             `}>
-                                                {React.cloneElement(feature.icon as React.ReactElement<any>, { size: 18 })}
+                                                {React.cloneElement(feature.icon as React.ReactElement<any>, { size: 20 })}
                                             </div>
-                                            <div className={`mt-1 ${activeFeature === idx ? 'opacity-100' : 'opacity-80'}`}>
-                                                <h3 className="font-black text-slate-800 text-[9px] uppercase italic tracking-wider leading-none bg-white/90 px-1.5 py-1 rounded shadow-sm inline-block max-w-full">
+                                            <div className={`mt-1 ${activeFeature === idx ? 'opacity-100 scale-105' : 'opacity-90'} transition-transform duration-300`}>
+                                                <h3 className="font-black text-slate-900 text-[11px] sm:text-xs uppercase italic tracking-wide leading-tight bg-white px-3 py-1.5 rounded-lg shadow-md inline-block max-w-full border-2 border-slate-100">
                                                     {feature.title}
                                                 </h3>
                                             </div>
@@ -523,13 +523,13 @@ const SellerLandingPage = () => {
                                     </h1>
 
                                     {/* --- REFINED SUB-HEADLINE: FOCUSING ON TRUST & FRICTION REMOVAL --- */}
-                                    <p className="text-slate-500 text-sm font-medium max-w-lg mb-6 leading-relaxed">
-                                        Sell more, faster & securely by giving your customers the <span className="font-bold text-slate-900">absolute confidence</span> to buy instantly. Eliminate <span className="font-bold text-slate-900">repetitive price and delivery questions</span> with a <span className="font-bold text-slate-900 bg-yellow-100 px-1 rounded">Verified Secure M-Pesa Checkout</span> across all social apps that also handles delivery for you.
+                                    <p className="text-slate-500 text-base font-medium max-w-lg mb-6 leading-relaxed">
+                                        Sell more, faster & securely by giving your customers the <span className="font-bold text-slate-900">absolute confidence</span> to buy instantly. Eliminate <span className="font-bold text-slate-900">repetitive price and delivery questions</span> with a <span className="font-bold text-slate-900 bg-yellow-100 px-1 rounded">Verified Secure M-Pesa Checkout</span> across all social apps that also handles delivery for you all over Kenya.
                                     </p>
 
                                     <div className="flex flex-col sm:flex-row gap-4 items-start">
                                         <button onClick={handleCallToAction} className="px-10 py-5 bg-black text-white rounded-[2rem] font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-3 shadow-2xl shadow-black/20">
-                                            Get Secure Checkout Link <ArrowRight size={16} strokeWidth={3} className="text-yellow-500" />
+                                            SET UP SECURE CHECKOUT <ArrowRight size={16} strokeWidth={3} className="text-yellow-500" />
                                         </button>
 
                                         {/* Social Proof Badge */}
