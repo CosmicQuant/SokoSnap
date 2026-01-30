@@ -180,7 +180,7 @@ const InteractiveSolutions = () => {
         if (isPaused) return;
         const interval = setInterval(() => {
             setActiveFeature((prev) => (prev + 1) % features.length);
-        }, 4000);
+        }, 2000);
         return () => clearInterval(interval);
     }, [isPaused, features.length]);
 
@@ -367,6 +367,9 @@ const SellerLandingPage = () => {
     const [showAuthWarning, setShowAuthWarning] = useState(false);
     const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
     const [mpesaType, setMpesaType] = useState('personal');
+
+    // === NEW ANIMATION STATE ===
+    const [isStep1Visible, setIsStep1Visible] = useState(false);
 
     const [formData, setFormData] = useState({
         shopName: '', locationRequest: '', locationName: '', latitude: null as number | null, longitude: null as number | null,
@@ -632,8 +635,8 @@ const SellerLandingPage = () => {
 
                                     {/* Step 1: Generate Link (UI Fragment) */}
                                     <motion.div
-                                        whileHover={{ y: -10 }}
-                                        viewport={{ once: true }}
+                                        onViewportEnter={() => setIsStep1Visible(true)}
+                                        viewport={{ once: true, amount: 0.6 }}
                                         className="relative group z-10"
                                     >
                                         <div className="bg-yellow-400 rounded-[2.5rem] border border-yellow-500 shadow-xl overflow-hidden h-full flex flex-col">
@@ -649,7 +652,7 @@ const SellerLandingPage = () => {
                                             {/* UI VISUAL */}
                                             <div className="p-6 pt-2 flex-grow flex items-center justify-center relative overflow-hidden">
                                                 {/* Card */}
-                                                <div className="w-full bg-white rounded-2xl p-4 shadow-xl border border-white/50 space-y-3 relative overflow-hidden group-hover:shadow-2xl transition-all rotate-[-2deg] group-hover:rotate-0">
+                                                <div className={`w-full bg-white rounded-2xl p-4 shadow-xl border border-white/50 space-y-3 relative overflow-hidden transition-all duration-700 ease-out ${isStep1Visible ? 'rotate-0 shadow-2xl' : 'rotate-[-2deg]'}`}>
                                                     {/* Fake Fields - Simplified */}
                                                     <div className="h-2 w-1/3 bg-slate-100 rounded mb-4" />
                                                     <div className="space-y-2">
@@ -662,29 +665,29 @@ const SellerLandingPage = () => {
                                                         <div className="h-8 w-full bg-slate-100 rounded-lg" />
                                                     </div>
                                                     {/* The Magic Button */}
-                                                    <div className="mt-4 bg-black text-white py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-wide group-hover:bg-yellow-500 group-hover:text-black transition-colors cursor-default relative overflow-hidden">
-                                                        <span className="relative z-10 flex items-center gap-2 group-hover:opacity-0 transition-opacity duration-300">
+                                                    <div className={`mt-4 py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-wide transition-colors duration-500 relative overflow-hidden ${isStep1Visible ? 'bg-yellow-500 text-black' : 'bg-black text-white'}`}>
+                                                        <span className={`relative z-10 flex items-center gap-2 transition-opacity duration-300 ${isStep1Visible ? 'opacity-0' : 'opacity-100'}`}>
                                                             <Zap size={12} fill="currentColor" /> Generate Link
                                                         </span>
-                                                        <span className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 font-bold">
+                                                        <span className={`absolute inset-0 flex items-center justify-center gap-2 transition-opacity duration-300 z-10 font-bold ${isStep1Visible ? 'opacity-100' : 'opacity-0'}`}>
                                                             <LinkIcon size={12} /> Link Ready!
                                                         </span>
                                                     </div>
 
                                                     {/* Cursor Animation - Moves to Button */}
-                                                    <div className="absolute bottom-4 right-1/4 opacity-0 group-hover:opacity-100 group-hover:right-1/2 group-hover:bottom-2 transition-all duration-700 ease-out z-20">
+                                                    <div className={`absolute transition-all duration-1000 ease-in-out z-20 ${isStep1Visible ? 'opacity-0 right-1/2 bottom-2 delay-500' : 'opacity-100 right-1/4 bottom-4'}`}>
                                                         <MousePointer2 className="fill-black text-black drop-shadow-lg" size={24} />
                                                     </div>
 
                                                     {/* Generated Link Popover - Appears after "click" */}
-                                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] bg-white border-2 border-slate-900 rounded-xl p-3 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] transform scale-50 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-500 delay-400 z-30">
+                                                    <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] bg-white border-2 border-slate-900 rounded-xl p-3 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] transform transition-all duration-500 delay-700 z-30 ${isStep1Visible ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
                                                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Your Branded Link</p>
                                                         <div className="flex items-center justify-between bg-yellow-50 rounded-lg p-2 border border-yellow-200">
                                                             <div className="flex items-center gap-2 min-w-0">
                                                                 <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shrink-0">
                                                                     <LinkIcon size={10} className="text-black" />
                                                                 </div>
-                                                                <span className="text-[10px] font-black text-slate-900 truncate">sokosnap.com/kicks</span>
+                                                                <span className="text-[10px] font-black text-slate-900 truncate">sokosnap.com/urbankicks</span>
                                                             </div>
                                                             <Copy size={10} className="text-yellow-600 shrink-0" />
                                                         </div>
