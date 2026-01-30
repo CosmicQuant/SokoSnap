@@ -13,10 +13,15 @@ import {
     TrendingUp,
     MapPin,
     Navigation,
+    PlusCircle,
     LogOut,
     Instagram,
     MessageCircle,
-    Share2 as Share2Icon
+    Share2 as Share2Icon,
+    MousePointer2,
+    Link as LinkIcon,
+    Copy,
+    Image as ImageIcon
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { LocationPickerModal } from '../common/LocationPickerModal';
@@ -128,7 +133,7 @@ const InteractiveSolutions = () => {
             )
         },
         {
-            title: "Verified Logistics",
+            title: "Automatic Delivery",
             desc: "TumaFast riders are dispatched automatically the moment a customer pays.",
             icon: <Zap size={20} />,
             screenColor: "bg-yellow-500",
@@ -524,7 +529,7 @@ const SellerLandingPage = () => {
 
                                     {/* --- REFINED SUB-HEADLINE: FOCUSING ON TRUST & FRICTION REMOVAL --- */}
                                     <p className="text-slate-500 text-base font-medium max-w-lg mb-6 leading-relaxed">
-                                        Sell more, faster & securely by giving your customers the <span className="font-bold text-slate-900">absolute confidence</span> to buy instantly. Eliminate <span className="font-bold text-slate-900">repetitive price and delivery questions</span> with a <span className="font-bold text-slate-900 bg-yellow-100 px-1 rounded">Verified Secure M-Pesa Checkout</span> across all social apps that also handles delivery for you all over Kenya.
+                                        Sell more, faster & securely by giving your customers <span className="font-bold text-slate-900">absolute confidence</span> to buy instantly. Eliminate <span className="font-bold text-slate-900">repetitive price and delivery questions</span> with a <span className="font-bold text-slate-900 bg-yellow-100 px-1 rounded">Verified Secure M-Pesa Checkout</span> with automatic delivery across Kenya.
                                     </p>
 
                                     <div className="flex flex-col sm:flex-row gap-4 items-start">
@@ -546,10 +551,10 @@ const SellerLandingPage = () => {
                                     </div>
 
                                     {/* Spacer for Mobile to push image below fold */}
-                                    <div className="h-[20vh] lg:hidden"></div>
+                                    <div className="h-[20vh] lg:hidden hidden"></div>
                                 </div>
 
-                                <div className="relative animate-in slide-in-from-right duration-1000 delay-200">
+                                <div className="hidden lg:block relative animate-in slide-in-from-right duration-1000 delay-200">
                                     <div className="absolute inset-0 bg-yellow-400 rounded-[4rem] rotate-6 opacity-20 blur-2xl" />
 
                                     {/* HERO IMAGE: Kenyan Seller Celebrating */}
@@ -621,81 +626,187 @@ const SellerLandingPage = () => {
                                     </p>
                                 </div>
 
-                                <div className="grid md:grid-cols-3 gap-8">
-                                    {/* Step 1: Generate Link */}
+                                <div className="grid md:grid-cols-3 gap-8 relative">
+                                    {/* Desktop Connecting Line */}
+                                    <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-gradient-to-r from-yellow-300 via-blue-300 to-green-300 -translate-y-1/2 z-0 opacity-30" />
+
+                                    {/* Step 1: Generate Link (UI Fragment) */}
                                     <motion.div
                                         whileHover={{ y: -10 }}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true }}
-                                        transition={{ delay: 0.1 }}
-                                        className="bg-white p-2 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 group"
+                                        className="relative group z-10"
                                     >
-                                        <div className="bg-slate-50 rounded-[2rem] p-8 h-full flex flex-col items-center text-center relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-100 rounded-bl-[4rem] -mr-8 -mt-8 opacity-50 group-hover:scale-110 transition-transform duration-500" />
-
-                                            <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-lg shadow-yellow-500/10 mb-8 relative z-10 group-hover:rotate-3 transition-transform duration-300">
-                                                <div className="absolute inset-0 bg-yellow-500/10 rounded-2xl blur-xl" />
-                                                <Sparkles size={32} className="text-yellow-500 relative z-10" />
-                                                <span className="absolute -top-3 -right-3 w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center font-black text-sm border-4 border-white">1</span>
+                                        <div className="bg-yellow-400 rounded-[2.5rem] border border-yellow-500 shadow-xl overflow-hidden h-full flex flex-col">
+                                            {/* Header */}
+                                            <div className="p-6 pb-2 flex justify-between items-center">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-6 h-6 bg-black rounded-full flex items-center justify-center font-black text-[10px] text-yellow-500 ring-4 ring-yellow-400/50">1</span>
+                                                    <span className="text-xs font-black uppercase text-yellow-900/60 tracking-wider">Create</span>
+                                                </div>
+                                                <PlusCircle size={14} className="text-black" />
                                             </div>
 
-                                            <h3 className="font-black text-xl text-slate-900 uppercase italic mb-3">Create Link</h3>
-                                            <p className="text-sm text-slate-500 font-medium leading-relaxed">
-                                                Upload product details. We instantly generate a <span className="font-bold text-slate-900">secure checkout link</span> that calculates delivery automatically.
-                                            </p>
+                                            {/* UI VISUAL */}
+                                            <div className="p-6 pt-2 flex-grow flex items-center justify-center relative overflow-hidden">
+                                                {/* Card */}
+                                                <div className="w-full bg-white rounded-2xl p-4 shadow-xl border border-white/50 space-y-3 relative overflow-hidden group-hover:shadow-2xl transition-all rotate-[-2deg] group-hover:rotate-0">
+                                                    {/* Fake Fields - Simplified */}
+                                                    <div className="h-2 w-1/3 bg-slate-100 rounded mb-4" />
+                                                    <div className="space-y-2">
+                                                        <div className="flex gap-2">
+                                                            <div className="h-8 w-8 bg-slate-100 rounded-lg shrink-0 flex items-center justify-center text-slate-300">
+                                                                <ImageIcon size={14} />
+                                                            </div>
+                                                            <div className="h-8 w-full bg-slate-100 rounded-lg" />
+                                                        </div>
+                                                        <div className="h-8 w-full bg-slate-100 rounded-lg" />
+                                                    </div>
+                                                    {/* The Magic Button */}
+                                                    <div className="mt-4 bg-black text-white py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-wide group-hover:bg-yellow-500 group-hover:text-black transition-colors cursor-default relative overflow-hidden">
+                                                        <span className="relative z-10 flex items-center gap-2 group-hover:opacity-0 transition-opacity duration-300">
+                                                            <Zap size={12} fill="currentColor" /> Generate Link
+                                                        </span>
+                                                        <span className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 font-bold">
+                                                            <LinkIcon size={12} /> Link Ready!
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Cursor Animation - Moves to Button */}
+                                                    <div className="absolute bottom-4 right-1/4 opacity-0 group-hover:opacity-100 group-hover:right-1/2 group-hover:bottom-2 transition-all duration-700 ease-out z-20">
+                                                        <MousePointer2 className="fill-black text-black drop-shadow-lg" size={24} />
+                                                    </div>
+
+                                                    {/* Generated Link Popover - Appears after "click" */}
+                                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] bg-white border-2 border-slate-900 rounded-xl p-3 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] transform scale-50 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-500 delay-400 z-30">
+                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Your Branded Link</p>
+                                                        <div className="flex items-center justify-between bg-yellow-50 rounded-lg p-2 border border-yellow-200">
+                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shrink-0">
+                                                                    <LinkIcon size={10} className="text-black" />
+                                                                </div>
+                                                                <span className="text-[10px] font-black text-slate-900 truncate">sokosnap.com/kicks</span>
+                                                            </div>
+                                                            <Copy size={10} className="text-yellow-600 shrink-0" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-6 pt-0 z-10">
+                                                <h3 className="font-black text-lg text-black uppercase italic mb-2">Snap a Product</h3>
+                                                <p className="text-sm text-yellow-900 font-bold leading-relaxed opacity-80">
+                                                    Take a photo, set the price. We generate a <span className="text-black font-black bg-white/20 px-1 rounded">Smart Checkout Link</span> instantly.
+                                                </p>
+                                            </div>
                                         </div>
                                     </motion.div>
 
-                                    {/* Step 2: Share Link */}
+                                    {/* Step 2: Share Link (WhatsApp UI) */}
                                     <motion.div
                                         whileHover={{ y: -10 }}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true }}
-                                        transition={{ delay: 0.2 }}
-                                        className="bg-white p-2 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 group"
+                                        className="relative group z-10"
                                     >
-                                        <div className="bg-slate-50 rounded-[2rem] p-8 h-full flex flex-col items-center text-center relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-bl-[4rem] -mr-8 -mt-8 opacity-50 group-hover:scale-110 transition-transform duration-500" />
-
-                                            <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/10 mb-8 relative z-10 group-hover:-rotate-3 transition-transform duration-300">
-                                                <div className="absolute inset-0 bg-blue-500/10 rounded-2xl blur-xl" />
-                                                <Share2Icon className="text-blue-500" size={32} />
-                                                <span className="absolute -top-3 -right-3 w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center font-black text-sm border-4 border-white">2</span>
+                                        <div className="bg-blue-600 rounded-[2.5rem] border border-blue-500 shadow-xl overflow-hidden h-full flex flex-col">
+                                            {/* Header */}
+                                            <div className="p-6 pb-2 flex justify-between items-center">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-6 h-6 bg-white rounded-full flex items-center justify-center font-black text-[10px] text-blue-600 ring-4 ring-blue-500/50">2</span>
+                                                    <span className="text-xs font-black uppercase text-blue-200 tracking-wider">Share</span>
+                                                </div>
+                                                <Share2Icon size={14} className="text-white" />
                                             </div>
 
-                                            <h3 className="font-black text-xl text-slate-900 uppercase italic mb-3">Share Anywhere</h3>
-                                            <p className="text-sm text-slate-500 font-medium leading-relaxed">
-                                                Paste the link on <span className="font-bold text-blue-600">WhatsApp Status</span>, TikTok Bio, or Instagram Stories. Turn views into sales.
-                                            </p>
+                                            {/* UI VISUAL */}
+                                            <div className="p-6 pt-2 flex-grow flex items-center justify-center relative overflow-hidden">
+                                                {/* Phone Screen Container */}
+                                                <div className="w-full h-32 bg-[#efeae2] rounded-xl overflow-hidden relative shadow-lg border-4 border-slate-900 rotate-2 group-hover:rotate-0 transition-all duration-500">
+                                                    {/* WhatsApp Doodle Pattern Overlay */}
+                                                    <div className="absolute inset-0 opacity-[0.4] bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-731a-11e7-99d4-d60b44c278d4.png')] bg-repeat bg-[length:400px_400px] mix-blend-multiply"></div>
+
+                                                    {/* Chat Content */}
+                                                    <div className="relative h-full flex items-center p-3">
+                                                        <div className="w-full max-w-[95%] ml-auto transform translate-y-1">
+                                                            {/* Outgoing Message Bubble */}
+                                                            <div className="bg-[#d9fdd3] p-2 rounded-lg rounded-tr-none shadow-[0_1px_0.5px_rgba(0,0,0,0.13)] relative">
+                                                                {/* Tail */}
+                                                                <div className="absolute top-0 -right-2 w-0 h-0 border-[8px] border-t-[#d9fdd3] border-r-transparent border-b-transparent border-l-[#d9fdd3] transform rotate-[0deg] drop-shadow-[1px_0_0_rgba(0,0,0,0.05)]"></div>
+
+                                                                <p className="text-[9px] font-medium text-[#111b21] leading-tight mb-1.5 line-clamp-2">Hey! Cop the new kicks here 👇</p>
+
+                                                                {/* Link Preview Card */}
+                                                                <div className="bg-[#f0f0f0] rounded flex gap-1.5 p-1 items-center border-l-2 border-slate-300">
+                                                                    <div className="h-6 w-6 bg-slate-200 rounded shrink-0 overflow-hidden">
+                                                                        <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100&q=80" className="w-full h-full object-cover" />
+                                                                    </div>
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <div className="h-1 w-12 bg-slate-400 rounded mb-0.5" />
+                                                                        <div className="h-1 w-8 bg-slate-300 rounded" />
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Metadata */}
+                                                                <div className="flex justify-end items-center gap-0.5 mt-1 opacity-60">
+                                                                    <span className="text-[7px] text-slate-500">11:42 AM</span>
+                                                                    <CheckCircle2 size={10} className="text-blue-500" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-6 pt-0 z-10">
+                                                <h3 className="font-black text-lg text-white uppercase italic mb-2">Post Anywhere</h3>
+                                                <p className="text-sm text-blue-100 font-medium leading-relaxed opacity-90">
+                                                    Paste on <span className="text-white font-bold underline decoration-wavy">WhatsApp, IG, or TikTok</span>. No website needed.
+                                                </p>
+                                            </div>
                                         </div>
                                     </motion.div>
 
-                                    {/* Step 3: Get Paid */}
+                                    {/* Step 3: Get Paid (Notification UI) */}
                                     <motion.div
                                         whileHover={{ y: -10 }}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true }}
-                                        transition={{ delay: 0.3 }}
-                                        className="bg-white p-2 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 group"
+                                        className="relative group z-10"
                                     >
-                                        <div className="bg-[#4CAF50] rounded-[2rem] p-8 h-full flex flex-col items-center text-center relative overflow-hidden text-white">
-                                            <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-bl-[4rem] -mr-8 -mt-8 opacity-20 group-hover:scale-110 transition-transform duration-500" />
-
-                                            <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-lg shadow-black/20 mb-8 relative z-10 group-hover:scale-110 transition-transform duration-300 ring-1 ring-white/20">
-                                                <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl" />
-                                                <ShieldCheck size={32} className="text-white" />
-                                                <span className="absolute -top-3 -right-3 w-8 h-8 bg-white text-[#4CAF50] rounded-full flex items-center justify-center font-black text-sm">3</span>
+                                        <div className="bg-green-600 rounded-[2.5rem] border border-green-500 shadow-xl overflow-hidden h-full flex flex-col">
+                                            {/* Header */}
+                                            <div className="p-6 pb-2 flex justify-between items-center">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-6 h-6 bg-white rounded-full flex items-center justify-center font-black text-[10px] text-green-600 ring-4 ring-green-500/50">3</span>
+                                                    <span className="text-xs font-black uppercase text-green-200 tracking-wider">Earn</span>
+                                                </div>
+                                                <ShieldCheck size={14} className="text-white" />
                                             </div>
 
-                                            <h3 className="font-black text-xl text-white uppercase italic mb-3 flex items-center justify-center gap-2">
-                                                Get Paid <span className="bg-white/20 text-[10px] px-2 py-0.5 rounded-full border border-white/20 font-bold tracking-tight">M-PESA</span>
-                                            </h3>
-                                            <p className="text-sm text-white/90 font-medium leading-relaxed">
-                                                Funds are held securely. Rider is dispatched <span className="text-white font-bold underline decoration-wavy decoration-white/50">instantly</span>. You get paid upon delivery.
-                                            </p>
+                                            {/* UI VISUAL */}
+                                            <div className="p-6 pt-2 flex-grow flex items-center justify-center relative overflow-hidden">
+                                                {/* Wallpaper Blur - Simplified for green theme */}
+                                                <div className="absolute inset-0 bg-green-500/20 mix-blend-overlay"></div>
+
+                                                {/* Notification Banner */}
+                                                <div className="bg-white backdrop-blur-md w-full rounded-2xl p-3 shadow-lg border border-white/50 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className="w-5 h-5 bg-green-600 rounded-md flex items-center justify-center text-white text-[8px] font-bold">M</div>
+                                                            <span className="text-[10px] font-black uppercase text-slate-800">M-PESA</span>
+                                                        </div>
+                                                        <span className="text-[9px] text-slate-400">Now</span>
+                                                    </div>
+                                                    <p className="text-[11px] font-medium text-slate-800 leading-snug">
+                                                        <span className="font-bold">PDA38... Confirmed.</span> You have received <span className="text-green-600 font-black">KES 4,500.00</span> from SokoSnap.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-6 pt-0 z-10">
+                                                <h3 className="font-black text-lg text-white uppercase italic mb-2">Instant Payout</h3>
+                                                <p className="text-sm text-green-100 font-medium leading-relaxed opacity-90">
+                                                    We handle the delivery. You get the cash. <span className="text-white font-bold decoration-wavy underline">Safe & Automatic.</span>
+                                                </p>
+                                            </div>
                                         </div>
                                     </motion.div>
                                 </div>
