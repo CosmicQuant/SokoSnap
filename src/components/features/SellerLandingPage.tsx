@@ -94,7 +94,7 @@ const InteractiveSolutions = () => {
 
     const features = [
         {
-            title: "Universal Link",
+            title: "Universal Secure Checkout Links",
             desc: "One bio link for TikTok, WhatsApp, IG & Facebook. No more 'DM for details'.",
             icon: <Globe size={20} />,
             screenColor: "bg-blue-600",
@@ -112,7 +112,7 @@ const InteractiveSolutions = () => {
             )
         },
         {
-            title: "Secure Mpesa Payments",
+            title: "Instant Secure Mpesa Payments",
             desc: "We hold the buyer's money safely. You get paid instantly upon delivery verification.",
             icon: <ShieldCheck size={20} />,
             screenColor: "bg-black",

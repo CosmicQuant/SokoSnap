@@ -1,1259 +1,652 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-    Plus,
-    Wallet,
-    TrendingUp,
-    Package,
+    Camera,
     Share2,
+    Plus,
+    Package,
+    Ticket,
+    Wrench,
     Copy,
+    Bell,
+    TrendingUp,
     CheckCircle2,
-    ShieldCheck,
-    Eye,
-    MousePointer2,
-    X,
+    ArrowUpRight,
+    MoreVertical,
+    ChevronRight,
     Smartphone,
-    Trash2,
-    ArrowLeft,
-    Clock,
-    Truck,
-    Box,
-    Lock,
-    Pencil,
-    Menu,
+    ShieldCheck,
+    Zap,
+    BarChart3,
+    User as UserIcon,
+    Settings,
     LogOut,
-    User,
-    LayoutDashboard,
-    MapPin,
+    Truck,
+    ChevronLeft,
+    Star,
     CreditCard,
-    MessageCircle,
-    Instagram,
-    Facebook,
-    Store,
-    Mail
+    Sun,
+    Moon,
+    MousePointer2,
+    LayoutDashboard,
+    ShoppingBag
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useSellerStore } from '../../store/sellerStore';
-import { LinkItem, Order } from '../../types';
-import { formatCompactNumber } from '../../utils/formatters';
 
-interface StatCardProps {
-    label: string;
-    value: string;
-    sub?: string;
-    icon: React.ReactNode;
-    color: string;
-    onClick?: () => void;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ label, value, sub, icon, color, onClick }) => (
-    <div onClick={onClick} className={`h-full bg-white border border-slate-100 p-3 sm:p-4 rounded-[1.5rem] relative overflow-hidden shadow-sm ${onClick ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}>
-        <div className={`absolute -right-4 -top-4 opacity-10 text-${color}-600 scale-75`}>{icon}</div>
-        <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 sm:mb-2 truncate">{label}</p>
-        <h3 className="text-lg sm:text-2xl font-black text-slate-900 italic tracking-tighter truncate">{value}</h3>
-        {sub && <p className={`text-[8px] sm:text-[9px] font-bold mt-0.5 sm:mt-1 uppercase tracking-wide text-${color}-600 truncate`}>{sub}</p>}
-    </div>
-);
-
-const LinkCard = ({ item, onClick, action }: { item: LinkItem; onClick: () => void; action?: React.ReactNode }) => {
-    const handleShare = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        // Use share functionality suitable for mobile/desktop
-        if (navigator.share) {
-            navigator.share({
-                title: item.name,
-                text: `Check out ${item.name} on SokoSnap!`,
-                url: window.location.href // In real app, this would be the product link
-            }).catch(console.error);
-        } else {
-            // Fallback to clipboard or alert
-            alert(`Link copied: https://sokosnap.com/p/${item.id}`);
-        }
-    };
-
-    return (
-        <div onClick={onClick} className="bg-white border border-slate-100 p-4 rounded-3xl flex items-center gap-4 group active:bg-slate-50 transition-colors shadow-sm cursor-pointer">
-            {item.img.includes('mp4') ? (
-                <video src={item.img} className="w-16 h-16 rounded-2xl object-cover opacity-90" muted />
-            ) : (
-                <img src={item.img} className="w-16 h-16 rounded-2xl object-cover opacity-90" alt="product" />
-            )}
-            <div className="flex-1 min-w-0">
-                <h4 className="text-slate-900 font-black text-sm truncate">{item.name}</h4>
-                <div className="flex items-center gap-3 mt-2 text-[10px] font-bold text-slate-400">
-                    <span className="flex items-center gap-1"><Eye size={12} /> {item.views}</span>
-                    <span className="flex items-center gap-1 text-green-600"><Package size={12} /> {item.sales}</span>
-                </div>
-            </div>
-            <div className="text-right">
-                <span className="block text-slate-900 font-black italic">KES {(item.revenue / 1000).toFixed(1)}k</span>
-                {action ? action : (
-                    <button
-                        onClick={handleShare}
-                        className="bg-yellow-100 p-2 rounded-xl text-yellow-700 mt-1 hover:bg-yellow-200 transition-colors"
-                    >
-                        <Share2 size={16} />
-                    </button>
-                )}
-            </div>
-        </div>
-    );
-
-};
-
-const OrderCard = ({ order }: { order: Order }) => {
-    // Map status to color
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'pending': return 'bg-yellow-100 text-yellow-700';
-            case 'shipping': return 'bg-blue-100 text-blue-700';
-            case 'completed': return 'bg-green-100 text-green-700';
-            case 'cancelled': return 'bg-red-100 text-red-700';
-            default: return 'bg-slate-100 text-slate-700';
-        }
-    };
-
-    // Map status to icon
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case 'pending': return <Clock size={12} />;
-            case 'shipping': return <Truck size={12} />;
-            case 'completed': return <CheckCircle2 size={12} />;
-            case 'cancelled': return <X size={12} />;
-            default: return <Clock size={12} />;
-        }
-    };
-
-    // Fallback for image (since Order type doesn't store product image directly anymore)
-    const productImg = order.items && order.items[0] ? order.items[0].product.mediaUrl : '';
-    const productName = order.items && order.items[0] ? order.items[0].product.name : 'Product';
-
-    return (
-        <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-            {productImg.includes('mp4') ? (
-                <video src={productImg} className="w-14 h-14 rounded-2xl object-cover bg-slate-100" />
-            ) : (
-                <img src={productImg} className="w-14 h-14 rounded-2xl object-cover bg-slate-100" />
-            )}
-            <div className="flex-1">
-                <div className="flex justify-between items-start mb-1">
-                    <h4 className="font-black text-slate-900 text-sm">{order.customerId}</h4>
-                    <span className="text-xs font-black text-slate-900">KES {order.amount}</span>
-                </div>
-                <p className="text-[10px] font-bold text-slate-400 truncate w-40">{productName} • {order.id}</p>
-                <div className="flex justify-between items-center mt-2">
-                    <span className={`flex items-center gap-1 text-[9px] font-bold uppercase px-2 py-1 rounded-full ${getStatusColor(order.status)}`}>
-                        {getStatusIcon(order.status)} {order.status}
-                    </span>
-                    <span className="text-[9px] font-bold text-slate-300">{/* Check date format */}</span>
-                </div>
-            </div>
-        </div>
-    );
-};
-
+// Add props interface for compatibility with SellerLandingPage
 interface SellerDashboardProps {
-    onBack: () => void;
+    onBack?: () => void;
 }
 
 export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
-    // Views: 'hub' | 'payouts' | 'analytics' | 'edit-link' | 'orders'
-    const [view, setView] = useState('hub');
-    const [selectedLink, setSelectedLink] = useState<LinkItem | null>(null);
-    const [ordersFilter, setOrdersFilter] = useState<string | null>(null); // null = all, string = linkId
-    const [activeOrderTab, setActiveOrderTab] = useState<'ongoing' | 'completed'>('ongoing');
+    const { user, logout, initialize } = useAuthStore();
+    const { links, orders, isLoading, fetchSellerData } = useSellerStore();
 
-    // Store Hooks
-    const { user, updateUser, logout } = useAuthStore();
-    const {
-        links,
-        orders,
-        fetchSellerData,
-        createProduct: storeCreateProduct,
-        archiveProduct: storeArchiveProduct,
-        stopListening
-    } = useSellerStore();
+    // Initialize Auth Listener within the component as well, to be safe
+    useEffect(() => {
+        const unsubscribe = initialize();
+        return () => unsubscribe();
+    }, [initialize]);
+
+    const [activeView, setActiveView] = useState('home'); // home, orders, insights, menu
+    const [activeTab, setActiveTab] = useState('Products');
+    const [showCopyToast, setShowCopyToast] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
 
     // Fetch data on mount
     useEffect(() => {
         if (user?.id) {
             fetchSellerData(user.id);
         }
-        return () => stopListening();
-    }, [user?.id]);
+    }, [user, fetchSellerData]);
 
-    // Check verification status
-    const isShopVerified = user?.isVerified === true;
-
-    // Profile State
-    const [profileData, setProfileData] = useState({
-        shopName: user?.shopName || 'My Shop',
-        locationName: user?.shopLocation || 'Nairobi',
-        contactName: user?.contactPerson || user?.name || '',
-        contactPhone: user?.contactPhone || user?.phone || '',
-        email: user?.email || '',
-        kraPin: 'A00xxxxxxZ', // TODO: Add to User type
-        mpesaType: 'personal', // TODO: Add to User type
-        mpesaNumber: user?.phone || '',
-        tillNumber: '',
-        paybillNumber: '',
-        accountNumber: '',
-        whatsapp: user?.phone || '',
-        instagram: '',
-        tiktok: '',
-        facebook: ''
-    });
-
-    const [showGenerator, setShowGenerator] = useState(false);
-    const [files, setFiles] = useState<File[]>([]);
-    const [previews, setPreviews] = useState<string[]>([]);
-    const [productName, setProductName] = useState('');
-    const [price, setPrice] = useState('');
-    const [qty, setQty] = useState('');
-    const [returnPolicy, setReturnPolicy] = useState('exchange_7d');
-    const [isEditing, setIsEditing] = useState(false);
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-
-    // Filter links
-    const activeLinks = links.filter(l => l.status !== 'archived');
-    const archivedLinks = links.filter(l => l.status === 'archived');
-
-    // Stats calculations
-    const totalViews = links.reduce((sum, item) => sum + (item.views || 0), 0);
-    const totalClicks = links.reduce((sum, item) => sum + (item.clicks || 0), 0);
-
+    // --- DERIVED METRICS ---
     const safeOrders = orders || [];
-    const inHoldAmount = safeOrders
-        .filter(o => ['pending', 'shipping'].includes(o.status))
-        .reduce((sum, o) => sum + (o.amount || 0), 0);
+    const safeLinks = links || [];
 
-    const payoutAmount = safeOrders
-        .filter(o => o.status === 'completed')
-        .reduce((sum, o) => sum + (o.amount || 0), 0);
+    const totalSettled = safeOrders
+        .filter(o => o.status === 'completed' || o.status === 'delivered')
+        .reduce((acc, curr) => acc + curr.total, 0);
 
-    const totalSalesAmount = safeOrders
-        .filter(o => o.status !== 'cancelled')
-        .reduce((sum, o) => sum + (o.amount || 0), 0);
+    const inTransit = safeOrders
+        .filter(o => o.status === 'in_transit' || o.status === 'processing')
+        .reduce((acc, curr) => acc + curr.total, 0);
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const totalClicks = safeLinks.reduce((acc, curr) => acc + (curr.clicks || 0), 0);
+    const totalSales = safeLinks.reduce((acc, curr) => acc + (curr.sales || 0), 0);
+    const conversionRate = totalClicks > 0 ? ((totalSales / totalClicks) * 100).toFixed(1) : '0.0';
 
-    const handleCreateNewLink = () => {
-        if (!isShopVerified) {
-            alert("Verification Pending \n\nYour shop is currently under review. Link generation will be enabled once your account is verified.");
-            return;
-        }
-
-        // Reset all form state
-        setFiles([]);
-        setPreviews([]);
-        setProductName('');
-        setPrice('');
-        setQty('');
-        setReturnPolicy('exchange_7d');
-        setIsEditing(false);
-        setSelectedLink(null);
-        setShowGenerator(true);
+    const handleCopy = () => {
+        setShowCopyToast(true);
+        setTimeout(() => setShowCopyToast(false), 2000);
     };
 
-    const handleGenerate = async () => {
-        if (files.length === 0 && !isEditing) {
-            alert("Please upload at least one media file.");
-            return;
-        }
-        if (!productName || !price || !qty) {
-            alert("Please fill in all product details (Name, Price, and Quantity).");
-            return;
-        }
-
-        try {
-            if (isEditing && selectedLink) {
-                // TODO: specific update product action
-                alert("Update logic not fully implemented yet.");
-            } else {
-                if (!user?.id) return;
-
-                await storeCreateProduct({
-                    name: productName,
-                    price: parseFloat(price),
-                    sellerId: user.id,
-                    sellerName: profileData.shopName,
-                    description: '',
-                    // Add other fields as needed
-                }, files);
-
-                alert("SokoSnap Link Generated Successfully!");
-            }
-            setShowGenerator(false);
-            setIsEditing(false);
-
-            // Reset form
-            setFiles([]);
-            setPreviews([]);
-            setProductName('');
-            setPrice('');
-            setQty('');
-            setReturnPolicy('exchange_7d');
-        } catch (err) {
-            alert("Failed to create product. Please try again.");
-            console.error(err);
-        }
+    // --- THEME CLASSES ---
+    const theme = {
+        bg: isDarkMode ? 'bg-black text-white' : 'bg-gray-50 text-gray-900',
+        card: isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-200 shadow-sm',
+        subCard: isDarkMode ? 'bg-black/40 border-zinc-800/50' : 'bg-gray-50 border-gray-100',
+        textMuted: isDarkMode ? 'text-zinc-500' : 'text-gray-400',
+        navBg: isDarkMode ? 'bg-zinc-900/90 border-zinc-800/50' : 'bg-white/90 border-gray-200 shadow-xl',
+        headerBg: isDarkMode ? 'bg-black/80' : 'bg-white/80',
+        pill: isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-200 border-gray-300',
+        btnGhost: isDarkMode ? 'bg-zinc-800/50 hover:bg-zinc-800' : 'bg-gray-100 hover:bg-gray-200',
+        sidebar: isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-gray-200'
     };
 
-    const handleArchiveProduct = async () => {
-        if (!selectedLink) return;
+    // --- VIEWS ---
 
-        if (confirm('Are you sure you want to archive this product? It will be moved to the Archived tab.')) {
-            await storeArchiveProduct(selectedLink.id.toString());
-            alert("Product archived successfully.");
-            setShowGenerator(false);
-            setView('hub');
-        }
-    };
+    const InsightsView = () => (
+        <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
+            <div className="px-6 mb-6">
+                <h2 className="text-2xl font-black italic tracking-tighter uppercase">Insights Pulse</h2>
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Real-time Merchant Performance</p>
+            </div>
 
-    const handleEditLink = () => {
-        if (!selectedLink) return;
-        setProductName(selectedLink.name);
-        setPrice((selectedLink.price || 0).toString());
-        setQty("50"); // Mock
-        setReturnPolicy('exchange_7d');
-        setPreviews([selectedLink.img]);
-        setIsEditing(true);
-        setShowGenerator(true);
-    };
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 px-6 mb-6">
+                <div className={`p-4 rounded-[2rem] border ${theme.card}`}>
+                    <div className="bg-yellow-500/10 text-yellow-500 h-8 w-8 rounded-lg flex items-center justify-center mb-3">
+                        <MousePointer2 size={16} />
+                    </div>
+                    <p className={`text-[9px] font-black uppercase tracking-widest ${theme.textMuted}`}>Total Clicks</p>
+                    <div className="flex items-end gap-2">
+                        <p className="text-xl font-black italic">{totalClicks.toLocaleString()}</p>
+                        <span className="text-[9px] text-green-500 font-bold mb-1">+0%</span>
+                    </div>
+                </div>
+                <div className={`p-4 rounded-[2rem] border ${theme.card}`}>
+                    <div className="bg-green-500/10 text-green-500 h-8 w-8 rounded-lg flex items-center justify-center mb-3">
+                        <Zap size={16} />
+                    </div>
+                    <p className={`text-[9px] font-black uppercase tracking-widest ${theme.textMuted}`}>Conv. Rate</p>
+                    <div className="flex items-end gap-2">
+                        <p className="text-xl font-black italic">{conversionRate}%</p>
+                        <span className="text-[9px] text-blue-500 font-bold mb-1">Avg</span>
+                    </div>
+                </div>
+            </div>
 
-    const validateVideoDuration = (file: File): Promise<boolean> => {
-        return new Promise((resolve) => {
-            if (!file.type.startsWith('video/')) {
-                resolve(true);
-                return;
-            }
-            const video = document.createElement('video');
-            video.preload = 'metadata';
-            video.onloadedmetadata = () => {
-                window.URL.revokeObjectURL(video.src);
-                resolve(video.duration <= 60.5);
-            };
-            video.onerror = () => resolve(false);
-            video.src = window.URL.createObjectURL(file);
-        });
-    };
+            <section className="px-6 mb-6">
+                <div className={`p-6 rounded-[2.5rem] border ${theme.card}`}>
+                    <h3 className={`text-[10px] font-black uppercase tracking-widest mb-6 ${theme.textMuted}`}>Revenue Trend (Last 7 Days)</h3>
+                    <div className="flex items-end justify-between h-32 px-2 gap-2">
+                        {totalSettled > 0 ? (
+                            // Use actual data or a consistent non-zero pattern if we have revenue
+                            [35, 60, 45, 90, 65, 85, 70].map((height, i) => (
+                                <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                                    <div
+                                        className={`w-full rounded-t-lg transition-all duration-500 group-hover:bg-yellow-500 ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}
+                                        style={{ height: `${height}%` }}
+                                    ></div>
+                                    <span className={`text-[8px] font-bold uppercase ${theme.textMuted}`}>
+                                        {['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}
+                                    </span>
+                                </div>
+                            ))
+                        ) : (
+                            // Zero state placeholders for charts
+                            [5, 5, 5, 5, 5, 5, 5].map((height, i) => (
+                                <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                                    <div
+                                        className={`w-full rounded-t-lg transition-all duration-500 cursor-not-allowed ${isDarkMode ? 'bg-zinc-800/50' : 'bg-gray-100'}`}
+                                        style={{ height: `${height}%` }}
+                                    ></div>
+                                    <span className={`text-[8px] font-bold uppercase ${theme.textMuted}`}>
+                                        {['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}
+                                    </span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    {totalSettled === 0 && (
+                        <p className="text-center text-[10px] italic text-zinc-500 mt-4">Start selling to see revenue trends.</p>
+                    )}
+                </div>
+            </section>
 
-    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const newFiles = Array.from(event.target.files || []);
-        if (files.length + newFiles.length > 5) {
-            alert("Maximum 5 media files allowed");
-            return;
-        }
-
-        for (const file of newFiles) {
-            if (file.type.startsWith('video/')) {
-                const isValidDuration = await validateVideoDuration(file);
-                if (!isValidDuration) {
-                    alert(`Video ${file.name} must be 60 seconds or less`);
-                    continue;
-                }
-            }
-            setPreviews(prev => [...prev, URL.createObjectURL(file)]);
-            setFiles(prev => [...prev, file]);
-        }
-    };
-
-    const removeFile = (index: number) => {
-        setFiles(prev => prev.filter((_, i) => i !== index));
-        setPreviews(prev => prev.filter((_, i) => i !== index));
-    };
-
-    const filteredOrders = orders.filter(o => {
-        const matchesFilter = ordersFilter
-            ? o.items.some(i => String(i.product.id) === String(ordersFilter))
-            : true;
-
-        const matchesTab = activeOrderTab === 'ongoing'
-            ? ['pending', 'shipping'].includes(o.status)
-            : ['completed', 'cancelled'].includes(o.status);
-
-        return matchesFilter && matchesTab;
-    });
-
-    const CreateLinkModal = () => (
-        showGenerator && (
-            <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
-                <div className="fixed inset-0 bg-slate-900/60 transition-opacity backdrop-blur-sm" onClick={() => setShowGenerator(false)} />
-
-                <div className="relative bg-white w-full sm:max-w-xl h-[95vh] sm:h-[85vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 shadow-2xl transform transition-all animate-in slide-in-from-bottom duration-300 overflow-y-auto scrollbar-hide flex flex-col" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    <div className="flex justify-between items-center mb-6 shrink-0">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-yellow-100 text-yellow-700 p-3 rounded-2xl">
-                                {isEditing ? <Pencil size={20} /> : <Plus size={20} />}
+            <section className="px-6 mb-6">
+                <div className={`p-6 rounded-[2.5rem] border ${theme.card}`}>
+                    <h3 className={`text-[10px] font-black uppercase tracking-widest mb-4 ${theme.textMuted}`}>Social Funnel</h3>
+                    <div className="space-y-4 max-w-2xl">
+                        <div className="relative">
+                            <div className="flex justify-between text-[10px] font-bold uppercase mb-1">
+                                <span>Link Impressions</span>
+                                <span>0</span>
                             </div>
-                            <div>
-                                <h3 className="font-black text-xl text-slate-900">{isEditing ? 'Edit Product' : 'New Product'}</h3>
-                                <p className="text-xs font-bold text-slate-400">{isEditing ? 'Update your product details' : 'Generate a SokoSnap secure checkout link'}</p>
+                            <div className={`h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}>
+                                <div className="h-full bg-yellow-500 w-[0%]"></div>
                             </div>
                         </div>
-                        <button onClick={() => setShowGenerator(false)} className="bg-slate-100 p-2 rounded-full text-slate-400 hover:text-slate-900 transition-colors">
-                            <X size={20} />
-                        </button>
+                        <div className="relative">
+                            <div className="flex justify-between text-[10px] font-bold uppercase mb-1">
+                                <span>Unique Clicks</span>
+                                <span>{totalClicks}</span>
+                            </div>
+                            <div className={`h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}>
+                                <div className="h-full bg-yellow-500 opacity-80" style={{ width: totalClicks > 0 ? '50%' : '0%' }}></div>
+                            </div>
+                        </div>
+                        <div className="relative">
+                            <div className="flex justify-between text-[10px] font-bold uppercase mb-1">
+                                <span>Orders Completed</span>
+                                <span>{safeOrders.length}</span>
+                            </div>
+                            <div className={`h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}>
+                                <div className="h-full bg-green-500" style={{ width: safeOrders.length > 0 ? '20%' : '0%' }}></div>
+                            </div>
+                        </div>
                     </div>
+                </div>
+            </section>
+        </div>
+    );
 
-                    <div className="space-y-6 flex-1">
-                        {/* Media Upload Grid - Supports up to 5 items */}
-                        <div className="grid grid-cols-3 gap-2">
-                            {/* Previews */}
-                            {previews.map((src, idx) => (
-                                <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border border-slate-100 group">
-                                    {files[idx]?.type.startsWith('video') ? (
-                                        <video src={src} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <img src={src} className="w-full h-full object-cover" />
-                                    )}
-                                    <button
-                                        onClick={() => removeFile(idx)}
-                                        className="absolute top-1 right-1 bg-black/50 text-white p-1 rounded-full opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <X size={12} />
-                                    </button>
+    const HomeView = () => (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 px-6">
+                {/* Wallet & Metrics */}
+                <div className="lg:col-span-8">
+                    <section className="mb-8">
+                        <div className={`border p-6 rounded-[2.5rem] relative overflow-hidden ${theme.card}`}>
+                            <div className="absolute -right-8 -top-8 w-32 h-32 bg-green-500/10 rounded-full blur-3xl"></div>
+                            <div className="flex justify-between items-start mb-6">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className={`text-[10px] font-black uppercase tracking-widest ${theme.textMuted}`}>Total Settled (30d)</span>
+                                        <div className="bg-green-500/10 text-green-500 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold">
+                                            <ArrowUpRight size={10} /> +0%
+                                        </div>
+                                    </div>
+                                    <h2 className="text-4xl md:text-5xl font-black tracking-tight italic">
+                                        <span className={`text-sm md:text-base not-italic font-bold mr-1 ${theme.textMuted}`}>KES</span>
+                                        {totalSettled.toLocaleString()}
+                                    </h2>
+                                </div>
+                                <div className="h-12 w-12 bg-green-500 rounded-2xl flex items-center justify-center text-black shadow-lg shadow-green-500/20">
+                                    <Zap size={24} />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className={`rounded-2xl p-3 border ${theme.subCard}`}>
+                                    <p className={`text-[10px] font-bold uppercase mb-1 flex items-center gap-1 ${theme.textMuted}`}>
+                                        <Truck size={10} className="text-blue-400" /> In Transit
+                                    </p>
+                                    <p className="font-black text-sm">KES {inTransit.toLocaleString()}</p>
+                                </div>
+                                <div className={`rounded-2xl p-3 border ${theme.subCard}`}>
+                                    <p className={`text-[10px] font-bold uppercase mb-1 ${theme.textMuted}`}>Avg. Settlement</p>
+                                    <p className="font-black text-sm text-yellow-500">Instant</p>
+                                </div>
+                                {/* Desktop-only extra metrics */}
+                                <div className={`hidden md:block rounded-2xl p-3 border ${theme.subCard}`}>
+                                    <p className={`text-[10px] font-bold uppercase mb-1 ${theme.textMuted}`}>Top Channel</p>
+                                    <p className="font-black text-sm text-blue-500">WhatsApp</p>
+                                </div>
+                                <div className={`hidden md:block rounded-2xl p-3 border ${theme.subCard}`}>
+                                    <p className={`text-[10px] font-bold uppercase mb-1 ${theme.textMuted}`}>Growth Score</p>
+                                    <p className="font-black text-sm text-green-500">A+</p>
+                                </div>
+                            </div>
+                            <p className={`mt-4 text-[10px] text-center font-medium ${theme.textMuted}`}>Funds settled to your M-Pesa instantly after delivery.</p>
+                        </div>
+                    </section>
+
+                    {/* Quick Create Speed Zone */}
+                    <section className="mb-10">
+                        <h3 className={`text-xs font-black uppercase tracking-widest mb-4 ${theme.textMuted}`}>Quick Actions</h3>
+                        <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+                            {[
+                                { icon: <Camera />, label: 'Snap Link', color: 'text-yellow-500' },
+                                { icon: <Plus />, label: 'Manual', color: isDarkMode ? 'text-zinc-400' : 'text-gray-400' },
+                                { icon: <Smartphone />, label: 'Invoice', color: isDarkMode ? 'text-zinc-400' : 'text-gray-400' },
+                                { icon: <Share2 />, label: 'Store QR', color: isDarkMode ? 'text-zinc-400' : 'text-gray-400' }
+                            ].map((item, i) => (
+                                <button key={i} className="flex-shrink-0 flex flex-col items-center gap-3">
+                                    <div className={`h-16 w-16 md:h-20 md:w-20 rounded-3xl flex items-center justify-center border shadow-xl active:scale-95 transition-transform ${theme.card}`}>
+                                        <span className={item.color}>{item.icon}</span>
+                                    </div>
+                                    <span className={`text-[11px] font-bold ${isDarkMode ? 'text-zinc-300' : 'text-gray-600'}`}>{item.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* Smart Toggles & Feed */}
+                    <section className="pb-32 lg:pb-12">
+                        <div className={`p-1.5 rounded-[1.5rem] flex gap-1 mb-8 border shadow-inner max-w-md ${theme.card}`}>
+                            {['Products', 'Services', 'Tickets'].map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`flex-1 py-3 rounded-2xl text-[11px] font-black transition-all flex items-center justify-center gap-2 uppercase tracking-tight ${activeTab === tab
+                                        ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/20'
+                                        : `${theme.textMuted} hover:text-yellow-500`
+                                        }`}
+                                >
+                                    {tab === 'Products' && <Package size={14} />}
+                                    {tab === 'Services' && <Wrench size={14} />}
+                                    {tab === 'Tickets' && <Ticket size={14} />}
+                                    {tab}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Filter Links: For now we show all links under 'Products', others empty */}
+                            {activeTab === 'Products' && safeLinks.length === 0 && !isLoading && (
+                                <div className="col-span-full border-2 border-dashed rounded-[2.2rem] p-8 text-center opacity-50">
+                                    <p className="text-sm font-bold">No products yet.</p>
+                                </div>
+                            )}
+                            {activeTab === 'Products' && safeLinks.map((item) => (
+                                <div key={item.id} className={`border p-4 rounded-[2.2rem] flex items-center gap-4 transition-colors group ${theme.card}`}>
+                                    <div className={`h-16 w-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner group-hover:scale-105 transition-transform overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}>
+                                        {item.img ? <img src={item.img} alt={item.name} className="w-full h-full object-cover" /> : <Package size={24} />}
+                                    </div>
+
+                                    <div className="flex-1 overflow-hidden">
+                                        <h4 className="font-bold text-sm truncate pr-2">{item.name}</h4>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <span className="text-yellow-500 font-black text-sm italic">KES {item.price?.toLocaleString() || '0'}</span>
+                                            <span className={`h-1 w-1 rounded-full ${isDarkMode ? 'bg-zinc-700' : 'bg-gray-300'}`}></span>
+                                            <span className={`text-[10px] font-bold uppercase tracking-tighter ${theme.textMuted}`}>
+                                                {item.sales} Sold
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col gap-2">
+                                        <button onClick={handleCopy} className={`h-10 w-10 rounded-xl flex items-center justify-center text-yellow-500 transition-all active:scale-90 ${theme.btnGhost} hover:bg-yellow-500 hover:text-black`}>
+                                            <Copy size={16} />
+                                        </button>
+                                        <button className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all active:scale-90 ${theme.btnGhost} ${theme.textMuted} hover:text-yellow-500`}>
+                                            <Share2 size={16} />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
 
-                            {/* Upload Button */}
-                            {files.length < 5 && (
-                                <div
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="aspect-square bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-yellow-500 hover:bg-yellow-50/50 transition-all text-slate-400 hover:text-yellow-600"
-                                >
-                                    <Plus size={24} />
-                                    <span className="text-[9px] font-bold uppercase">Add</span>
+                            {/* Fallback for other tabs */}
+                            {activeTab !== 'Products' && (
+                                <div className="col-span-full py-12 text-center opacity-50 italic">
+                                    Coming soon for {activeTab}
                                 </div>
                             )}
+
+                            {/* Create New Button */}
+                            <button className={`w-full border-2 border-dashed py-8 rounded-[2.2rem] flex flex-col items-center justify-center gap-2 transition-all group ${theme.card} hover:border-yellow-500/30`}>
+                                <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-all group-hover:bg-yellow-500 group-hover:text-black ${isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-gray-100 text-gray-500'}`}>
+                                    <Plus size={24} />
+                                </div>
+                                <span className={`text-xs font-black uppercase tracking-widest ${theme.textMuted} group-hover:text-yellow-500`}>Create New {activeTab.slice(0, -1)}</span>
+                            </button>
                         </div>
+                    </section>
+                </div>
 
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            className="hidden"
-                            accept="image/*,video/*"
-                            multiple
-                            onChange={handleFileUpload}
-                        />
+                {/* Desktop Sidebar Column */}
+                <div className="hidden lg:block lg:col-span-4 space-y-6">
+                    <div className={`p-6 rounded-[2.5rem] border ${theme.card}`}>
+                        <h3 className="text-xs font-black uppercase tracking-widest mb-4 italic">Merchant Activity</h3>
+                        <div className="space-y-4">
+                            {/* Mock activity if no orders */}
+                            {safeOrders.length === 0 ? (
+                                <>
+                                    {[
+                                        { icon: <ShoppingBag size={14} />, text: "Welcome to SokoSnap!", time: "Just now", color: "text-green-500" },
+                                        { icon: <TrendingUp size={14} />, text: "Finish setting up profile", time: "Action Item", color: "text-yellow-500" },
+                                    ].map((activity, i) => (
+                                        <div key={i} className="flex items-center gap-3">
+                                            <div className={`h-8 w-8 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 ${activity.color}`}>
+                                                {activity.icon}
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold">{activity.text}</p>
+                                                <p className="text-[10px] text-zinc-400">{activity.time}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </>
+                            ) : (
+                                safeOrders.slice(0, 5).map((order) => (
+                                    <div key={order.id} className="flex items-center gap-3">
+                                        <div className={`h-8 w-8 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-blue-500`}>
+                                            <CreditCard size={14} />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold">New Order: KES {order.total}</p>
+                                            <p className="text-[10px] text-zinc-400">{new Date().toLocaleTimeString()}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
 
-                        {files.length === 0 && (
-                            <div className="text-center py-4">
-                                <p className="text-xs text-slate-400">Upload up to 5 media files photos or videos (Max 60s)</p>
+                    <div className={`p-6 rounded-[2.5rem] border ${theme.card}`}>
+                        <h3 className="text-xs font-black uppercase tracking-widest mb-4 italic">Market Growth</h3>
+                        {/* Chart Placeholder */}
+                        {totalSettled > 0 ? (
+                            // Use actual chart if we have data (or placeholder for now)
+                            <div className="h-24 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
+                                <TrendingUp className="text-green-500 opacity-30" size={48} />
+                            </div>
+                        ) : (
+                            // Zero state chart
+                            <div className="h-24 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl flex items-center justify-center border border-zinc-100 dark:border-zinc-800 relative overflow-hidden">
+                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagonal-stripes.png')] opacity-10"></div>
+                                <p className="text-[10px] font-black uppercase text-zinc-300">No Data Yet</p>
                             </div>
                         )}
 
-                        {/* Pro Tip for Video Length */}
-                        <div className="bg-blue-50 p-3 rounded-2xl flex gap-3 items-start border border-blue-100">
-                            <div className="bg-blue-100 text-blue-600 p-2 rounded-xl mt-0.5 shadow-sm">
-                                <TrendingUp size={14} />
-                            </div>
-                            <div className="flex-1">
-                                <div className="flex justify-between items-center mb-0.5">
-                                    <p className="text-[10px] font-black text-blue-800 uppercase">Pro Tip: Boost Sales</p>
-                                    <span className="bg-blue-200 text-blue-700 text-[9px] font-bold px-1.5 rounded-md">3x Conversion</span>
-                                </div>
-                                <p className="text-xs text-blue-700 leading-snug font-medium">
-                                    You can upload up to 60s, but <strong>videos under 15s sell best</strong>. Keep it short and snappy to hook customers fast!
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="space-y-3 pt-2">
-                            <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3 border border-slate-100 focus-within:border-yellow-500 transition-colors">
-                                <span className="text-slate-400"><Smartphone size={18} /></span>
-                                <input
-                                    value={productName}
-                                    onChange={(e) => setProductName(e.target.value)}
-                                    placeholder="Product Name (e.g. Navy Blue Suit)"
-                                    className="bg-transparent w-full text-sm font-bold text-slate-900 placeholder:text-slate-400 outline-none"
-                                />
-                            </div>
-
-                            <div className="flex gap-4">
-                                <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3 border border-slate-100 focus-within:border-yellow-500 transition-colors flex-1">
-                                    <span className="text-slate-400 font-bold text-xs">KES</span>
-                                    <input
-                                        type="number"
-                                        value={price}
-                                        onChange={(e) => setPrice(e.target.value)}
-                                        placeholder="Price"
-                                        className="bg-transparent w-full text-sm font-bold text-slate-900 placeholder:text-slate-400 outline-none"
-                                    />
-                                </div>
-                                <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3 border border-slate-100 focus-within:border-yellow-500 transition-colors w-1/3">
-                                    <span className="text-slate-400"><Box size={18} /></span>
-                                    <input
-                                        type="number"
-                                        value={qty}
-                                        onChange={(e) => setQty(e.target.value)}
-                                        placeholder="Qty"
-                                        className="bg-transparent w-full text-sm font-bold text-slate-900 placeholder:text-slate-400 outline-none"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Return Policy Selection */}
-                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 focus-within:border-yellow-500 transition-colors">
-                                <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Return Policy</label>
-                                <select
-                                    value={returnPolicy}
-                                    onChange={(e) => setReturnPolicy(e.target.value)}
-                                    className="bg-transparent w-full text-sm font-bold text-slate-900 outline-none"
-                                >
-                                    <option value="exchange_7d">7-Day Exchange (The "Fashion" Standard)</option>
-                                    <option value="tech_warranty_48h">48hr Tech Warranty (The "Imenti" Standard)</option>
-                                    <option value="inspect_accept">Inspect & Accept (The "Mitumba" Standard)</option>
-                                    <option value="guarantee_30d">30-Day Guarantee (The "Premium" Standard)</option>
-                                    <option value="manufacturer_warranty">Manufacturer Warranty (The "Official" Standard)</option>
-                                    <option value="custom_order">Custom & Made-to-Order (The "Fundi" Standard)</option>
-                                    <option value="restocking_fee">Restocking Fee Apply (The "Open Box" Standard)</option>
-                                    <option value="final_sale">Non-Returnable / Final Sale (The "Hygiene" Standard)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-4 pt-4 mt-auto">
-                            {isEditing && (
-                                <button
-                                    onClick={handleArchiveProduct}
-                                    className="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-black text-lg hover:bg-red-50 hover:text-red-500 transition-colors"
-                                >
-                                    Archive
-                                </button>
-                            )}
-                            <button
-                                onClick={handleGenerate}
-                                className={`flex-[2] bg-slate-900 text-white py-4 rounded-2xl font-black text-lg hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20 active:scale-95`}
-                            >
-                                {isEditing ? 'Update Link' : 'Generate Link'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )
-    );
-
-    // --- RENDER HELPERS ---
-
-    if (view === 'all-links') {
-        return (
-            <div className="h-full bg-slate-50 flex flex-col">
-                <div className="bg-white px-6 pt-12 pb-4 border-b border-slate-100 flex items-center gap-3 sticky top-0 z-20">
-                    <button onClick={() => setView('hub')} className="p-2 -ml-2 rounded-full hover:bg-slate-50"><ArrowLeft size={20} /></button>
-                    <h1 className="text-xl font-black text-slate-900">All Links</h1>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                    {/* Active Links */}
-                    <div>
-                        <h2 className="text-lg font-black text-slate-900 mb-4">Active</h2>
-                        <div className="space-y-3">
-                            {activeLinks.map(item => (
-                                <LinkCard
-                                    key={item.id}
-                                    item={item}
-                                    onClick={() => {
-                                        setSelectedLink(item);
-                                        setView('edit-link');
-                                    }}
-                                />
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Archived Links */}
-                    <div>
-                        <h2 className="text-lg font-black text-slate-900 mb-4 text-slate-400">Archived</h2>
-                        <div className="space-y-3 opacity-75">
-                            {archivedLinks.map(item => (
-                                <LinkCard
-                                    key={item.id}
-                                    item={item}
-                                    onClick={() => { }}
-                                    action={
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (confirm('Delete this archived link permanently?')) {
-                                                    // setArchivedLinks(prev => prev.filter(l => l.id !== item.id));
-                                                    console.warn('Delete not implemented yet');
-                                                }
-                                            }}
-                                            className="bg-red-100 p-2 rounded-xl text-red-600 mt-1 hover:bg-red-200 transition-colors"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    }
-                                />
-                            ))}
-                            {archivedLinks.length === 0 && <p className="text-slate-400 text-sm font-bold italic">No archived links.</p>}
-                        </div>
-                    </div>
-                </div>
-                {CreateLinkModal()}
-            </div>
-        );
-    }
-
-    if (view === 'profile') {
-        return (
-            <div className="h-full bg-slate-50 flex flex-col">
-                <div className="bg-white px-6 pt-12 pb-4 border-b border-slate-100 flex items-center gap-3 sticky top-0 z-20">
-                    <button onClick={() => setView('hub')} className="p-2 -ml-2 rounded-full hover:bg-slate-50"><ArrowLeft size={20} /></button>
-                    <h1 className="text-xl font-black text-slate-900">My Profile</h1>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                    {/* Profile Header */}
-                    <div className="flex items-center gap-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                        <div className="w-20 h-20 bg-slate-200 rounded-full flex items-center justify-center text-slate-400 text-2xl">
-                            <Store size={32} />
-                        </div>
-                        <div>
-                            <h2 className="font-black text-2xl text-slate-900">{profileData.shopName}</h2>
-                            <p className="font-medium text-slate-500">Verified Merchant</p>
-                            <button className="text-yellow-600 text-xs font-bold uppercase mt-2">Change Photo</button>
-                        </div>
-                    </div>
-
-                    {/* Form Fields */}
-                    <div className="space-y-6">
-                        {/* Shop Details */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-2">Shop Details</h3>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase ml-2">Shop Name</label>
-                                <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3">
-                                    <Store size={18} className="text-slate-400" />
-                                    <input
-                                        value={profileData.shopName}
-                                        onChange={(e) => setProfileData({ ...profileData, shopName: e.target.value })}
-                                        className="flex-1 outline-none text-slate-900 font-bold"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase ml-2">Location</label>
-                                <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3">
-                                    <MapPin size={18} className="text-slate-400" />
-                                    <input
-                                        value={profileData.locationName}
-                                        onChange={(e) => setProfileData({ ...profileData, locationName: e.target.value })}
-                                        className="flex-1 outline-none text-slate-900 font-bold"
-                                    />
-                                    <button className="text-xs font-bold text-yellow-600 uppercase">Change</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Contact Person */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-2">Contact Info</h3>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase ml-2">Contact Person</label>
-                                <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3">
-                                    <User size={18} className="text-slate-400" />
-                                    <input
-                                        value={profileData.contactName}
-                                        onChange={(e) => setProfileData({ ...profileData, contactName: e.target.value })}
-                                        className="flex-1 outline-none text-slate-900 font-bold"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase ml-2">Phone Number</label>
-                                <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3">
-                                    <Smartphone size={18} className="text-slate-400" />
-                                    <input
-                                        value={profileData.contactPhone}
-                                        onChange={(e) => setProfileData({ ...profileData, contactPhone: e.target.value })}
-                                        className="flex-1 outline-none text-slate-900 font-bold"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase ml-2">Email Address</label>
-                                <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3">
-                                    <Mail size={18} className="text-slate-400" />
-                                    <input
-                                        type="email"
-                                        value={profileData.email}
-                                        onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                                        className="flex-1 outline-none text-slate-900 font-bold"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Legal */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-2">Legal</h3>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase ml-2">KRA PIN</label>
-                                <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3">
-                                    <ShieldCheck size={18} className="text-slate-400" />
-                                    <input
-                                        value={profileData.kraPin}
-                                        onChange={(e) => setProfileData({ ...profileData, kraPin: e.target.value })}
-                                        className="flex-1 outline-none text-slate-900 font-bold uppercase"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Payment */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-2">Payment Details</h3>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase ml-2">Payment Type</label>
-                                <div className="flex gap-2">
-                                    {['personal', 'till', 'paybill'].map(type => (
-                                        <button
-                                            key={type}
-                                            onClick={() => setProfileData({ ...profileData, mpesaType: type })}
-                                            className={`flex-1 py-3 text-xs font-black uppercase rounded-xl border-2 transition-all ${profileData.mpesaType === type
-                                                ? 'border-yellow-400 bg-yellow-50 text-slate-900'
-                                                : 'border-slate-100 bg-white text-slate-400'
-                                                }`}
-                                        >
-                                            {type}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {profileData.mpesaType === 'personal' && (
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase ml-2">M-Pesa Number</label>
-                                    <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3">
-                                        <Smartphone size={18} className="text-slate-400" />
-                                        <input
-                                            value={profileData.mpesaNumber}
-                                            onChange={(e) => setProfileData({ ...profileData, mpesaNumber: e.target.value })}
-                                            className="flex-1 outline-none text-slate-900 font-bold"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            {profileData.mpesaType === 'till' && (
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase ml-2">Till Number</label>
-                                    <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3">
-                                        <Store size={18} className="text-slate-400" />
-                                        <input
-                                            value={profileData.tillNumber}
-                                            onChange={(e) => setProfileData({ ...profileData, tillNumber: e.target.value })}
-                                            className="flex-1 outline-none text-slate-900 font-bold"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            {profileData.mpesaType === 'paybill' && (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase ml-2">Paybill No</label>
-                                        <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3">
-                                            <CreditCard size={18} className="text-slate-400" />
-                                            <input
-                                                value={profileData.paybillNumber}
-                                                onChange={(e) => setProfileData({ ...profileData, paybillNumber: e.target.value })}
-                                                className="flex-1 outline-none text-slate-900 font-bold"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase ml-2">Account No</label>
-                                        <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3">
-                                            <User size={18} className="text-slate-400" />
-                                            <input
-                                                value={profileData.accountNumber}
-                                                onChange={(e) => setProfileData({ ...profileData, accountNumber: e.target.value })}
-                                                className="flex-1 outline-none text-slate-900 font-bold"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Socials */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-2">Social Storefronts</h3>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase ml-2">WhatsApp</label>
-                                <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3">
-                                    <MessageCircle size={18} className="text-[#25D366]" />
-                                    <input
-                                        value={profileData.whatsapp}
-                                        onChange={(e) => setProfileData({ ...profileData, whatsapp: e.target.value })}
-                                        className="flex-1 outline-none text-slate-900 font-bold"
-                                    />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase ml-2">Instagram</label>
-                                <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3">
-                                    <Instagram size={18} className="text-pink-500" />
-                                    <input
-                                        value={profileData.instagram}
-                                        onChange={(e) => setProfileData({ ...profileData, instagram: e.target.value })}
-                                        className="flex-1 outline-none text-slate-900 font-bold"
-                                    />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase ml-2">Facebook</label>
-                                <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-3">
-                                    <Facebook size={18} className="text-blue-600" />
-                                    <input
-                                        value={profileData.facebook}
-                                        onChange={(e) => setProfileData({ ...profileData, facebook: e.target.value })}
-                                        className="flex-1 outline-none text-slate-900 font-bold"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <button
-                        onClick={async () => {
-                            if (user?.id) {
-                                await updateUser({
-                                    shopName: profileData.shopName,
-                                    shopLocation: profileData.locationName,
-                                    contactPerson: profileData.contactName,
-                                    contactPhone: profileData.contactPhone,
-                                    email: profileData.email,
-                                    kraPin: profileData.kraPin,
-                                    mpesaType: profileData.mpesaType as 'personal' | 'till' | 'paybill',
-                                    mpesaNumber: profileData.mpesaNumber,
-                                    tillNumber: profileData.tillNumber,
-                                    paybillNumber: profileData.paybillNumber,
-                                    accountNumber: profileData.accountNumber,
-                                    whatsapp: profileData.whatsapp,
-                                    instagram: profileData.instagram,
-                                    facebook: profileData.facebook,
-                                    tiktok: profileData.tiktok
-                                });
-                                alert('Profile Updated Successfully!');
+                        <p className="text-[10px] mt-4 font-medium text-zinc-500 leading-relaxed uppercase tracking-tighter">
+                            {totalClicks > 100
+                                ? "Your store traffic is booming! Keep sharing."
+                                : "Share your links on WhatsApp to boost traffic (+42% avg)."
                             }
-                        }}
-                        className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-lg hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20 active:scale-95"
-                    >
-                        Save Changes
-                    </button>
-                    <div className="h-10" />
-                </div>
-                {CreateLinkModal()}
-            </div>
-        );
-    }
-
-    if (view === 'payouts') {
-        return (
-            <div className="h-full bg-slate-50 flex flex-col">
-                <div className="bg-white px-6 pt-12 pb-4 border-b border-slate-100 flex items-center gap-3 sticky top-0 z-20">
-                    <button onClick={() => setView('hub')} className="p-2 -ml-2 rounded-full hover:bg-slate-50"><ArrowLeft size={20} /></button>
-                    <h1 className="text-xl font-black text-slate-900">Payouts</h1>
-                </div>
-                <div className="flex-1 p-6 flex flex-col items-center justify-center text-slate-400">
-                    <Wallet size={48} className="mb-4 opacity-20" />
-                    <p className="font-bold text-sm">No recent transactions</p>
-                </div>
-                {CreateLinkModal()}
-            </div>
-        );
-    }
-
-    if (view === 'orders') {
-        return (
-            <div className="h-full bg-slate-50 flex flex-col">
-                <div className="bg-white px-6 pt-12 pb-4 border-b border-slate-100 sticky top-0 z-20">
-                    <div className="flex items-center gap-3 mb-4">
-                        <button onClick={() => setView(selectedLink ? 'edit-link' : 'hub')} className="p-2 -ml-2 rounded-full hover:bg-slate-50"><ArrowLeft size={20} /></button>
-                        <div>
-                            <h1 className="text-xl font-black text-slate-900 leading-none">Order History</h1>
-                            {ordersFilter && <p className="text-[10px] font-bold text-slate-400 mt-1">Filtering by: #{links.find(l => String(l.id) === String(ordersFilter))?.name}</p>}
-                        </div>
-                    </div>
-
-                    {/* Tabs */}
-                    <div className="flex p-1 bg-slate-100 rounded-2xl mx-2">
-                        <button
-                            onClick={() => setActiveOrderTab('ongoing')}
-                            className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${activeOrderTab === 'ongoing' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}
-                        >
-                            Ongoing ({orders.filter(o => ['pending', 'shipping'].includes(o.status)).length})
-                        </button>
-                        <button
-                            onClick={() => setActiveOrderTab('completed')}
-                            className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${activeOrderTab === 'completed' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}
-                        >
-                            History
-                        </button>
-                    </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-6 space-y-3">
-                    {filteredOrders.length > 0 ? (
-                        filteredOrders.map(order => <OrderCard key={order.id} order={order} />)
-                    ) : (
-                        <div className="text-center py-12 text-slate-400">
-                            <Box size={48} className="mx-auto mb-4 opacity-20" />
-                            <p className="font-bold text-sm">No orders found</p>
-                        </div>
-                    )}
-                </div>
-                {CreateLinkModal()}
-            </div>
-        );
-    }
-
-    if (view === 'edit-link' && selectedLink) {
-        return (
-            <div className="h-full bg-slate-50 flex flex-col">
-                <div className="bg-white px-6 pt-12 pb-4 border-b border-slate-100 flex justify-between items-center sticky top-0 z-20">
-                    <div className="flex items-center gap-3">
-                        <button onClick={() => { setView('hub'); setSelectedLink(null); }} className="p-2 -ml-2 rounded-full hover:bg-slate-50"><ArrowLeft size={20} /></button>
-                        <div>
-                            <h1 className="text-xl font-black text-slate-900 leading-none">Link Details</h1>
-                            <p className="text-[10px] font-bold text-slate-400 mt-1">Ref: #SK{selectedLink.id}992</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={handleArchiveProduct}
-                            className="bg-slate-50 text-red-500 p-2 rounded-full hover:bg-red-50 transition-colors"
-                        >
-                            <Trash2 size={20} />
-                        </button>
-                        <button
-                            onClick={() => handleEditLink()}
-                            className="bg-slate-50 text-slate-900 p-2 rounded-full hover:bg-slate-100 transition-colors"
-                        >
-                            <Pencil size={20} />
-                        </button>
-                    </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                    {/* Preview Card */}
-                    <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
-                        <div className="aspect-square bg-slate-100 rounded-2xl mb-4 overflow-hidden relative">
-                            {selectedLink.img.includes('mp4') ? (
-                                <video src={selectedLink.img} className="w-full h-full object-cover" controls />
-                            ) : (
-                                <img src={selectedLink.img} className="w-full h-full object-cover" />
-                            )}
-                            <button className="absolute bottom-4 right-4 bg-white/90 p-2 rounded-xl text-xs font-bold shadow-sm backdrop-blur-md">
-                                Edit Media
-                            </button>
-                        </div>
-                        <input className="text-2xl font-black text-slate-900 w-full mb-1 outline-none focus:bg-slate-50 rounded-lg px-2 -mx-2" defaultValue={selectedLink.name} />
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-slate-400 uppercase">Price (KES)</span>
-                            <input className="text-lg font-black text-slate-900 w-32 outline-none focus:bg-slate-50 rounded-lg px-2" defaultValue="4500" />
-                        </div>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <StatCard
-                            label="Total Views"
-                            value={selectedLink.views.toString()}
-                            icon={<Eye size={20} />}
-                            color="blue"
-                        />
-                        <StatCard
-                            label="Orders"
-                            value={selectedLink.sales.toString()}
-                            icon={<Package size={20} />}
-                            color="green"
-                            onClick={() => {
-                                setOrdersFilter(String(selectedLink.id));
-                                setView('orders');
-                            }}
-                        />
-                    </div>
-
-                    <div className="bg-white text-slate-900 p-5 rounded-3xl border border-slate-200">
-                        <div className="flex justify-between items-center mb-2">
-                            <h3 className="font-bold text-sm text-slate-500 uppercase tracking-wide">Checkout Link</h3>
-                            <button
-                                onClick={() => window.open(`https://sokosnap.com/p/${selectedLink.id}`, '_blank')}
-                                className="text-yellow-600 text-xs font-bold uppercase hover:underline"
-                            >
-                                Test Link
-                            </button>
-                        </div>
-                        <div className="flex items-center gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <span className="text-slate-400"><Lock size={16} /></span>
-                            <span className="flex-1 font-mono text-sm font-bold truncate">sokosnap.com/p/{selectedLink.id}</span>
-                            <button
-                                onClick={() => {
-                                    navigator.clipboard.writeText(`https://sokosnap.com/p/${selectedLink.id}`);
-                                    alert('Link copied to clipboard!');
-                                }}
-                                className="p-2 bg-white rounded-lg shadow-sm text-slate-600 hover:text-slate-900"
-                            >
-                                <Copy size={16} />
-                            </button>
-                        </div>
-                        <button
-                            onClick={async () => {
-                                if (navigator.share) {
-                                    try {
-                                        await navigator.share({
-                                            title: selectedLink.name,
-                                            text: `Check out ${selectedLink.name} on SokoSnap!`,
-                                            url: `https://sokosnap.com/p/${selectedLink.id}`
-                                        });
-                                    } catch (err) {
-                                        console.error('Error sharing:', err);
-                                    }
-                                } else {
-                                    navigator.clipboard.writeText(`https://sokosnap.com/p/${selectedLink.id}`);
-                                    alert('Link copied to clipboard!');
-                                }
-                            }}
-                            className="w-full mt-4 bg-yellow-400 text-slate-900 py-3 rounded-xl font-black text-sm uppercase tracking-wide shadow-lg shadow-yellow-200 hover:bg-yellow-300 transition-colors flex items-center justify-center gap-2"
-                        >
-                            <Share2 size={18} /> Share Link
-                        </button>
-                    </div>
-                </div>
-                {/* Footer Buttons Removed */}
-                {CreateLinkModal()}
-            </div>
-        );
-    }
-
-    return (
-        <div className="h-full bg-slate-50 font-sans text-slate-900 flex flex-col overflow-hidden">
-            {/* Header */}
-            <div className="bg-white px-6 pt-12 pb-4 border-b border-slate-100 flex justify-between items-center sticky top-0 z-20 shadow-sm">
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setIsDrawerOpen(true)}
-                        className="p-2 -ml-2 hover:bg-slate-50 rounded-full transition-colors group"
-                    >
-                        <Menu size={20} className="text-slate-900" />
-                    </button>
-                    <div className="bg-yellow-500 w-10 h-10 rounded-full flex items-center justify-center text-white font-black shadow-lg shadow-yellow-200">
-                        <Package size={20} />
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-xl font-black text-slate-900 leading-none">{user?.shopName || 'My Shop'}</h1>
-                            {!isShopVerified && (
-                                <span className="bg-yellow-100 text-yellow-700 text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase">Pending</span>
-                            )}
-                        </div>
-                        <p className="text-[10px] font-bold text-yellow-600 uppercase tracking-wide mt-1">{user?.type === 'verified_merchant' ? 'Verified Merchant' : 'Seller'}</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Verification Banner */}
-            {!isShopVerified && (
-                <div className="bg-yellow-50 mx-6 mt-6 p-4 rounded-2xl border border-yellow-100 flex gap-3">
-                    <div className="bg-yellow-100 text-yellow-700 p-2 rounded-xl h-fit">
-                        <Lock size={16} />
-                    </div>
-                    <div>
-                        <h4 className="font-black text-sm text-yellow-900 mb-1">Account Under Review</h4>
-                        <p className="text-xs text-yellow-800 font-medium leading-relaxed">
-                            We are verifying your shop details. You can set up your profile, but <span className="underline decoration-yellow-600/50">link generation is disabled</span> until verification is complete.
                         </p>
                     </div>
                 </div>
-            )}
+            </div>
+        </div>
+    );
 
-            <div className="flex-1 overflow-y-auto p-6 pb-24 space-y-8 scrollbar-hide">
-                {/* Actions Grid */}
-                <div className="grid grid-cols-2 gap-4">
-                    <button
-                        onClick={handleCreateNewLink}
-                        disabled={!isShopVerified}
-                        className={`bg-slate-900 text-white p-5 rounded-3xl flex flex-col justify-between h-32 shadow-xl shadow-slate-200 relative overflow-hidden group transition-all ${!isShopVerified ? 'opacity-50 grayscale cursor-not-allowed' : 'active:scale-[0.98]'}`}
-                    >
-                        <div className="bg-white/10 w-10 h-10 rounded-full flex items-center justify-center group-hover:bg-yellow-500 group-hover:text-slate-900 transition-colors">
-                            {isShopVerified ? <Plus size={24} /> : <Lock size={20} />}
-                        </div>
-                        <div className="text-left relative z-10">
-                            <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">New Product</p>
-                            <h3 className="font-black text-lg leading-tight">Create Link</h3>
-                        </div>
-                        <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-yellow-500/20 rounded-full blur-2xl group-hover:bg-yellow-500/40 transition-all" />
-                    </button>
-
-                    <div
-                        onClick={() => setView('payouts')}
-                        className="bg-white p-5 rounded-3xl flex flex-col justify-between h-32 border border-slate-100 shadow-sm relative overflow-hidden active:scale-95 transition-transform cursor-pointer"
-                    >
-                        <div className="flex justify-between items-start">
-                            <div className="bg-blue-50 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center">
-                                <Wallet size={20} />
-                            </div>
-                            <span className="bg-green-100 text-green-700 text-[9px] font-black px-2 py-1 rounded-full uppercase">Good</span>
-                        </div>
-                        <div>
-                            <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Total Payout</p>
-                            <h3 className="font-black text-xl text-slate-900">KES {formatCompactNumber(payoutAmount)}</h3>
-                        </div>
+    const MenuView = () => (
+        <div className="px-6 pb-32 lg:pb-12 animate-in fade-in duration-300 max-w-2xl mx-auto">
+            <div className="flex flex-col items-center mt-4 mb-8 text-center">
+                <div className="h-24 w-24 rounded-[2rem] bg-gradient-to-tr from-yellow-500 to-yellow-200 p-1 mb-4">
+                    <div className="h-full w-full bg-black rounded-[1.8rem] overflow-hidden">
+                        <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'Felix'}`} alt="Profile" />
                     </div>
                 </div>
-
-                {/* Analytics Scroll */}
-                <div>
-                    <div className="flex justify-between items-end mb-4 px-1">
-                        <h3 className="font-black text-slate-900 text-lg">Overview</h3>
-                        <select className="bg-transparent text-xs font-bold text-slate-400 outline-none">
-                            <option>This Week</option>
-                            <option>This Month</option>
-                        </select>
-                    </div>
-                    {/* Grid Layout for Stats */}
-                    <div className="grid grid-cols-3 gap-2 px-1">
-                        <StatCard
-                            label="In Hold"
-                            value={`KES ${formatCompactNumber(inHoldAmount)}`}
-                            sub="Pending"
-                            icon={<Lock size={64} />}
-                            color="blue"
-                            onClick={() => {
-                                setActiveOrderTab('ongoing');
-                                setOrdersFilter(null);
-                                setView('orders');
-                            }}
-                        />
-                        <StatCard
-                            label="Clicks"
-                            value={formatCompactNumber(totalClicks)}
-                            sub={`${totalViews > 0 ? ((links.reduce((a, b) => a + (b.sales || 0), 0) / totalViews) * 100).toFixed(1) : 0}% Conv`}
-                            icon={<MousePointer2 size={64} />}
-                            color="purple"
-                        />
-                        <StatCard
-                            label="Sales"
-                            value={`KES ${formatCompactNumber(totalSalesAmount)}`}
-                            sub="Revenue"
-                            icon={<TrendingUp size={64} />}
-                            color="green"
-                            onClick={() => {
-                                setOrdersFilter(null);
-                                setView('orders');
-                            }}
-                        />
-                    </div>
-                </div>
-
-                {/* Active Links */}
-                <div>
-                    <div className="flex justify-between items-center mb-4 px-1">
-                        <h3 className="font-black text-slate-900 text-lg">Active SokoLinks</h3>
-                        <button onClick={() => setView('all-links')} className="text-yellow-600 text-xs font-bold uppercase hover:underline">See All</button>
-                    </div>
-
-                    <div className="space-y-3">
-                        {activeLinks.map(item => (
-                            <LinkCard
-                                key={item.id}
-                                item={item}
-                                onClick={() => {
-                                    setSelectedLink(item);
-                                    setView('edit-link');
-                                }}
-                            />
-                        ))}
-                    </div>
+                <h2 className="text-2xl font-black italic">{user?.name || 'Store Owner'}</h2>
+                <div className={`flex items-center gap-1 mt-1 px-3 py-1 rounded-full ${theme.pill}`}>
+                    <Star className="text-yellow-500 fill-yellow-500" size={12} />
+                    <span className="text-[10px] font-black uppercase">4.9 TOP SELLER</span>
                 </div>
             </div>
 
-            {/* Drawer Navigation */}
-            {isDrawerOpen && (
-                <div className="fixed inset-0 z-50 flex justify-start">
-                    <div
-                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
-                        onClick={() => setIsDrawerOpen(false)}
-                    />
+            <div className="space-y-3">
+                {/* LIGHT MODE TOGGLE */}
+                <div className={`w-full p-4 rounded-3xl border flex items-center gap-4 ${theme.card}`}>
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${isDarkMode ? 'bg-zinc-800 text-yellow-500' : 'bg-gray-100 text-blue-500'}`}>
+                        {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
+                    </div>
+                    <div className="flex-1 text-left">
+                        <p className="text-sm font-bold">{isDarkMode ? 'Dark Mode' : 'Light Mode'}</p>
+                        <p className={`text-[10px] ${theme.textMuted}`}>{isDarkMode ? 'Easier on the eyes' : 'Maximum visibility'}</p>
+                    </div>
+                    <button
+                        onClick={() => setIsDarkMode(!isDarkMode)}
+                        className={`w-12 h-6 rounded-full relative transition-all border-2 ${isDarkMode ? 'bg-yellow-500 border-yellow-600' : 'bg-gray-200 border-gray-300'}`}
+                    >
+                        <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-all ${isDarkMode ? 'left-6' : 'left-0.5'}`}></div>
+                    </button>
+                </div>
 
-                    <div className="relative bg-white w-3/4 max-w-xs h-full shadow-2xl p-6 transform transition-transform animate-in slide-in-from-left duration-300 flex flex-col">
-                        <div className="flex justify-between items-center mb-8">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-yellow-500 w-10 h-10 rounded-full flex items-center justify-center text-white font-black shadow-lg shadow-yellow-200">
-                                    <Package size={20} />
-                                </div>
-                                <span className="font-black text-xl tracking-tight">SokoSnap</span>
+                {[
+                    { icon: <UserIcon />, title: 'Merchant Profile', desc: 'Edit your bio & location' },
+                    { icon: <CreditCard />, title: 'Settlement Account', desc: 'M-Pesa or Bank Details' },
+                    { icon: <ShieldCheck />, title: 'Identity Verification', desc: 'Level 2: Verified' },
+                    { icon: <Settings />, title: 'App Settings', desc: 'Notifications & Privacy' },
+                ].map((item, i) => (
+                    <button key={i} className={`w-full border p-4 rounded-3xl flex items-center gap-4 text-left active:scale-95 transition-transform ${theme.card}`}>
+                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${theme.pill} text-zinc-400`}>{item.icon}</div>
+                        <div className="flex-1">
+                            <p className="text-sm font-bold">{item.title}</p>
+                            <p className={`text-[10px] ${theme.textMuted}`}>{item.desc}</p>
+                        </div>
+                        <ChevronRight className={theme.textMuted} size={18} />
+                    </button>
+                ))}
+                <button
+                    onClick={() => {
+                        logout();
+                        if (onBack) onBack();
+                    }}
+                    className="w-full mt-4 flex items-center justify-center gap-2 text-red-500 font-bold py-4 bg-red-500/5 rounded-2xl border border-red-500/10 active:scale-95 transition-transform"
+                >
+                    <LogOut size={18} /> Sign Out
+                </button>
+            </div>
+        </div>
+    );
+
+    return (
+        <div className={`min-h-screen font-sans selection:bg-yellow-500/30 transition-colors duration-300 flex ${theme.bg}`}>
+
+            {/* Sidebar - Desktop Only */}
+            <aside className={`hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r z-50 transition-colors ${theme.sidebar}`}>
+                <div className="p-8">
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-2xl font-black tracking-tighter text-yellow-500 italic">SokoSnap</h1>
+                        <span className="bg-yellow-500 text-black text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter shadow-sm">Pro</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                        <Zap size={12} className="text-yellow-500 fill-yellow-500" />
+                        <p className={`text-[10px] font-black uppercase tracking-widest opacity-50`}>Hustle Active</p>
+                    </div>
+                </div>
+
+                <nav className="flex-1 px-4 space-y-2">
+                    {[
+                        { id: 'home', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
+                        { id: 'orders', icon: <ShoppingBag size={20} />, label: 'Orders' },
+                        { id: 'insights', icon: <BarChart3 size={20} />, label: 'Pulse Insights' },
+                        { id: 'menu', icon: <Settings size={20} />, label: 'Settings' },
+                    ].map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => setActiveView(item.id)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all group ${activeView === item.id
+                                ? 'bg-yellow-500 text-black font-black'
+                                : `${isDarkMode ? 'text-zinc-500' : 'text-zinc-600'} hover:bg-yellow-500/10 hover:text-yellow-500`
+                                }`}
+                        >
+                            {item.icon}
+                            <span className="text-sm font-bold uppercase tracking-tighter">{item.label}</span>
+                        </button>
+                    ))}
+                </nav>
+
+                <div className="p-8 border-t border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-gradient-to-tr from-yellow-500 to-yellow-200 rounded-full p-0.5">
+                            <div className="h-full w-full rounded-full bg-black overflow-hidden">
+                                <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'Felix'}`} alt="profile" />
                             </div>
-                            <button onClick={() => setIsDrawerOpen(false)} className="p-2 bg-slate-50 rounded-full text-slate-400">
-                                <X size={20} />
+                        </div>
+                        <div className="overflow-hidden">
+                            <p className="text-xs font-black truncate">{user?.name || 'User'}</p>
+                            <p className="text-[10px] opacity-50 font-bold uppercase tracking-tighter">Verified</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            {/* Main Content Area */}
+            <div className="flex-1 min-w-0 flex flex-col">
+                {/* Toast Notification */}
+                <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[60] transition-all duration-300 ${showCopyToast ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+                    <div className="bg-yellow-500 text-black px-6 py-2 rounded-full font-bold shadow-2xl flex items-center gap-2">
+                        <CheckCircle2 size={18} /> Link Copied!
+                    </div>
+                </div>
+
+                {/* Mobile Header - Hidden on Desktop Sidebar View */}
+                <header className={`p-6 pt-8 flex justify-between items-center sticky top-0 backdrop-blur-md z-40 transition-colors lg:hidden ${theme.headerBg}`}>
+                    <div>
+                        {activeView === 'home' ? (
+                            <div className="animate-in fade-in slide-in-from-left-2 duration-300">
+                                <div className="flex items-center gap-2">
+                                    <h1 className="text-2xl font-black tracking-tighter text-yellow-500 italic">SokoSnap</h1>
+                                    <span className="bg-yellow-500 text-black text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter shadow-sm">Pro</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                    <Zap size={12} className="text-yellow-500 fill-yellow-500" />
+                                    <p className={`text-[10px] font-black uppercase tracking-widest ${theme.textMuted}`}>Hustle Active</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <button onClick={() => setActiveView('home')} className="flex items-center gap-2 group">
+                                <ChevronLeft className="text-yellow-500 group-hover:-translate-x-1 transition-transform" />
+                                <span className="font-black uppercase tracking-widest text-xs">Back Home</span>
+                            </button>
+                        )}
+                    </div>
+                    <div className="flex gap-3">
+                        <button className={`h-10 w-10 rounded-full flex items-center justify-center border relative ${theme.pill}`}>
+                            <Bell size={20} className={isDarkMode ? 'text-zinc-300' : 'text-gray-600'} />
+                            <span className="absolute top-0 right-0 h-3 w-3 bg-red-500 rounded-full border-2 border-black"></span>
+                        </button>
+                        {activeView !== 'menu' && (
+                            <button onClick={() => setActiveView('menu')} className="h-10 w-10 bg-gradient-to-tr from-yellow-500 to-yellow-200 rounded-full p-0.5 active:scale-90 transition-transform shadow-lg">
+                                <div className="h-full w-full rounded-full bg-black flex items-center justify-center overflow-hidden">
+                                    <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'Felix'}`} alt="profile" />
+                                </div>
+                            </button>
+                        )}
+                    </div>
+                </header>
+
+                {/* Desktop Header - Visible on Desktop only */}
+                <header className="hidden lg:flex p-12 pb-4 justify-between items-center">
+                    <div>
+                        <h2 className="text-3xl font-black italic tracking-tighter uppercase">{activeView === 'home' ? 'Merchant Dashboard' : activeView}</h2>
+                        <p className={`text-xs font-bold uppercase tracking-widest ${theme.textMuted}`}>Welcome back, {user?.name || 'Seller'}</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <button className={`h-12 w-12 rounded-2xl flex items-center justify-center border relative transition-all ${theme.btnGhost}`}>
+                            <Bell size={22} />
+                            <span className="absolute top-1 right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white"></span>
+                        </button>
+                    </div>
+                </header>
+
+                {/* Main View Router */}
+                <main className="pt-2 pb-24 lg:pb-12 lg:px-6">
+                    {activeView === 'home' && <HomeView />}
+                    {activeView === 'insights' && <InsightsView />}
+                    {activeView === 'menu' && <MenuView />}
+                    {activeView === 'orders' && <div className="px-6 text-center py-20 italic opacity-50 uppercase font-black text-xl tracking-tighter text-zinc-500">Orders Stream coming soon...</div>}
+                </main>
+
+                {/* Bottom Navigation - Mobile Only */}
+                <div className="fixed bottom-6 left-6 right-6 z-50 lg:hidden">
+                    <nav className={`backdrop-blur-xl border rounded-[2.5rem] p-2 flex justify-between items-center shadow-2xl px-6 py-3 transition-colors ${theme.navBg}`}>
+                        <button
+                            onClick={() => setActiveView('home')}
+                            className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'home' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
+                        >
+                            <div className={`p-2 rounded-2xl ${activeView === 'home' ? 'bg-yellow-500/10' : ''}`}>
+                                <Package size={22} strokeWidth={activeView === 'home' ? 3 : 2} />
+                            </div>
+                            <span className="text-[9px] font-black uppercase tracking-tighter">Home</span>
+                        </button>
+
+                        <button
+                            onClick={() => setActiveView('orders')}
+                            className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'orders' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
+                        >
+                            <div className={`p-2 rounded-2xl ${activeView === 'orders' ? 'bg-yellow-500/10' : ''}`}>
+                                <Ticket size={22} strokeWidth={activeView === 'orders' ? 3 : 2} />
+                            </div>
+                            <span className="text-[9px] font-black uppercase tracking-tighter">Orders</span>
+                        </button>
+
+                        {/* Central Action Button */}
+                        <div className="relative -top-10">
+                            <button className="h-16 w-16 bg-yellow-500 text-black rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(234,179,8,0.4)] border-4 border-black active:scale-95 transition-all hover:scale-105">
+                                <Camera size={28} strokeWidth={3} />
                             </button>
                         </div>
 
-                        <div className="flex items-center gap-4 mb-8 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <div className="w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center text-slate-400">
-                                <User size={24} />
+                        <button
+                            onClick={() => setActiveView('insights')}
+                            className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'insights' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
+                        >
+                            <div className={`p-2 rounded-2xl ${activeView === 'insights' ? 'bg-yellow-500/10' : ''}`}>
+                                <BarChart3 size={22} strokeWidth={activeView === 'insights' ? 3 : 2} />
                             </div>
-                            <div>
-                                <h4 className="font-black text-slate-900 leading-none">Eastleigh Kicks</h4>
-                                <p className="text-xs font-bold text-slate-400 mt-1">Verified Merchant</p>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2 flex-1">
-                            {[
-                                { icon: <LayoutDashboard size={20} />, label: 'Dashboard', id: 'hub' },
-                                { icon: <Package size={20} />, label: 'My Orders', id: 'orders' },
-                                { icon: <Wallet size={20} />, label: 'Payouts', id: 'payouts' },
-                                { icon: <User size={20} />, label: 'Profile', id: 'profile' },
-                            ].map((item) => (
-                                <button
-                                    key={item.label}
-                                    onClick={() => {
-                                        setView(item.id);
-                                        setIsDrawerOpen(false);
-                                    }}
-                                    className={`w-full flex items-center gap-4 p-4 rounded-2xl font-bold transition-all ${view === item.id
-                                        ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20'
-                                        : 'text-slate-400 hover:bg-slate-50 hover:text-slate-900'
-                                        }`}
-                                >
-                                    {item.icon}
-                                    {item.label}
-                                </button>
-                            ))}
-                        </div>
+                            <span className="text-[9px] font-black uppercase tracking-tighter">Insights</span>
+                        </button>
 
                         <button
-                            onClick={async () => {
-                                await logout();
-                                onBack();
-                            }}
-                            className="flex items-center gap-4 p-4 rounded-2xl font-bold text-red-500 hover:bg-red-50 transition-colors mt-auto"
+                            onClick={() => setActiveView('menu')}
+                            className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'menu' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
                         >
-                            <LogOut size={20} />
-                            Log Out
+                            <div className={`p-2 rounded-2xl ${activeView === 'menu' ? 'bg-yellow-500/10' : ''}`}>
+                                <MoreVertical size={22} strokeWidth={activeView === 'menu' ? 3 : 2} />
+                            </div>
+                            <span className="text-[9px] font-black uppercase tracking-tighter">Menu</span>
                         </button>
-                    </div>
+                    </nav>
                 </div>
-            )}
 
-            {CreateLinkModal()}
+                {/* iOS Safe Area Spacer */}
+                <div className={`h-8 transition-colors ${theme.headerBg} lg:hidden`}></div>
+            </div>
         </div>
     );
 };
-
-export default SellerDashboard;

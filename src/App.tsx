@@ -1,478 +1,644 @@
-import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
-import { ShieldCheck, Loader2 } from 'lucide-react';
-import { generateMockSecureOTP } from './utils/validation';
-import { useCartStore, useAuthStore, useSellerStore, useProductStore } from './store';
-import { useNetworkStatus } from './hooks';
-import { FeedItem } from '@components/feed/FeedItem';
-import { TopNav } from './components/layout/TopNav';
-import { CheckoutTopNav } from './components/layout/CheckoutTopNav';
-import { NoInternetModal } from './components/common/NoInternetModal';
-
-// Lazy Load Views for Code Splitting
-const CartView = lazy(() => import('./components/cart/CartView').then(module => ({ default: module.CartView })));
-const ProfileView = lazy(() => import('./components/profile/ProfileView').then(module => ({ default: module.ProfileView })));
-const SellerProfileView = lazy(() => import('./components/profile/SellerProfileView').then(module => ({ default: module.SellerProfileView })));
-const SearchOverlay = lazy(() => import('./components/search/SearchOverlay').then(module => ({ default: module.SearchOverlay })));
-const SuccessView = lazy(() => import('./components/common/SuccessView').then(module => ({ default: module.SuccessView })));
-const AuthModal = lazy(() => import('./components/features/AuthModal').then(module => ({ default: module.AuthModal })));
-const CreatePostView = lazy(() => import('./components/seller/CreatePostView').then(module => ({ default: module.CreatePostView })));
-const OrderHistoryView = lazy(() => import('./components/profile/OrderHistoryView').then(module => ({ default: module.OrderHistoryView })));
-
-import { App as CapacitorApp } from '@capacitor/app';
-
-// Loading Fallback
-const PageLoader = () => (
-    <div className="h-full w-full flex items-center justify-center bg-white z-50">
-        <Loader2 className="animate-spin text-yellow-500" size={32} />
-    </div>
-);
+import { useState, useEffect } from 'react';
+import {
+    Camera,
+    Share2,
+    Plus,
+    Package,
+    Ticket,
+    Wrench,
+    Copy,
+    Bell,
+    TrendingUp,
+    CheckCircle2,
+    ArrowUpRight,
+    MoreVertical,
+    ChevronRight,
+    Smartphone,
+    ShieldCheck,
+    Zap,
+    BarChart3,
+    User as UserIcon,
+    Settings,
+    LogOut,
+    Truck,
+    ChevronLeft,
+    Star,
+    CreditCard,
+    Sun,
+    Moon,
+    MousePointer2,
+    LayoutDashboard,
+    ShoppingBag
+} from 'lucide-react';
+import { useAuthStore } from './store/authStore';
+import { useSellerStore } from './store/sellerStore';
 
 const App = () => {
-    // Store
-    const { products, fetchProducts, loading: productsLoading } = useProductStore();
-    const { initialize } = useAuthStore();
+    const { user, logout, initialize } = useAuthStore();
+    const { links, orders, isLoading, fetchSellerData } = useSellerStore();
 
-    // Initialize auth and fetch products on mount
+    // Initialize Auth Listener
     useEffect(() => {
-        fetchProducts();
-        // Initialize Firebase auth listener
         const unsubscribe = initialize();
         return () => unsubscribe();
-    }, [fetchProducts, initialize]);
+    }, [initialize]);
 
-    // Checkout Mode State (for shared checkout links)
-    const [isCheckoutMode, setIsCheckoutMode] = useState(false);
-    const [checkoutProductId, setCheckoutProductId] = useState<string | null>(null);
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [activeView, setActiveView] = useState('home'); // home, orders, insights, menu
+    const [activeTab, setActiveTab] = useState('Products');
+    const [showCopyToast, setShowCopyToast] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
 
-    // Ref to track checkout mode for async callbacks
-    const isCheckoutModeRef = useRef(isCheckoutMode);
+    // Fetch data on mount
     useEffect(() => {
-        isCheckoutModeRef.current = isCheckoutMode;
-    }, [isCheckoutMode]);
-
-    // Navigation State
-    const [activeTab, setActiveTab] = useState('shop');
-    const [view, setView] = useState<'feed' | 'success' | 'cart' | 'profile' | 'seller-profile' | 'order-history' | 'create-post'>('feed');
-    const [currentSeller, setCurrentSeller] = useState<{ name: string, handle: string } | undefined>(undefined);
-
-    // Seller State
-    const { user, openAuthModal } = useAuthStore();
-    const { createProduct } = useSellerStore();
-    const isSeller = user?.type === 'verified_merchant';
-
-    // Network Status
-    const isOnline = useNetworkStatus();
-    const [isOfflineDismissed, setIsOfflineDismissed] = useState(false);
-
-    // Reset dismissed state when online comes back
-    useEffect(() => {
-        if (isOnline) {
-            setIsOfflineDismissed(false);
+        if (user?.id) {
+            fetchSellerData(user.id);
         }
-    }, [isOnline]);
+    }, [user, fetchSellerData]);
 
-    // Feature State
-    const [showTrustModal, setShowTrustModal] = useState(false);
-    const [showSearch, setShowSearch] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
+    // --- DERIVED METRICS ---
+    const safeOrders = orders || [];
+    const safeLinks = links || [];
 
-    // Parse URL for checkout mode on mount and handle deep links
-    useEffect(() => {
-        const parseCheckoutUrl = (url: string) => {
-            // Match patterns: /p/ID
-            // Supports numeric or string IDs (Firebase IDs are mixed case strings)
-            const pathMatch = url.match(/\/p\/([^\/?#]+)/);
-            const queryMatch = url.match(/[?&]p=([^\/?#&]+)/);
-            const hashMatch = url.match(/#\/p\/([^\/?#]+)/);
+    const totalSettled = safeOrders
+        .filter(o => o.status === 'completed' || o.status === 'delivered')
+        .reduce((acc, curr) => acc + curr.total, 0);
 
-            const productId = pathMatch?.[1] || queryMatch?.[1] || hashMatch?.[1];
+    const inTransit = safeOrders
+        .filter(o => o.status === 'in_transit' || o.status === 'processing')
+        .reduce((acc, curr) => acc + curr.total, 0);
 
-            console.log('[Checkout] Parsing URL:', url, 'Found ID:', productId);
+    const totalClicks = safeLinks.reduce((acc, curr) => acc + (curr.clicks || 0), 0);
+    const totalSales = safeLinks.reduce((acc, curr) => acc + (curr.sales || 0), 0);
+    const conversionRate = totalClicks > 0 ? ((totalSales / totalClicks) * 100).toFixed(1) : '0.0';
 
-            if (productId) {
-                // Determine if ID exists in products or if we should trust it's loading
-                const product = products.find(p => p.id === productId || String(p.id) === productId);
-
-                if (product) {
-                    setIsCheckoutMode(true);
-                    setCheckoutProductId(product.id);
-                    return true;
-                } else if (productsLoading) {
-                    // Assume loading
-                    setIsCheckoutMode(true);
-                    setCheckoutProductId(productId);
-                    return true;
-                }
-            }
-            return false;
-        };
-
-        // Check initial URL
-        parseCheckoutUrl(window.location.href);
-
-        // Listen for deep links on native (Capacitor)
-        const appUrlListener = CapacitorApp.addListener('appUrlOpen', (event) => {
-            parseCheckoutUrl(event.url);
-        });
-
-        // Listen for popstate (browser back/forward)
-        const handlePopState = () => {
-            if (!parseCheckoutUrl(window.location.href)) {
-                // If no checkout URL, exit checkout mode
-                setIsCheckoutMode(false);
-                setCheckoutProductId(null);
-            }
-        };
-        window.addEventListener('popstate', handlePopState);
-
-        return () => {
-            appUrlListener.then(h => h.remove());
-            window.removeEventListener('popstate', handlePopState);
-        };
-    }, [products, productsLoading]);
-
-    // Hardware Back Button Handling
-    useEffect(() => {
-        const backListener = CapacitorApp.addListener('backButton', () => {
-            if (showSuccessModal) {
-                // Close success modal first
-                handleSuccessModalClose();
-            } else if (showSearch) {
-                setShowSearch(false);
-            } else if (isCheckoutMode) {
-                // In checkout mode, back button exits checkout mode
-                setIsCheckoutMode(false);
-                setCheckoutProductId(null);
-                // Clear URL
-                window.history.replaceState({}, '', '/');
-            } else if (view !== 'feed') {
-                // Return to feed from any other view
-                setView('feed');
-                setCurrentSeller(undefined);
-            } else {
-                // Determine exit behavior: could minimize or exit
-                CapacitorApp.exitApp();
-            }
-        });
-
-        return () => {
-            backListener.then((h: any) => h.remove());
-        };
-    }, [view, showSearch]);
-
-    // Data State
-    const { items: cartItems, addItem: addToCart, clearCart, updateQuantity, removeItem } = useCartStore();
-    const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-    const cartTotal = cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
-    const [userData, setUserData] = useState({
-        phone: '',
-        location: '',
-        name: 'Guest User'
-    });
-
-    // Transaction State
-    const [otp, setOtp] = useState<number | null>(null);
-    const [deliveryQuote, setDeliveryQuote] = useState<number | null>(null);
-    const [isProcessing, setIsProcessing] = useState(false);
-
-    // Effect: Delivery Quote Simulation
-    useEffect(() => {
-        if (userData.location.length > 3) {
-            setDeliveryQuote(150);
-        } else {
-            setDeliveryQuote(null);
-        }
-    }, [userData.location]);
-
-    // Actions
-    const handleAddToCart = (product: any) => {
-        addToCart(product, 1);
+    const handleCopy = () => {
+        setShowCopyToast(true);
+        setTimeout(() => setShowCopyToast(false), 2000);
     };
 
-    const handleRemoveFromCart = (product: any) => {
-        // Decrease quantity by 1, or remove if 0 (handled by store)
-        const currentItem = cartItems.find(i => i.product.id === product.id);
-        if (currentItem) {
-            if (currentItem.quantity > 1) {
-                updateQuantity(product.id, currentItem.quantity - 1);
-            } else {
-                removeItem(product.id);
-            }
-        }
+    // --- THEME CLASSES ---
+    const theme = {
+        bg: isDarkMode ? 'bg-black text-white' : 'bg-gray-50 text-gray-900',
+        card: isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-200 shadow-sm',
+        subCard: isDarkMode ? 'bg-black/40 border-zinc-800/50' : 'bg-gray-50 border-gray-100',
+        textMuted: isDarkMode ? 'text-zinc-500' : 'text-gray-400',
+        navBg: isDarkMode ? 'bg-zinc-900/90 border-zinc-800/50' : 'bg-white/90 border-gray-200 shadow-xl',
+        headerBg: isDarkMode ? 'bg-black/80' : 'bg-white/80',
+        pill: isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-200 border-gray-300',
+        btnGhost: isDarkMode ? 'bg-zinc-800/50 hover:bg-zinc-800' : 'bg-gray-100 hover:bg-gray-200',
+        sidebar: isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-gray-200'
     };
 
-    const handleCheckout = async () => {
-        // Use ref to get current value (avoids stale closure)
-        const inCheckoutMode = isCheckoutModeRef.current;
-        console.log('[Checkout] handleCheckout called, isCheckoutMode:', inCheckoutMode);
-        setIsProcessing(true);
+    // --- VIEWS ---
 
-        // Simulate secure OTP generation from server
-        const code = await generateMockSecureOTP();
-        setOtp(code);
-
-        setIsProcessing(false);
-        clearCart();
-
-        // In checkout mode, show modal instead of navigating to success page
-        console.log('[Checkout] Showing success, isCheckoutMode:', inCheckoutMode);
-        if (inCheckoutMode) {
-            console.log('[Checkout] Setting showSuccessModal to true');
-            setShowSuccessModal(true);
-        } else {
-            setView('success');
-        }
-    };
-
-    // Handle success modal close - exit checkout mode and show normal feed
-    const handleSuccessModalClose = () => {
-        setShowSuccessModal(false);
-        setIsCheckoutMode(false);
-        setCheckoutProductId(null);
-        // Clear URL to show normal feed
-        window.history.replaceState({}, '', '/');
-    };
-    const filteredProducts = useMemo(() => {
-        if (!searchQuery) return products;
-        return products.filter(p =>
-            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.sellerName.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    }, [searchQuery, products]);
-
-    // View Routing
-    if (showSearch) {
-        return (
-            <Suspense fallback={<PageLoader />}>
-                <SearchOverlay
-                    onClose={() => setShowSearch(false)}
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    results={filteredProducts}
-                    onResultClick={() => {
-                        setShowSearch(false);
-                        setView('feed');
-                    }}
-                />
-            </Suspense>
-        );
-    }
-
-    if (view === 'cart') {
-        return (
-            <Suspense fallback={<PageLoader />}>
-                <CartView
-                    onBack={() => setView('feed')}
-                    userData={userData}
-                    setUserData={setUserData}
-                    onCheckout={handleCheckout}
-                />
-            </Suspense>
-        );
-    }
-
-    if (view === 'profile') {
-        return (
-            <Suspense fallback={<PageLoader />}>
-                <ProfileView
-                    onBack={() => setView('feed')}
-                    onOrderHistory={() => setView('order-history')}
-                    onCreatePost={() => setView('create-post')}
-                />
-            </Suspense>
-        );
-    }
-
-    if (view === 'order-history') {
-        return (
-            <Suspense fallback={<PageLoader />}>
-                <OrderHistoryView
-                    onBack={() => setView('profile')}
-                />
-            </Suspense>
-        );
-    }
-
-    if (view === 'create-post') {
-        return (
-            <Suspense fallback={<PageLoader />}>
-                <CreatePostView
-                    onBack={() => setView('feed')}
-                    onCreatePost={async (data, files) => {
-                        const id = await createProduct({
-                            name: data.name,
-                            description: data.description,
-                            price: data.price,
-                            sellerId: user?.id || 'unknown',
-                            sellerName: user?.shopName || user?.name || 'Seller',
-                            sellerHandle: user?.handle || '@seller',
-                            sellerAvatar: user?.avatar || '',
-                            verified: user?.type === 'verified_merchant',
-                            type: files[0]?.type.includes('video') ? 'video' : 'image',
-                            status: 'active',
-                            likes: '0',
-                            comments: '0'
-                        }, files);
-
-                        fetchProducts();
-                        return id;
-                    }}
-                />
-            </Suspense>
-        );
-    }
-
-    if (view === 'success') {
-        return (
-            <Suspense fallback={<PageLoader />}>
-                <SuccessView
-                    otp={otp}
-                    onReturn={() => setView('feed')}
-                    onLogin={() => {
-                        // Keep current view as success, but open the modal
-                        openAuthModal('login');
-                    }}
-                    onViewOrders={() => setView('order-history')}
-                    isLoggedIn={!!user}
-                />
-                {/* Ensure AuthModal is mounted if it is triggered from here */}
-                <AuthModal />
-            </Suspense>
-        );
-    }
-
-    if (view === 'seller-profile' && currentSeller) {
-        return (
-            <Suspense fallback={<PageLoader />}>
-                <SellerProfileView
-                    seller={currentSeller}
-                    onBack={() => {
-                        setView('feed');
-                        setCurrentSeller(undefined);
-                    }}
-                    products={products.filter(p => p.sellerName === currentSeller.name)}
-                    onSelectPost={() => {
-                        setActiveTab('shop');
-                        setView('feed');
-                    }}
-                />
-            </Suspense>
-        );
-    }
-
-    // Get checkout product if in checkout mode
-    const checkoutProduct = isCheckoutMode && checkoutProductId
-        ? products.find(p => p.id === checkoutProductId || String(p.id) === checkoutProductId)
-        : null;
-
-    // Default: Feed View
-    return (
-        <div className="h-[100dvh] w-full bg-black relative flex flex-col overflow-hidden select-none">
-
-            {/* Conditional TopNav based on checkout mode */}
-            {isCheckoutMode ? (
-                <CheckoutTopNav />
-            ) : (
-                <TopNav
-                    activeTab={activeTab}
-                    setActiveTab={setActiveTab}
-                    cartCount={cartCount}
-                    cartTotal={cartTotal}
-                    onProfileClick={() => setView('profile')}
-                    onBack={currentSeller ? () => {
-                        setView('seller-profile');
-                    } : undefined}
-                    onSearchClick={() => setShowSearch(true)}
-                    onCartClick={() => setView('cart')}
-                    onCreateClick={() => setView('create-post')}
-                    currentSeller={currentSeller}
-                    isSeller={isSeller}
-                />
-            )}
-
-            {/* Feed List - Single product in checkout mode, full feed otherwise */}
-            <div className={`flex-1 ${isCheckoutMode ? 'overflow-hidden' : 'overflow-y-scroll snap-y snap-mandatory'} hide-scrollbar`}>
-                {/* 
-                    Feed Logic:
-                    1. In checkout mode: Only show the single checkout product
-                    2. If activeTab is 'shop' AND we have a currentSeller, we only show products from that seller.
-                    3. If activeTab is 'foryou', we show everything (mixed).
-                */}
-                {(isCheckoutMode && checkoutProduct ? [checkoutProduct] : products
-                    .filter(p => {
-                        if (activeTab === 'shop' && currentSeller) {
-                            return p.sellerName === currentSeller.name;
-                        }
-                        return true;
-                    }))
-                    .map(p => (
-                        <FeedItem
-                            key={p.id}
-                            product={p}
-                            cart={cartItems}
-                            onAddToCart={handleAddToCart}
-                            onRemoveFromCart={handleRemoveFromCart}
-                            userData={userData}
-                            setUserData={setUserData}
-                            onCheckout={handleCheckout}
-                            isProcessing={isProcessing}
-                            deliveryQuote={deliveryQuote}
-                            onView={isCheckoutMode ? undefined : (seller) => {
-                                setCurrentSeller(seller);
-                                setView('seller-profile');
-                            }}
-                            hideActions={isCheckoutMode}
-                            disableScroll={isCheckoutMode}
-                        />
-                    ))}
+    const InsightsView = () => (
+        <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
+            <div className="px-6 mb-6">
+                <h2 className="text-2xl font-black italic tracking-tighter uppercase">Insights Pulse</h2>
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Real-time Merchant Performance</p>
             </div>
 
-            {/* Success Modal (for checkout mode) */}
-            {showSuccessModal && (
-                <div className="fixed inset-0 z-[10000] bg-white animate-in fade-in duration-300 slide-in-from-bottom-5">
-                    <Suspense fallback={<PageLoader />}>
-                        <SuccessView
-                            otp={otp}
-                            onReturn={handleSuccessModalClose}
-                            onLogin={() => {
-                                setShowSuccessModal(false);
-                                openAuthModal('login');
-                            }}
-                            onViewOrders={() => {
-                                setShowSuccessModal(false);
-                                setView('order-history');
-                            }}
-                            isLoggedIn={!!user}
-                        />
-                    </Suspense>
-                </div>
-            )}
-
-            {/* Auth Modal (Global) - Render this outside of views to ensure it works everywhere */}
-            <Suspense fallback={null}>
-                <AuthModal />
-            </Suspense>
-
-            {/* Offline Modal */}
-            <NoInternetModal
-                isOpen={!isOnline && !isOfflineDismissed}
-                onClose={() => setIsOfflineDismissed(true)}
-            />
-
-            {/* Trust/Info Modal */}
-            {showTrustModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm px-10">
-                    <div className="text-center space-y-6 animate-in zoom-in-95 duration-300">
-                        <ShieldCheck size={48} className="text-blue-500 mx-auto" />
-                        <h3 className="text-xl font-black italic uppercase tracking-tighter text-white leading-none">Security First</h3>
-                        <p className="text-white/60 text-xs font-medium leading-relaxed">Your funds are held in the TumaFast Secure Vault. The seller only receives payment once you approve the delivery.</p>
-                        <button onClick={() => setShowTrustModal(false)} className="px-8 py-3 border border-white/20 text-white rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-black transition-colors">
-                            CLOSE
-                        </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 px-6 mb-6">
+                <div className={`p-4 rounded-[2rem] border ${theme.card}`}>
+                    <div className="bg-yellow-500/10 text-yellow-500 h-8 w-8 rounded-lg flex items-center justify-center mb-3">
+                        <MousePointer2 size={16} />
+                    </div>
+                    <p className={`text-[9px] font-black uppercase tracking-widest ${theme.textMuted}`}>Total Clicks</p>
+                    <div className="flex items-end gap-2">
+                        <p className="text-xl font-black italic">{totalClicks.toLocaleString()}</p>
+                        <span className="text-[9px] text-green-500 font-bold mb-1">+0%</span>
                     </div>
                 </div>
-            )}
+                <div className={`p-4 rounded-[2rem] border ${theme.card}`}>
+                    <div className="bg-green-500/10 text-green-500 h-8 w-8 rounded-lg flex items-center justify-center mb-3">
+                        <Zap size={16} />
+                    </div>
+                    <p className={`text-[9px] font-black uppercase tracking-widest ${theme.textMuted}`}>Conv. Rate</p>
+                    <div className="flex items-end gap-2">
+                        <p className="text-xl font-black italic">{conversionRate}%</p>
+                        <span className="text-[9px] text-blue-500 font-bold mb-1">Avg</span>
+                    </div>
+                </div>
+            </div>
+
+            <section className="px-6 mb-6">
+                <div className={`p-6 rounded-[2.5rem] border ${theme.card}`}>
+                    <h3 className={`text-[10px] font-black uppercase tracking-widest mb-6 ${theme.textMuted}`}>Revenue Trend (Last 7 Days)</h3>
+                    <div className="flex items-end justify-between h-32 px-2 gap-2">
+                        {totalSettled > 0 ? (
+                            // Use actual data or a consistent non-zero pattern if we have revenue
+                            [35, 60, 45, 90, 65, 85, 70].map((height, i) => (
+                                <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                                    <div
+                                        className={`w-full rounded-t-lg transition-all duration-500 group-hover:bg-yellow-500 ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}
+                                        style={{ height: `${height}%` }}
+                                    ></div>
+                                    <span className={`text-[8px] font-bold uppercase ${theme.textMuted}`}>
+                                        {['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}
+                                    </span>
+                                </div>
+                            ))
+                        ) : (
+                            // Zero state placeholders for charts
+                            [5, 5, 5, 5, 5, 5, 5].map((height, i) => (
+                                <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                                    <div
+                                        className={`w-full rounded-t-lg transition-all duration-500 cursor-not-allowed ${isDarkMode ? 'bg-zinc-800/50' : 'bg-gray-100'}`}
+                                        style={{ height: `${height}%` }}
+                                    ></div>
+                                    <span className={`text-[8px] font-bold uppercase ${theme.textMuted}`}>
+                                        {['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}
+                                    </span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    {totalSettled === 0 && (
+                        <p className="text-center text-[10px] italic text-zinc-500 mt-4">Start selling to see revenue trends.</p>
+                    )}
+                </div>
+            </section>
+
+            <section className="px-6 mb-6">
+                <div className={`p-6 rounded-[2.5rem] border ${theme.card}`}>
+                    <h3 className={`text-[10px] font-black uppercase tracking-widest mb-4 ${theme.textMuted}`}>Social Funnel</h3>
+                    <div className="space-y-4 max-w-2xl">
+                        <div className="relative">
+                            <div className="flex justify-between text-[10px] font-bold uppercase mb-1">
+                                <span>Link Impressions</span>
+                                <span>0</span>
+                            </div>
+                            <div className={`h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}>
+                                <div className="h-full bg-yellow-500 w-[0%]"></div>
+                            </div>
+                        </div>
+                        <div className="relative">
+                            <div className="flex justify-between text-[10px] font-bold uppercase mb-1">
+                                <span>Unique Clicks</span>
+                                <span>{totalClicks}</span>
+                            </div>
+                            <div className={`h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}>
+                                <div className="h-full bg-yellow-500 opacity-80" style={{ width: totalClicks > 0 ? '50%' : '0%' }}></div>
+                            </div>
+                        </div>
+                        <div className="relative">
+                            <div className="flex justify-between text-[10px] font-bold uppercase mb-1">
+                                <span>Orders Completed</span>
+                                <span>{safeOrders.length}</span>
+                            </div>
+                            <div className={`h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}>
+                                <div className="h-full bg-green-500" style={{ width: safeOrders.length > 0 ? '20%' : '0%' }}></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    );
+
+    const HomeView = () => (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 px-6">
+                {/* Wallet & Metrics */}
+                <div className="lg:col-span-8">
+                    <section className="mb-8">
+                        <div className={`border p-6 rounded-[2.5rem] relative overflow-hidden ${theme.card}`}>
+                            <div className="absolute -right-8 -top-8 w-32 h-32 bg-green-500/10 rounded-full blur-3xl"></div>
+                            <div className="flex justify-between items-start mb-6">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className={`text-[10px] font-black uppercase tracking-widest ${theme.textMuted}`}>Total Settled (30d)</span>
+                                        <div className="bg-green-500/10 text-green-500 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold">
+                                            <ArrowUpRight size={10} /> +0%
+                                        </div>
+                                    </div>
+                                    <h2 className="text-4xl md:text-5xl font-black tracking-tight italic">
+                                        <span className={`text-sm md:text-base not-italic font-bold mr-1 ${theme.textMuted}`}>KES</span>
+                                        {totalSettled.toLocaleString()}
+                                    </h2>
+                                </div>
+                                <div className="h-12 w-12 bg-green-500 rounded-2xl flex items-center justify-center text-black shadow-lg shadow-green-500/20">
+                                    <Zap size={24} />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className={`rounded-2xl p-3 border ${theme.subCard}`}>
+                                    <p className={`text-[10px] font-bold uppercase mb-1 flex items-center gap-1 ${theme.textMuted}`}>
+                                        <Truck size={10} className="text-blue-400" /> In Transit
+                                    </p>
+                                    <p className="font-black text-sm">KES {inTransit.toLocaleString()}</p>
+                                </div>
+                                <div className={`rounded-2xl p-3 border ${theme.subCard}`}>
+                                    <p className={`text-[10px] font-bold uppercase mb-1 ${theme.textMuted}`}>Avg. Settlement</p>
+                                    <p className="font-black text-sm text-yellow-500">Instant</p>
+                                </div>
+                                {/* Desktop-only extra metrics */}
+                                <div className={`hidden md:block rounded-2xl p-3 border ${theme.subCard}`}>
+                                    <p className={`text-[10px] font-bold uppercase mb-1 ${theme.textMuted}`}>Top Channel</p>
+                                    <p className="font-black text-sm text-blue-500">WhatsApp</p>
+                                </div>
+                                <div className={`hidden md:block rounded-2xl p-3 border ${theme.subCard}`}>
+                                    <p className={`text-[10px] font-bold uppercase mb-1 ${theme.textMuted}`}>Growth Score</p>
+                                    <p className="font-black text-sm text-green-500">A+</p>
+                                </div>
+                            </div>
+                            <p className={`mt-4 text-[10px] text-center font-medium ${theme.textMuted}`}>Funds settled to your M-Pesa instantly after delivery.</p>
+                        </div>
+                    </section>
+
+                    {/* Quick Create Speed Zone */}
+                    <section className="mb-10">
+                        <h3 className={`text-xs font-black uppercase tracking-widest mb-4 ${theme.textMuted}`}>Quick Actions</h3>
+                        <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+                            {[
+                                { icon: <Camera />, label: 'Snap Link', color: 'text-yellow-500' },
+                                { icon: <Plus />, label: 'Manual', color: isDarkMode ? 'text-zinc-400' : 'text-gray-400' },
+                                { icon: <Smartphone />, label: 'Invoice', color: isDarkMode ? 'text-zinc-400' : 'text-gray-400' },
+                                { icon: <Share2 />, label: 'Store QR', color: isDarkMode ? 'text-zinc-400' : 'text-gray-400' }
+                            ].map((item, i) => (
+                                <button key={i} className="flex-shrink-0 flex flex-col items-center gap-3">
+                                    <div className={`h-16 w-16 md:h-20 md:w-20 rounded-3xl flex items-center justify-center border shadow-xl active:scale-95 transition-transform ${theme.card}`}>
+                                        <span className={item.color}>{item.icon}</span>
+                                    </div>
+                                    <span className={`text-[11px] font-bold ${isDarkMode ? 'text-zinc-300' : 'text-gray-600'}`}>{item.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* Smart Toggles & Feed */}
+                    <section className="pb-32 lg:pb-12">
+                        <div className={`p-1.5 rounded-[1.5rem] flex gap-1 mb-8 border shadow-inner max-w-md ${theme.card}`}>
+                            {['Products', 'Services', 'Tickets'].map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`flex-1 py-3 rounded-2xl text-[11px] font-black transition-all flex items-center justify-center gap-2 uppercase tracking-tight ${activeTab === tab
+                                            ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/20'
+                                            : `${theme.textMuted} hover:text-yellow-500`
+                                        }`}
+                                >
+                                    {tab === 'Products' && <Package size={14} />}
+                                    {tab === 'Services' && <Wrench size={14} />}
+                                    {tab === 'Tickets' && <Ticket size={14} />}
+                                    {tab}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Filter Links: For now we show all links under 'Products', others empty */}
+                            {activeTab === 'Products' && safeLinks.length === 0 && !isLoading && (
+                                <div className="col-span-full border-2 border-dashed rounded-[2.2rem] p-8 text-center opacity-50">
+                                    <p className="text-sm font-bold">No products yet.</p>
+                                </div>
+                            )}
+                            {activeTab === 'Products' && safeLinks.map((item) => (
+                                <div key={item.id} className={`border p-4 rounded-[2.2rem] flex items-center gap-4 transition-colors group ${theme.card}`}>
+                                    <div className={`h-16 w-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner group-hover:scale-105 transition-transform overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}>
+                                        {item.img ? <img src={item.img} alt={item.name} className="w-full h-full object-cover" /> : <Package size={24} />}
+                                    </div>
+
+                                    <div className="flex-1 overflow-hidden">
+                                        <h4 className="font-bold text-sm truncate pr-2">{item.name}</h4>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <span className="text-yellow-500 font-black text-sm italic">KES {item.price?.toLocaleString() || '0'}</span>
+                                            <span className={`h-1 w-1 rounded-full ${isDarkMode ? 'bg-zinc-700' : 'bg-gray-300'}`}></span>
+                                            <span className={`text-[10px] font-bold uppercase tracking-tighter ${theme.textMuted}`}>
+                                                {item.sales} Sold
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col gap-2">
+                                        <button onClick={handleCopy} className={`h-10 w-10 rounded-xl flex items-center justify-center text-yellow-500 transition-all active:scale-90 ${theme.btnGhost} hover:bg-yellow-500 hover:text-black`}>
+                                            <Copy size={16} />
+                                        </button>
+                                        <button className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all active:scale-90 ${theme.btnGhost} ${theme.textMuted} hover:text-yellow-500`}>
+                                            <Share2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Fallback for other tabs */}
+                            {activeTab !== 'Products' && (
+                                <div className="col-span-full py-12 text-center opacity-50 italic">
+                                    Coming soon for {activeTab}
+                                </div>
+                            )}
+
+                            {/* Create New Button */}
+                            <button className={`w-full border-2 border-dashed py-8 rounded-[2.2rem] flex flex-col items-center justify-center gap-2 transition-all group ${theme.card} hover:border-yellow-500/30`}>
+                                <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-all group-hover:bg-yellow-500 group-hover:text-black ${isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-gray-100 text-gray-500'}`}>
+                                    <Plus size={24} />
+                                </div>
+                                <span className={`text-xs font-black uppercase tracking-widest ${theme.textMuted} group-hover:text-yellow-500`}>Create New {activeTab.slice(0, -1)}</span>
+                            </button>
+                        </div>
+                    </section>
+                </div>
+
+                {/* Desktop Sidebar Column */}
+                <div className="hidden lg:block lg:col-span-4 space-y-6">
+                    <div className={`p-6 rounded-[2.5rem] border ${theme.card}`}>
+                        <h3 className="text-xs font-black uppercase tracking-widest mb-4 italic">Merchant Activity</h3>
+                        <div className="space-y-4">
+                            {/* Mock activity if no orders */}
+                            {safeOrders.length === 0 ? (
+                                <>
+                                    {[
+                                        { icon: <ShoppingBag size={14} />, text: "Welcome to SokoSnap!", time: "Just now", color: "text-green-500" },
+                                        { icon: <TrendingUp size={14} />, text: "Finish setting up profile", time: "Action Item", color: "text-yellow-500" },
+                                    ].map((activity, i) => (
+                                        <div key={i} className="flex items-center gap-3">
+                                            <div className={`h-8 w-8 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 ${activity.color}`}>
+                                                {activity.icon}
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold">{activity.text}</p>
+                                                <p className="text-[10px] text-zinc-400">{activity.time}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </>
+                            ) : (
+                                safeOrders.slice(0, 5).map((order) => (
+                                    <div key={order.id} className="flex items-center gap-3">
+                                        <div className={`h-8 w-8 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-blue-500`}>
+                                            <CreditCard size={14} />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold">New Order: KES {order.total}</p>
+                                            <p className="text-[10px] text-zinc-400">{new Date().toLocaleTimeString()}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    <div className={`p-6 rounded-[2.5rem] border ${theme.card}`}>
+                        <h3 className="text-xs font-black uppercase tracking-widest mb-4 italic">Market Growth</h3>
+                        {/* Chart Placeholder */}
+                        {totalSettled > 0 ? (
+                            // Use actual chart if we have data (or placeholder for now)
+                            <div className="h-24 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
+                                <TrendingUp className="text-green-500 opacity-30" size={48} />
+                            </div>
+                        ) : (
+                            // Zero state chart
+                            <div className="h-24 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl flex items-center justify-center border border-zinc-100 dark:border-zinc-800 relative overflow-hidden">
+                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagonal-stripes.png')] opacity-10"></div>
+                                <p className="text-[10px] font-black uppercase text-zinc-300">No Data Yet</p>
+                            </div>
+                        )}
+
+                        <p className="text-[10px] mt-4 font-medium text-zinc-500 leading-relaxed uppercase tracking-tighter">
+                            {totalClicks > 100
+                                ? "Your store traffic is booming! Keep sharing."
+                                : "Share your links on WhatsApp to boost traffic (+42% avg)."
+                            }
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    const MenuView = () => (
+        <div className="px-6 pb-32 lg:pb-12 animate-in fade-in duration-300 max-w-2xl mx-auto">
+            <div className="flex flex-col items-center mt-4 mb-8 text-center">
+                <div className="h-24 w-24 rounded-[2rem] bg-gradient-to-tr from-yellow-500 to-yellow-200 p-1 mb-4">
+                    <div className="h-full w-full bg-black rounded-[1.8rem] overflow-hidden">
+                        <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'Felix'}`} alt="Profile" />
+                    </div>
+                </div>
+                <h2 className="text-2xl font-black italic">{user?.name || 'Store Owner'}</h2>
+                <div className={`flex items-center gap-1 mt-1 px-3 py-1 rounded-full ${theme.pill}`}>
+                    <Star className="text-yellow-500 fill-yellow-500" size={12} />
+                    <span className="text-[10px] font-black uppercase">4.9 TOP SELLER</span>
+                </div>
+            </div>
+
+            <div className="space-y-3">
+                {/* LIGHT MODE TOGGLE */}
+                <div className={`w-full p-4 rounded-3xl border flex items-center gap-4 ${theme.card}`}>
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${isDarkMode ? 'bg-zinc-800 text-yellow-500' : 'bg-gray-100 text-blue-500'}`}>
+                        {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
+                    </div>
+                    <div className="flex-1 text-left">
+                        <p className="text-sm font-bold">{isDarkMode ? 'Dark Mode' : 'Light Mode'}</p>
+                        <p className={`text-[10px] ${theme.textMuted}`}>{isDarkMode ? 'Easier on the eyes' : 'Maximum visibility'}</p>
+                    </div>
+                    <button
+                        onClick={() => setIsDarkMode(!isDarkMode)}
+                        className={`w-12 h-6 rounded-full relative transition-all border-2 ${isDarkMode ? 'bg-yellow-500 border-yellow-600' : 'bg-gray-200 border-gray-300'}`}
+                    >
+                        <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-all ${isDarkMode ? 'left-6' : 'left-0.5'}`}></div>
+                    </button>
+                </div>
+
+                {[
+                    { icon: <UserIcon />, title: 'Merchant Profile', desc: 'Edit your bio & location' },
+                    { icon: <CreditCard />, title: 'Settlement Account', desc: 'M-Pesa or Bank Details' },
+                    { icon: <ShieldCheck />, title: 'Identity Verification', desc: 'Level 2: Verified' },
+                    { icon: <Settings />, title: 'App Settings', desc: 'Notifications & Privacy' },
+                ].map((item, i) => (
+                    <button key={i} className={`w-full border p-4 rounded-3xl flex items-center gap-4 text-left active:scale-95 transition-transform ${theme.card}`}>
+                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${theme.pill} text-zinc-400`}>{item.icon}</div>
+                        <div className="flex-1">
+                            <p className="text-sm font-bold">{item.title}</p>
+                            <p className={`text-[10px] ${theme.textMuted}`}>{item.desc}</p>
+                        </div>
+                        <ChevronRight className={theme.textMuted} size={18} />
+                    </button>
+                ))}
+                <button
+                    onClick={logout}
+                    className="w-full mt-4 flex items-center justify-center gap-2 text-red-500 font-bold py-4 bg-red-500/5 rounded-2xl border border-red-500/10 active:scale-95 transition-transform"
+                >
+                    <LogOut size={18} /> Sign Out
+                </button>
+            </div>
+        </div>
+    );
+
+    return (
+        <div className={`min-h-screen font-sans selection:bg-yellow-500/30 transition-colors duration-300 flex ${theme.bg}`}>
+
+            {/* Sidebar - Desktop Only */}
+            <aside className={`hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r z-50 transition-colors ${theme.sidebar}`}>
+                <div className="p-8">
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-2xl font-black tracking-tighter text-yellow-500 italic">SokoSnap</h1>
+                        <span className="bg-yellow-500 text-black text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter shadow-sm">Pro</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                        <Zap size={12} className="text-yellow-500 fill-yellow-500" />
+                        <p className={`text-[10px] font-black uppercase tracking-widest opacity-50`}>Hustle Active</p>
+                    </div>
+                </div>
+
+                <nav className="flex-1 px-4 space-y-2">
+                    {[
+                        { id: 'home', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
+                        { id: 'orders', icon: <ShoppingBag size={20} />, label: 'Orders' },
+                        { id: 'insights', icon: <BarChart3 size={20} />, label: 'Pulse Insights' },
+                        { id: 'menu', icon: <Settings size={20} />, label: 'Settings' },
+                    ].map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => setActiveView(item.id)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all group ${activeView === item.id
+                                    ? 'bg-yellow-500 text-black font-black'
+                                    : `${isDarkMode ? 'text-zinc-500' : 'text-zinc-600'} hover:bg-yellow-500/10 hover:text-yellow-500`
+                                }`}
+                        >
+                            {item.icon}
+                            <span className="text-sm font-bold uppercase tracking-tighter">{item.label}</span>
+                        </button>
+                    ))}
+                </nav>
+
+                <div className="p-8 border-t border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-gradient-to-tr from-yellow-500 to-yellow-200 rounded-full p-0.5">
+                            <div className="h-full w-full rounded-full bg-black overflow-hidden">
+                                <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'Felix'}`} alt="profile" />
+                            </div>
+                        </div>
+                        <div className="overflow-hidden">
+                            <p className="text-xs font-black truncate">{user?.name || 'User'}</p>
+                            <p className="text-[10px] opacity-50 font-bold uppercase tracking-tighter">Verified</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            {/* Main Content Area */}
+            <div className="flex-1 min-w-0 flex flex-col">
+                {/* Toast Notification */}
+                <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[60] transition-all duration-300 ${showCopyToast ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+                    <div className="bg-yellow-500 text-black px-6 py-2 rounded-full font-bold shadow-2xl flex items-center gap-2">
+                        <CheckCircle2 size={18} /> Link Copied!
+                    </div>
+                </div>
+
+                {/* Mobile Header - Hidden on Desktop Sidebar View */}
+                <header className={`p-6 pt-8 flex justify-between items-center sticky top-0 backdrop-blur-md z-40 transition-colors lg:hidden ${theme.headerBg}`}>
+                    <div>
+                        {activeView === 'home' ? (
+                            <div className="animate-in fade-in slide-in-from-left-2 duration-300">
+                                <div className="flex items-center gap-2">
+                                    <h1 className="text-2xl font-black tracking-tighter text-yellow-500 italic">SokoSnap</h1>
+                                    <span className="bg-yellow-500 text-black text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter shadow-sm">Pro</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                    <Zap size={12} className="text-yellow-500 fill-yellow-500" />
+                                    <p className={`text-[10px] font-black uppercase tracking-widest ${theme.textMuted}`}>Hustle Active</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <button onClick={() => setActiveView('home')} className="flex items-center gap-2 group">
+                                <ChevronLeft className="text-yellow-500 group-hover:-translate-x-1 transition-transform" />
+                                <span className="font-black uppercase tracking-widest text-xs">Back Home</span>
+                            </button>
+                        )}
+                    </div>
+                    <div className="flex gap-3">
+                        <button className={`h-10 w-10 rounded-full flex items-center justify-center border relative ${theme.pill}`}>
+                            <Bell size={20} className={isDarkMode ? 'text-zinc-300' : 'text-gray-600'} />
+                            <span className="absolute top-0 right-0 h-3 w-3 bg-red-500 rounded-full border-2 border-black"></span>
+                        </button>
+                        {activeView !== 'menu' && (
+                            <button onClick={() => setActiveView('menu')} className="h-10 w-10 bg-gradient-to-tr from-yellow-500 to-yellow-200 rounded-full p-0.5 active:scale-90 transition-transform shadow-lg">
+                                <div className="h-full w-full rounded-full bg-black flex items-center justify-center overflow-hidden">
+                                    <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'Felix'}`} alt="profile" />
+                                </div>
+                            </button>
+                        )}
+                    </div>
+                </header>
+
+                {/* Desktop Header - Visible on Desktop only */}
+                <header className="hidden lg:flex p-12 pb-4 justify-between items-center">
+                    <div>
+                        <h2 className="text-3xl font-black italic tracking-tighter uppercase">{activeView === 'home' ? 'Merchant Dashboard' : activeView}</h2>
+                        <p className={`text-xs font-bold uppercase tracking-widest ${theme.textMuted}`}>Welcome back, {user?.name || 'Seller'}</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <button className={`h-12 w-12 rounded-2xl flex items-center justify-center border relative transition-all ${theme.btnGhost}`}>
+                            <Bell size={22} />
+                            <span className="absolute top-1 right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white"></span>
+                        </button>
+                    </div>
+                </header>
+
+                {/* Main View Router */}
+                <main className="pt-2 pb-24 lg:pb-12 lg:px-6">
+                    {activeView === 'home' && <HomeView />}
+                    {activeView === 'insights' && <InsightsView />}
+                    {activeView === 'menu' && <MenuView />}
+                    {activeView === 'orders' && <div className="px-6 text-center py-20 italic opacity-50 uppercase font-black text-xl tracking-tighter text-zinc-500">Orders Stream coming soon...</div>}
+                </main>
+
+                {/* Bottom Navigation - Mobile Only */}
+                <div className="fixed bottom-6 left-6 right-6 z-50 lg:hidden">
+                    <nav className={`backdrop-blur-xl border rounded-[2.5rem] p-2 flex justify-between items-center shadow-2xl px-6 py-3 transition-colors ${theme.navBg}`}>
+                        <button
+                            onClick={() => setActiveView('home')}
+                            className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'home' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
+                        >
+                            <div className={`p-2 rounded-2xl ${activeView === 'home' ? 'bg-yellow-500/10' : ''}`}>
+                                <Package size={22} strokeWidth={activeView === 'home' ? 3 : 2} />
+                            </div>
+                            <span className="text-[9px] font-black uppercase tracking-tighter">Home</span>
+                        </button>
+
+                        <button
+                            onClick={() => setActiveView('orders')}
+                            className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'orders' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
+                        >
+                            <div className={`p-2 rounded-2xl ${activeView === 'orders' ? 'bg-yellow-500/10' : ''}`}>
+                                <Ticket size={22} strokeWidth={activeView === 'orders' ? 3 : 2} />
+                            </div>
+                            <span className="text-[9px] font-black uppercase tracking-tighter">Orders</span>
+                        </button>
+
+                        {/* Central Action Button */}
+                        <div className="relative -top-10">
+                            <button className="h-16 w-16 bg-yellow-500 text-black rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(234,179,8,0.4)] border-4 border-black active:scale-95 transition-all hover:scale-105">
+                                <Camera size={28} strokeWidth={3} />
+                            </button>
+                        </div>
+
+                        <button
+                            onClick={() => setActiveView('insights')}
+                            className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'insights' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
+                        >
+                            <div className={`p-2 rounded-2xl ${activeView === 'insights' ? 'bg-yellow-500/10' : ''}`}>
+                                <BarChart3 size={22} strokeWidth={activeView === 'insights' ? 3 : 2} />
+                            </div>
+                            <span className="text-[9px] font-black uppercase tracking-tighter">Insights</span>
+                        </button>
+
+                        <button
+                            onClick={() => setActiveView('menu')}
+                            className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'menu' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
+                        >
+                            <div className={`p-2 rounded-2xl ${activeView === 'menu' ? 'bg-yellow-500/10' : ''}`}>
+                                <MoreVertical size={22} strokeWidth={activeView === 'menu' ? 3 : 2} />
+                            </div>
+                            <span className="text-[9px] font-black uppercase tracking-tighter">Menu</span>
+                        </button>
+                    </nav>
+                </div>
+
+                {/* iOS Safe Area Spacer */}
+                <div className={`h-8 transition-colors ${theme.headerBg} lg:hidden`}></div>
+            </div>
         </div>
     );
 };
