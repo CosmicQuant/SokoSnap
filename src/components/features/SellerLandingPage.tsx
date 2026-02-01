@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     CheckCircle2,
     ArrowRight,
@@ -9,7 +9,6 @@ import {
     Lock,
     ChevronRight,
     Globe,
-    Sparkles,
     TrendingUp,
     MapPin,
     Navigation,
@@ -21,7 +20,7 @@ import {
     MousePointer2,
     Link as LinkIcon,
     Copy,
-    Image as ImageIcon
+    BrainCircuit
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { LocationPickerModal } from '../common/LocationPickerModal';
@@ -154,16 +153,16 @@ const InteractiveSolutions = () => {
             )
         },
         {
-            title: "Smart Analytics",
-            desc: "Understand your customers with deep insights into views, clicks, and conversion rates.",
+            title: "AI Growth Insights",
+            desc: "Our AI predicts your best selling times and suggests price optimizations.",
             icon: <TrendingUp size={20} />,
             screenColor: "bg-blue-600",
             screenContent: (
                 <div className="text-center p-6 text-white">
                     <div className="bg-white/20 w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center">
-                        <TrendingUp size={32} className="text-white" />
+                        <BrainCircuit size={32} className="text-white animate-pulse" />
                     </div>
-                    <h3 className="font-black text-2xl italic mb-4">GROWTH</h3>
+                    <h3 className="font-black text-2xl italic mb-4">AI ANALYTICS</h3>
                     <div className="flex gap-2 justify-center items-end h-24 pb-2">
                         <div className="w-4 bg-white/30 h-[40%] rounded-t-lg"></div>
                         <div className="w-4 bg-white/50 h-[60%] rounded-t-lg"></div>
@@ -324,7 +323,7 @@ const RevenueCalculator = ({ onAction }: { onAction: () => void }) => {
                 </div>
 
                 <button onClick={onAction} className="mt-12 px-12 py-5 bg-green-500 text-black rounded-full font-black text-sm uppercase tracking-widest hover:scale-105 transition-transform shadow-xl shadow-green-500/20 flex items-center gap-2 mx-auto">
-                    <Sparkles size={16} fill="currentColor" /> Start Earning More Now
+                    <TrendingUp size={16} fill="currentColor" /> Start Earning More Now
                 </button>
             </div>
         </div>
@@ -340,7 +339,8 @@ const SellerLandingPage = () => {
         return params.get('view') || 'hero';
     });
     const { user, isAuthenticated, isInitialized, initialize, logout, openAuthModal, becomeSeller } = useAuthStore();
-    const { scrollY } = useScroll();
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const { scrollY } = useScroll({ container: scrollRef });
     const navBackground = useTransform(scrollY, [0, 50], ["rgba(255, 255, 255, 0)", "rgba(255, 255, 255, 0.8)"]);
     const navBackdrop = useTransform(scrollY, [0, 50], ["blur(0px)", "blur(12px)"]);
 
@@ -461,7 +461,7 @@ const SellerLandingPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-yellow-200 overflow-x-hidden">
+        <div ref={scrollRef} className="h-screen bg-white text-slate-900 font-sans selection:bg-yellow-200 overflow-y-auto overflow-x-hidden">
 
 
             {/* --- IMMERSIVE BACKGROUND --- */}
@@ -510,20 +510,25 @@ const SellerLandingPage = () => {
                         className="relative z-10"
                     >
                         {/* HERO SECTION */}
-                        <div className="max-w-7xl mx-auto px-6 pt-4 pb-12 relative z-10">
-                            <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+                        <div className="max-w-7xl mx-auto px-6 pt-4 pb-8 lg:pb-12 relative z-10 lg:min-h-screen lg:flex lg:items-center">
+                            <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center w-full">
                                 {/* Mobile: Occupy full viewport height minus header to push image down */}
-                                <div className="text-left animate-in slide-in-from-left duration-700 pt-8 lg:min-h-0 lg:block">
+                                <div className="text-left animate-in slide-in-from-left duration-700 pt-4 lg:pt-0 lg:min-h-0 lg:block">
 
-                                    {/* --- TOP BADGE --- */}
-                                    <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-full px-4 py-1.5 mb-6">
-                                        <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse shadow-[0_0_8px_#ffd400]" />
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-700">The Universal Checkout Link</span>
+                                    {/* --- TOP BADGE (UNIFIED) --- */}
+                                    <div className="flex mb-6 lg:mb-8">
+                                        <div className="inline-flex items-center gap-3 bg-slate-900 border border-slate-800 rounded-full px-5 py-2 self-start shadow-[0_0_20px_rgba(34,211,238,0.15)]">
+                                            <BrainCircuit size={16} className="text-cyan-400 animate-pulse" />
+                                            <div className="h-4 w-px bg-slate-700" />
+                                            <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] leading-none pt-0.5">
+                                                <span className="text-cyan-400">AI-Powered</span> <span className="text-yellow-500">Universal Checkout</span>
+                                            </span>
+                                        </div>
                                     </div>
 
                                     {/* --- DYNAMIC BRANDED HEADLINE (FIXED 'FOR') --- */}
                                     <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic uppercase tracking-tighter leading-none mb-4 text-slate-900 py-2">
-                                        The #1 <img src="/M-PESA_LOGO-01.svg.png" alt="M-PESA" className="inline-block h-16 sm:h-20 md:h-32 -mt-3 sm:-mt-6 ml-2 align-middle object-contain" /> <br />
+                                        The #1 <img src="/M-PESA_LOGO-01.svg.png" alt="M-PESA" className="inline-block h-12 sm:h-20 md:h-24 -mt-2 sm:-mt-6 ml-2 align-middle object-contain" /> <br />
                                         Secure Checkout For <br />
                                         <span className={`inline-block pr-4 transition-all duration-500 ${platforms[platformIndex]?.color}`}>
                                             {platforms[platformIndex]?.name}.
@@ -531,17 +536,17 @@ const SellerLandingPage = () => {
                                     </h1>
 
                                     {/* --- REFINED SUB-HEADLINE: FOCUSING ON TRUST & FRICTION REMOVAL --- */}
-                                    <p className="text-slate-500 text-base font-medium max-w-lg mb-6 leading-relaxed">
+                                    <p className="text-slate-500 text-sm md:text-base font-medium max-w-lg mb-6 leading-relaxed">
                                         Sell more, faster & securely by giving your customers <span className="font-bold text-slate-900">absolute confidence</span> to buy instantly. Eliminate <span className="font-bold text-slate-900">repetitive price and delivery questions</span> with a <span className="font-bold text-slate-900 bg-yellow-100 px-1 rounded">Verified Secure M-Pesa Checkout</span> with automatic delivery across Kenya.
                                     </p>
 
-                                    <div className="flex flex-col sm:flex-row gap-4 items-start">
-                                        <button onClick={handleCallToAction} className="px-10 py-5 bg-black text-white rounded-[2rem] font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-3 shadow-2xl shadow-black/20">
+                                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                                        <button onClick={handleCallToAction} className="px-8 py-4 md:px-10 md:py-5 bg-black text-white rounded-[2rem] font-black text-[10px] md:text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-3 shadow-2xl shadow-black/20 shrink-0">
                                             SET UP SECURE CHECKOUT <ArrowRight size={16} strokeWidth={3} className="text-yellow-500" />
                                         </button>
 
                                         {/* Social Proof Badge */}
-                                        <div className="flex items-center gap-2 mt-4 sm:mt-0 sm:ml-4 bg-slate-50 px-4 py-3 rounded-[2rem] border border-slate-100 shadow-sm">
+                                        <div className="flex items-center gap-2 mt-2 sm:mt-0 sm:ml-2 bg-slate-50 px-4 py-3 rounded-[2rem] border border-slate-100 shadow-sm shrink-0">
                                             <div className="flex -space-x-3">
                                                 {[1, 2, 3].map(i => (
                                                     <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
@@ -650,44 +655,72 @@ const SellerLandingPage = () => {
                                             </div>
 
                                             {/* UI VISUAL */}
-                                            <div className="p-6 pt-2 flex-grow flex items-center justify-center relative overflow-hidden">
+                                            <div className="p-5 pt-2 flex-grow flex items-center justify-center relative overflow-hidden">
                                                 {/* Card */}
                                                 <div className={`w-full bg-white rounded-2xl p-4 shadow-xl border border-white/50 space-y-3 relative overflow-hidden transition-all duration-700 ease-out ${isStep1Visible ? 'rotate-0 shadow-2xl' : 'rotate-[-2deg]'}`}>
+
+                                                    {/* Scanning Laser Effect Overlay - UPGRADED */}
+                                                    {isStep1Visible && (
+                                                        <div className="absolute inset-x-0 top-0 bottom-0 z-30 pointer-events-none rounded-2xl overflow-hidden">
+                                                            {/* The Moving Scanner Bar */}
+                                                            <div className="absolute left-0 right-0 h-10 -top-10 bg-gradient-to-b from-transparent via-cyan-400/50 to-cyan-400 z-10 animate-scan drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]">
+                                                                <div className="absolute bottom-0 w-full h-[2px] bg-cyan-300 shadow-[0_0_15px_#22d3ee]" />
+                                                            </div>
+                                                            {/* Grid Overlay that appears only during detection phase */}
+                                                            <div className="absolute inset-0 bg-[linear-gradient(rgba(34,211,238,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.1)_1px,transparent_1px)] bg-[size:16px_16px] animate-[fadeIn_0.5s_ease-out] opacity-30 mix-blend-overlay" />
+                                                        </div>
+                                                    )}
+
                                                     {/* Fake Fields - Simplified */}
                                                     <div className="h-2 w-1/3 bg-slate-100 rounded mb-4" />
                                                     <div className="space-y-2">
-                                                        <div className="flex gap-2">
-                                                            <div className="h-8 w-8 bg-slate-100 rounded-lg shrink-0 flex items-center justify-center text-slate-300">
-                                                                <ImageIcon size={14} />
+                                                        <div className="relative group/img overflow-hidden rounded-lg">
+                                                            {/* AI Bounding Box Effect */}
+                                                            <div className={`absolute inset-0 border-2 border-cyan-400/80 z-20 opacity-0 transition-opacity duration-500 rounded-lg ${isStep1Visible ? 'opacity-100 delay-300' : ''}`}>
+                                                                <div className="absolute top-0 left-0 bg-cyan-400 text-black text-[6px] font-bold px-1.5 py-0.5 rounded-br shadow-sm">
+                                                                    Sneakers Detected (99%)
+                                                                </div>
+                                                                {/* Corner Brackets */}
+                                                                <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-cyan-300 -mt-px -mr-px" />
+                                                                <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-cyan-300 -mb-px -ml-px" />
+                                                                <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-cyan-300 -mb-px -mr-px" />
                                                             </div>
-                                                            <div className="h-8 w-full bg-slate-100 rounded-lg" />
+
+                                                            <div className="relative aspect-video w-full">
+                                                                <img
+                                                                    src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=400"
+                                                                    alt="Sneaker Scan"
+                                                                    className="w-full h-full object-cover rounded-lg bg-slate-100"
+                                                                />
+                                                            </div>
                                                         </div>
+
                                                         <div className="h-8 w-full bg-slate-100 rounded-lg" />
                                                     </div>
                                                     {/* The Magic Button */}
-                                                    <div className={`mt-4 py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-wide transition-colors duration-500 relative overflow-hidden ${isStep1Visible ? 'bg-yellow-500 text-black' : 'bg-black text-white'}`}>
-                                                        <span className={`relative z-10 flex items-center gap-2 transition-opacity duration-300 ${isStep1Visible ? 'opacity-0' : 'opacity-100'}`}>
+                                                    <div className={`mt-4 py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-wide transition-colors duration-300 delay-500 relative overflow-hidden ${isStep1Visible ? 'bg-yellow-500 text-black' : 'bg-black text-white'}`}>
+                                                        <span className={`relative z-10 flex items-center gap-2 transition-opacity duration-300 delay-500 ${isStep1Visible ? 'opacity-0' : 'opacity-100'}`}>
                                                             <Zap size={12} fill="currentColor" /> Generate Link
                                                         </span>
-                                                        <span className={`absolute inset-0 flex items-center justify-center gap-2 transition-opacity duration-300 z-10 font-bold ${isStep1Visible ? 'opacity-100' : 'opacity-0'}`}>
+                                                        <span className={`absolute inset-0 flex items-center justify-center gap-2 transition-opacity duration-300 delay-500 z-10 font-bold ${isStep1Visible ? 'opacity-100' : 'opacity-0'}`}>
                                                             <LinkIcon size={12} /> Link Ready!
                                                         </span>
                                                     </div>
 
                                                     {/* Cursor Animation - Moves to Button */}
-                                                    <div className={`absolute transition-all duration-1000 ease-in-out z-20 ${isStep1Visible ? 'opacity-0 right-1/2 bottom-2 delay-500' : 'opacity-100 right-1/4 bottom-4'}`}>
-                                                        <MousePointer2 className="fill-black text-black drop-shadow-lg" size={24} />
+                                                    <div className={`absolute transition-all duration-500 ease-in-out z-40 ${isStep1Visible ? 'opacity-0 right-1/2 bottom-2' : 'opacity-100 right-1/4 bottom-4'}`}>
+                                                        <MousePointer2 className="fill-black text-white drop-shadow-xl stroke-white" size={24} />
                                                     </div>
 
                                                     {/* Generated Link Popover - Appears after "click" */}
-                                                    <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] bg-white border-2 border-slate-900 rounded-xl p-3 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] transform transition-all duration-500 delay-700 z-30 ${isStep1Visible ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
+                                                    <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] bg-white border-2 border-slate-900 rounded-xl p-3 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] transform transition-all duration-500 delay-[800ms] z-50 ${isStep1Visible ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
                                                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Your Branded Link</p>
                                                         <div className="flex items-center justify-between bg-yellow-50 rounded-lg p-2 border border-yellow-200">
                                                             <div className="flex items-center gap-2 min-w-0">
                                                                 <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shrink-0">
                                                                     <LinkIcon size={10} className="text-black" />
                                                                 </div>
-                                                                <span className="text-[10px] font-black text-slate-900 truncate">sokosnap.com/urbankicks</span>
+                                                                <span className="text-[10px] font-black text-slate-900 truncate tracking-tight">soko.to/urbankicks/red-nikes-001</span>
                                                             </div>
                                                             <Copy size={10} className="text-yellow-600 shrink-0" />
                                                         </div>
@@ -696,9 +729,9 @@ const SellerLandingPage = () => {
                                             </div>
 
                                             <div className="p-6 pt-0 z-10">
-                                                <h3 className="font-black text-lg text-black uppercase italic mb-2">Snap a Product</h3>
+                                                <h3 className="font-black text-lg text-black uppercase italic mb-2">Smart AI Scan</h3>
                                                 <p className="text-sm text-yellow-900 font-bold leading-relaxed opacity-80">
-                                                    Take a photo, set the price. We generate a <span className="text-black font-black bg-white/20 px-1 rounded">Smart Checkout Link</span> instantly.
+                                                    Snap a photo. Our AI <span className="text-black font-black bg-white/20 px-1 rounded">generates details</span> & builds your checkout link instantly.
                                                 </p>
                                             </div>
                                         </div>
@@ -721,37 +754,47 @@ const SellerLandingPage = () => {
                                             </div>
 
                                             {/* UI VISUAL */}
-                                            <div className="p-6 pt-2 flex-grow flex items-center justify-center relative overflow-hidden">
+                                            <div className="p-5 pt-2 flex-grow flex items-center justify-center relative overflow-hidden">
                                                 {/* Phone Screen Container */}
-                                                <div className="w-full h-32 bg-[#efeae2] rounded-xl overflow-hidden relative shadow-lg border-4 border-slate-900 rotate-2 group-hover:rotate-0 transition-all duration-500">
+                                                <div className="w-full h-48 bg-[#efeae2] rounded-xl overflow-hidden relative shadow-lg border-4 border-slate-900 rotate-2 group-hover:rotate-0 transition-all duration-500 flex flex-col justify-end pb-4">
                                                     {/* WhatsApp Doodle Pattern Overlay */}
                                                     <div className="absolute inset-0 opacity-[0.4] bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-731a-11e7-99d4-d60b44c278d4.png')] bg-repeat bg-[length:400px_400px] mix-blend-multiply"></div>
 
                                                     {/* Chat Content */}
-                                                    <div className="relative h-full flex items-center p-3">
-                                                        <div className="w-full max-w-[95%] ml-auto transform translate-y-1">
-                                                            {/* Outgoing Message Bubble */}
-                                                            <div className="bg-[#d9fdd3] p-2 rounded-lg rounded-tr-none shadow-[0_1px_0.5px_rgba(0,0,0,0.13)] relative">
-                                                                {/* Tail */}
-                                                                <div className="absolute top-0 -right-2 w-0 h-0 border-[8px] border-t-[#d9fdd3] border-r-transparent border-b-transparent border-l-[#d9fdd3] transform rotate-[0deg] drop-shadow-[1px_0_0_rgba(0,0,0,0.05)]"></div>
+                                                    <div className="relative w-full px-3 space-y-3">
 
-                                                                <p className="text-[9px] font-medium text-[#111b21] leading-tight mb-1.5 line-clamp-2">Hey! Cop the new kicks here 👇</p>
+                                                        {/* Buyer Message (Incoming) */}
+                                                        <div className="w-full flex justify-start">
+                                                            <div className="bg-white p-3 rounded-lg rounded-tl-none shadow-[0_1px_0.5px_rgba(0,0,0,0.13)] relative max-w-[85%]">
+                                                                <div className="absolute top-0 -left-2 w-0 h-0 border-[8px] border-t-white border-l-transparent border-b-transparent border-r-white transform rotate-[0deg]"></div>
+                                                                <p className="text-[10px] md:text-xs font-medium text-[#111b21] leading-tight">How much specifically for the red ones? 🤔</p>
+                                                                <span className="text-[9px] text-slate-400 block text-right mt-1">11:41 AM</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Seller Reply (Outgoing) */}
+                                                        <div className="w-full flex justify-end">
+                                                            <div className="bg-[#d9fdd3] p-3 rounded-lg rounded-tr-none shadow-[0_1px_0.5px_rgba(0,0,0,0.13)] relative max-w-[90%]">
+                                                                <div className="absolute top-0 -right-2 w-0 h-0 border-[8px] border-t-[#d9fdd3] border-r-transparent border-b-transparent border-l-[#d9fdd3] transform rotate-[0deg]"></div>
+
+                                                                <p className="text-[10px] md:text-xs font-medium text-[#111b21] leading-tight mb-2">Hey! Cop the new kicks here 👇</p>
 
                                                                 {/* Link Preview Card */}
-                                                                <div className="bg-[#f0f0f0] rounded flex gap-1.5 p-1 items-center border-l-2 border-slate-300">
-                                                                    <div className="h-6 w-6 bg-slate-200 rounded shrink-0 overflow-hidden">
+                                                                <div className="bg-[#f0f0f0] rounded-lg flex gap-2 p-1.5 items-center border-l-4 border-slate-300">
+                                                                    <div className="h-10 w-10 bg-slate-200 rounded shrink-0 overflow-hidden">
                                                                         <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100&q=80" className="w-full h-full object-cover" />
                                                                     </div>
-                                                                    <div className="min-w-0 flex-1">
-                                                                        <div className="h-1 w-12 bg-slate-400 rounded mb-0.5" />
-                                                                        <div className="h-1 w-8 bg-slate-300 rounded" />
+                                                                    <div className="min-w-0 flex-1 pr-1">
+                                                                        <div className="h-2 w-20 bg-slate-400 rounded mb-1" />
+                                                                        <div className="h-1.5 w-12 bg-slate-300 rounded" />
+                                                                        <div className="mt-1 text-[8px] text-blue-500 font-bold">sokosnap.com</div>
                                                                     </div>
                                                                 </div>
 
                                                                 {/* Metadata */}
                                                                 <div className="flex justify-end items-center gap-0.5 mt-1 opacity-60">
-                                                                    <span className="text-[7px] text-slate-500">11:42 AM</span>
-                                                                    <CheckCircle2 size={10} className="text-blue-500" />
+                                                                    <span className="text-[9px] text-slate-500">11:42 AM</span>
+                                                                    <CheckCircle2 size={12} className="text-blue-500" />
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -785,22 +828,29 @@ const SellerLandingPage = () => {
                                             </div>
 
                                             {/* UI VISUAL */}
-                                            <div className="p-6 pt-2 flex-grow flex items-center justify-center relative overflow-hidden">
+                                            <div className="p-5 pt-2 flex-grow flex items-center justify-center relative overflow-hidden">
                                                 {/* Wallpaper Blur - Simplified for green theme */}
                                                 <div className="absolute inset-0 bg-green-500/20 mix-blend-overlay"></div>
 
-                                                {/* Notification Banner */}
-                                                <div className="bg-white backdrop-blur-md w-full rounded-2xl p-3 shadow-lg border border-white/50 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <div className="w-5 h-5 bg-green-600 rounded-md flex items-center justify-center text-white text-[8px] font-bold">M</div>
-                                                            <span className="text-[10px] font-black uppercase text-slate-800">M-PESA</span>
-                                                        </div>
-                                                        <span className="text-[9px] text-slate-400">Now</span>
+                                                {/* Phone Screen / Wallet Card */}
+                                                <div className="w-full h-48 bg-slate-900 rounded-xl overflow-hidden relative shadow-lg border-4 border-green-300 -rotate-2 group-hover:rotate-0 transition-all duration-500 flex flex-col items-center justify-center p-4">
+
+                                                    {/* Balance */}
+                                                    <div className="text-center mb-6">
+                                                        <p className="text-green-500 text-[9px] font-bold uppercase tracking-widest mb-1">Total Earned</p>
+                                                        <p className="text-white text-3xl font-black tracking-tighter">KES 4,500</p>
                                                     </div>
-                                                    <p className="text-[11px] font-medium text-slate-800 leading-snug">
-                                                        <span className="font-bold">PDA38... Confirmed.</span> You have received <span className="text-green-600 font-black">KES 4,500.00</span> from SokoSnap.
-                                                    </p>
+
+                                                    {/* Notification Toast over it */}
+                                                    <div className="w-full bg-white/10 backdrop-blur-md rounded-lg p-3 border border-white/20 flex gap-3 items-center shadow-2xl">
+                                                        <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center font-bold text-white text-sm shrink-0 shadow-lg shadow-green-500/50">M</div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-white text-[11px] font-black leading-tight mb-0.5">PAYMENT RECEIVED</p>
+                                                            <p className="text-green-100 text-[10px] font-medium leading-snug">
+                                                                You received <span className="text-white font-bold">KES 4,500.00</span> from <span className="text-white font-bold">SokoSnap Escrow</span> via TumaFast.
+                                                            </p>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 

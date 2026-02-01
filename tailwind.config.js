@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+    darkMode: 'selector',
     content: [
         "./index.html",
         "./src/**/*.{js,ts,jsx,tsx}",
@@ -38,6 +39,7 @@ export default {
                 'shiny-pulse': 'shinyPulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                 'heartbeat': 'heartbeat 1.5s ease-in-out infinite',
                 'sharp-sheen': 'sharpSheen 3s ease-in-out infinite',
+                'scan': 'scan 2s linear infinite',
             },
             keyframes: {
                 fadeIn: {
@@ -99,6 +101,10 @@ export default {
                     '5%': { opacity: '1' },
                     '25%': { transform: 'translateX(200%) skewX(-12deg)', opacity: '1' },
                     '100%': { transform: 'translateX(200%) skewX(-12deg)', opacity: '0' },
+                },
+                scan: {
+                    '0%, 100%': { top: '0%' },
+                    '50%': { top: '100%' },
                 },
             },
             screens: {

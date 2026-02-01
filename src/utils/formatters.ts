@@ -179,6 +179,24 @@ export function getInitials(name: string): string {
 }
 
 /**
+ * Generate an SEO-friendly slug from a string
+ * @param text - Text to slugify
+ * @returns Slugified string (e.g., "My Shop Name" -> "my-shop-name")
+ */
+export function slugify(text: string): string {
+    if (!text) return '';
+    return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')        // Replace spaces with -
+        .replace(/[^\w\-]+/g, '')    // Remove all non-word chars
+        .replace(/\-\-+/g, '-')      // Replace multiple - with single -
+        .replace(/^-+/, '')          // Trim - from start of text
+        .replace(/-+$/, '');         // Trim - from end of text
+}
+
+/**
  * Capitalize first letter of each word
  * @param text - Text to capitalize
  * @returns Capitalized text

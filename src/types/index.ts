@@ -69,6 +69,8 @@ export interface LinkItem {
     img: string;
     description?: string;
     price?: number;
+    stock?: number;
+    returnPolicy?: string;
     status?: 'active' | 'archived';
 }
 
@@ -92,6 +94,7 @@ export interface Product {
     stock?: number;
     category?: string;
     tags?: string[];
+    returnPolicy?: string;
     allowCOD?: boolean; // Allow Cash on Delivery
 }
 
