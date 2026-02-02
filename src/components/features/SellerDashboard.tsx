@@ -522,7 +522,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                         <div className="flex items-center justify-between mb-2">
                                             <p className={`text-[9px] font-bold uppercase ${theme.textMuted} group-hover:text-yellow-500 transition-colors`}>Top 3 Channels</p>
                                         </div>
-                                        <div className="flex items-center justify-between px-1">
+                                        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
                                             {/* Dynamic Channels Display utilizing totalClicks as proxy for activity distribution */}
                                             {[
                                                 { count: totalClicks > 0 ? Math.floor(totalClicks * 0.6) : 0, color: '#8b5cf6', bg: 'bg-violet-500/10', icon: Globe },
@@ -545,7 +545,6 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                                     </span>
                                                 </div>
                                             ))}
-                                            {totalClicks === 0 && <span className={`text-[9px] italic ${theme.textMuted}`}>No traffic yet</span>}
                                         </div>
                                     </div>
                                 </div>

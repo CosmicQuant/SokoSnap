@@ -1,6 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, BrainCircuit, Loader2, Camera, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// --- PROFESSIONAL AI SYSTEM PROMPT ---
+// This prompt configures the Vision Model (e.g., GPT-4 Vision / Gemini Pro Vision)
+// to act as an expert e-commerce listing agent.
+const SMART_SCAN_PROMPT = `
+ROLE: Expert E-commerce Listing Agent & Copywriter.
+TASK: Analyze the uploaded product image and generate a high-converting sales listing.
+OUTPUT FORMAT: JSON
+
+REQUIREMENTS:
+1. name: Write a SEO-optimized, click-worthy title (5-10 words). Include brand, model, and key feature.
+2. price: Estimate fair market value in KES (Kenyan Shilling) based on visual condition and brand tier. Return as a string number (e.g. "1500").
+3. category: Classify into one of: [fashion, electronics, home, beauty, automotive].
+4. condition: Assess visual wear. One of: [new, like-new, good, fair].
+5. description: Write a persuasive 150-word description using the AIDA framework:
+   - Attention: Hook the buyer immediately.
+   - Interest: Highlight key visual features/materials.
+   - Desire: Explain the lifestyle benefit or value.
+   - Action: Create urgency to buy now.
+   *formatting*: Use moderate emojis for readability.
+6. returnPolicy: Recommend based on product type (e.g. Hygiene/Underwear = No Returns, Electronics = 7 Days).
+7. tags: Generate 5-7 high-volume search keywords as an array of strings.
+
+CONSTRAINTS:
+- Do not hallucinate features not visible.
+- If brand is unrecognizable, use generic high-quality descriptors.
+- Ensure price is realistic for the local market.
+`;
 
 interface SmartScanModalProps {
     isOpen: boolean;
@@ -14,13 +43,89 @@ export const SmartScanModal: React.FC<SmartScanModalProps> = ({ isOpen, onClose,
     const [image, setImage] = useState<File | null>(null);
     const [preview, setPreview] = useState<string>('');
 
-    // Mock AI Result
-    const [aiResult] = useState({
-        name: 'Nike Air Jordan 1 High OG',
-        price: '18500',
-        description: 'Authentic leather high-top sneakers with improved durability and classic styling. Features deadstock condition details and premium cushioning.',
-        tags: ['Sneakers', 'Fashion', 'Men']
-    });
+    // State to hold the "AI" result
+    const [aiResult, setAiResult] = useState<any>(null);
+
+    // Helper to convert File to Base64/InlineData
+    const fileToPart = (file: File): Promise<any> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = () => {
+                const base64data = reader.result?.toString().split(',')[1];
+                resolve({
+                    inlineData: {
+                        data: base64data,
+                        mimeType: file.type
+                    }
+                });
+            };
+            reader.onerror = reject;
+        });
+    };
+
+    // Real API Call to Google AI Studio (Gemini)
+    const performSmartScan = async (file: File) => {
+        try {
+            const API_KEY = import.meta.env.VITE_GOOGLE_AI_API_KEY;
+
+            if (!API_KEY) {
+                console.error("Missing Google AI API Key");
+                return mockResult;
+            }
+
+            console.log("🚀 SENDING TO GOOGLE AI STUDIO...");
+
+            const genAI = new GoogleGenerativeAI(API_KEY);
+            const model = genAI.getGenerativeModel({
+                model: "gemini-2.5-pro",
+                generationConfig: { responseMimeType: "application/json" }
+            });
+
+            const imagePart = await fileToPart(file);
+
+            const result = await model.generateContent([
+                SMART_SCAN_PROMPT,
+                imagePart
+            ]);
+
+            const response = await result.response;
+            const text = response.text();
+            console.log("🤖 AI RAW RESPONSE:", text);
+
+            // Parse JSON response
+            const data = JSON.parse(text);
+
+            // Ensure stock is set to '1' if AI omits it
+            return { ...data, stock: data.stock || '1' };
+
+        } catch (error) {
+            console.error("Smart Scan Error:", error);
+            // Fallback to manual entry if API fails (e.g., quota exceeded)
+            return {
+                name: '',
+                price: '',
+                description: 'AI Analysis Failed. Please enter details manually.',
+                category: 'fashion',
+                condition: 'good',
+                tags: [],
+                returnPolicy: 'No Returns',
+                stock: '1'
+            };
+        }
+    };
+
+    // Mock result for fallback or if key is missing during dev
+    const mockResult = {
+        name: 'Smart Scan Demo Product',
+        price: '0',
+        description: 'AI Service unreachable. Please configure your API Key or check connectivity.',
+        category: 'fashion',
+        condition: 'good',
+        tags: [],
+        returnPolicy: 'No Returns',
+        stock: '1'
+    }
 
     const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -28,42 +133,61 @@ export const SmartScanModal: React.FC<SmartScanModalProps> = ({ isOpen, onClose,
             setImage(file);
             setPreview(URL.createObjectURL(file));
             setStep('scanning');
-            setScanLog(['Initializing Vision Engine...']);
+            setScanLog(['Initializing Vision Engine...', 'Uploading Image to Neural Cloud...']);
+
+            // Trigger Scan
+            runScanSequence(file);
         }
     };
 
-    useEffect(() => {
-        if (step === 'scanning') {
-            const sequence = [
-                { msg: 'Identifying Product Structure...', delay: 1000 },
-                { msg: 'Analysing Market Price Data...', delay: 2000 },
-                { msg: 'Generating SEO Description...', delay: 3000 },
-                { msg: 'Enhancing Product Visuals (Generative Fill)...', delay: 4500 },
-                { msg: 'Complete.', delay: 5500 }
-            ];
+    const runScanSequence = async (file: File) => {
+        // Visual Log Sequence
+        const sequence = [
+            { msg: 'Detecting Object Geometry & Brand...', delay: 1500 },
+            { msg: 'Analysing Material & Condition...', delay: 3000 },
+            { msg: 'Comparing Market Prices (Nairobi Region)...', delay: 4000 },
+            { msg: 'Generating High-Conversion Copy...', delay: 5000 },
+            { msg: 'Complete.', delay: 5500 }
+        ];
 
-            const timers = sequence.map(s => setTimeout(() => {
-                if (s.msg === 'Complete.') {
-                    setStep('success');
-                } else {
+        // Run UI Logs
+        sequence.forEach(s => {
+            setTimeout(() => {
+                if (s.msg !== 'Complete.') {
                     setScanLog(prev => [...prev, s.msg]);
                 }
-            }, s.delay));
+            }, s.delay);
+        });
 
-            return () => timers.forEach(clearTimeout);
-        } else {
-            setScanLog([]);
-        }
-    }, [step]);
+        // Run Actual "Logic"
+        const result = await performSmartScan(file);
+
+        setTimeout(() => {
+            setAiResult(result);
+            setStep('success');
+        }, 5500);
+    };
 
     const handleConfirm = () => {
-        onScanComplete({ ...aiResult, image, generatedImages: [preview] }); // Mock: In real app, scanned + generated
+        if (!aiResult) return;
+
+        // Pass the original image AND the AI data
+        onScanComplete({
+            ...aiResult,
+            image: image,
+            // In a real app, we might have an AI-enhanced version (background removed etc)
+            // For now, we reuse the preview as a 'generated' asset placeholder if needed, 
+            // but AddProductModal handles the File object best.
+            generatedImages: []
+        });
         onClose();
+
         // Reset
         setTimeout(() => {
             setStep('upload');
             setImage(null);
             setScanLog([]);
+            setAiResult(null);
         }, 500);
     };
 
@@ -137,7 +261,7 @@ export const SmartScanModal: React.FC<SmartScanModalProps> = ({ isOpen, onClose,
                         </div>
                     )}
 
-                    {step === 'success' && (
+                    {step === 'success' && aiResult && (
                         <div className="flex-1 flex flex-col pt-2">
                             <div className="flex gap-3 mb-6">
                                 <div className="w-1/2 aspect-[4/3] bg-gray-100 dark:bg-zinc-900 rounded-xl overflow-hidden relative border border-gray-200 dark:border-zinc-700 group">

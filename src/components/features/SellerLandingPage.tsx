@@ -510,10 +510,10 @@ const SellerLandingPage = () => {
                         className="relative z-10"
                     >
                         {/* HERO SECTION */}
-                        <div className="max-w-7xl mx-auto px-6 pt-4 pb-8 lg:pb-12 relative z-10 lg:min-h-screen lg:flex lg:items-center">
-                            <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center w-full">
+                        <div className="max-w-7xl mx-auto px-6 pt-4 pb-8 lg:pb-0 relative z-10 min-h-[85vh] flex flex-col justify-center lg:min-h-screen lg:block">
+                            <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center w-full grow">
                                 {/* Mobile: Occupy full viewport height minus header to push image down */}
-                                <div className="text-left animate-in slide-in-from-left duration-700 pt-4 lg:pt-0 lg:min-h-0 lg:block">
+                                <div className="text-left animate-in slide-in-from-left duration-700 pt-2 lg:pt-0 flex flex-col justify-center h-full">
 
                                     {/* --- TOP BADGE (UNIFIED) --- */}
                                     <div className="flex mb-6 lg:mb-8">
@@ -527,8 +527,8 @@ const SellerLandingPage = () => {
                                     </div>
 
                                     {/* --- DYNAMIC BRANDED HEADLINE (FIXED 'FOR') --- */}
-                                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic uppercase tracking-tighter leading-none mb-4 text-slate-900 py-2">
-                                        The #1 <img src="/M-PESA_LOGO-01.svg.png" alt="M-PESA" className="inline-block h-12 sm:h-20 md:h-24 -mt-2 sm:-mt-6 ml-2 align-middle object-contain" /> <br />
+                                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-black italic uppercase tracking-tighter leading-none mb-6 text-slate-900 py-2">
+                                        The #1 <img src="/M-PESA_LOGO-01.svg.png" alt="M-PESA" className="inline-block h-[1.5em] w-auto -mt-3 ml-2 align-middle object-contain" /> <br />
                                         Secure Checkout For <br />
                                         <span className={`inline-block pr-4 transition-all duration-500 ${platforms[platformIndex]?.color}`}>
                                             {platforms[platformIndex]?.name}.
@@ -536,17 +536,17 @@ const SellerLandingPage = () => {
                                     </h1>
 
                                     {/* --- REFINED SUB-HEADLINE: FOCUSING ON TRUST & FRICTION REMOVAL --- */}
-                                    <p className="text-slate-500 text-sm md:text-base font-medium max-w-lg mb-6 leading-relaxed">
+                                    <p className="text-slate-500 text-base md:text-lg font-medium max-w-lg mb-8 leading-relaxed">
                                         Sell more, faster & securely by giving your customers <span className="font-bold text-slate-900">absolute confidence</span> to buy instantly. Eliminate <span className="font-bold text-slate-900">repetitive price and delivery questions</span> with a <span className="font-bold text-slate-900 bg-yellow-100 px-1 rounded">Verified Secure M-Pesa Checkout</span> with automatic delivery across Kenya.
                                     </p>
 
-                                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                                        <button onClick={handleCallToAction} className="px-8 py-4 md:px-10 md:py-5 bg-black text-white rounded-[2rem] font-black text-[10px] md:text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-3 shadow-2xl shadow-black/20 shrink-0">
+                                    <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center pb-4">
+                                        <button onClick={handleCallToAction} className="w-full sm:w-auto px-8 py-4 md:px-10 md:py-5 bg-black text-white rounded-[2rem] font-black text-xs md:text-sm uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 shadow-2xl shadow-black/20 shrink-0">
                                             SET UP SECURE CHECKOUT <ArrowRight size={16} strokeWidth={3} className="text-yellow-500" />
                                         </button>
 
                                         {/* Social Proof Badge */}
-                                        <div className="flex items-center gap-2 mt-2 sm:mt-0 sm:ml-2 bg-slate-50 px-4 py-3 rounded-[2rem] border border-slate-100 shadow-sm shrink-0">
+                                        <div className="flex items-center gap-3 mt-2 sm:mt-0 sm:ml-2 bg-slate-50 px-5 py-3 rounded-[2rem] border border-slate-100 shadow-sm shrink-0">
                                             <div className="flex -space-x-3">
                                                 {[1, 2, 3].map(i => (
                                                     <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
@@ -554,12 +554,12 @@ const SellerLandingPage = () => {
                                                     </div>
                                                 ))}
                                             </div>
-                                            <p className="text-[9px] font-bold text-slate-500 leading-tight uppercase tracking-wide">Trusted by 500+ <br />Kenyan Merchants</p>
+                                            <p className="text-[10px] font-bold text-slate-500 leading-tight uppercase tracking-wide">Trusted by 500+ <br />Kenyan Merchants</p>
                                         </div>
                                     </div>
 
-                                    {/* Spacer for Mobile to push image below fold */}
-                                    <div className="h-[20vh] lg:hidden hidden"></div>
+                                    {/* Spacer to Ensure Trusted By is Last Visible Element */}
+                                    <div className="h-4 lg:hidden"></div>
                                 </div>
 
                                 <div className="hidden lg:block relative animate-in slide-in-from-right duration-1000 delay-200">
