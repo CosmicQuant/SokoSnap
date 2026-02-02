@@ -28,6 +28,10 @@ export interface User {
     contactPhone?: string;
     refundPolicy?: string;
 
+    // Computed / Extended settings
+    verificationDoc?: string;
+    notificationsEnabled?: boolean;
+
     // Payment & Verified Info
     kraPin?: string;
     mpesaType?: 'personal' | 'till' | 'paybill';

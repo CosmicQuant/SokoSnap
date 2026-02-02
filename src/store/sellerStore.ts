@@ -37,6 +37,7 @@ interface SellerState {
     fetchSellerData: (sellerId: string) => void;
     stopListening: () => void;
     createProduct: (product: any, files: File[]) => Promise<string>;
+    updateProduct: (productId: string, updates: any, newFiles?: File[]) => Promise<void>;
     archiveProduct: (productId: string) => Promise<void>;
 }
 
@@ -132,6 +133,55 @@ export const useSellerStore = create<SellerState>((set, get) => ({
         } catch (error) {
             console.error("Create Product Error:", error);
             set({ isLoading: false, error: "Failed to create product" });
+            throw error;
+        }
+    },
+
+    updateProduct: async (productId, updates, newFiles) => {
+        set({ isLoading: true });
+        try {
+            // Check if this update involves images (Edit Mode) or just other fields (Status Toggle)
+            const isImageUpdate = (updates.existingImages !== undefined) || (newFiles && newFiles.length > 0);
+
+            if (!isImageUpdate) {
+                // Simple partial update (e.g. status toggle)
+                await updateDoc(doc(db, 'products', productId), {
+                    ...updates,
+                    updatedAt: Timestamp.now()
+                });
+                set({ isLoading: false });
+                return;
+            }
+
+            // --- Full Update with potential image changes ---
+            let imageUrls = updates.existingImages || [];
+
+            // Upload new files if any
+            if (newFiles && newFiles.length > 0) {
+                for (const file of newFiles) {
+                    const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    const url = await getDownloadURL(snapshot.ref);
+                    imageUrls.push(url);
+                }
+            }
+
+            // Prepare Clean Payload
+            // Remove 'existingImages' helper field before sending to Firestore
+            const { existingImages, ...cleanUpdates } = updates;
+
+            const payload = {
+                ...cleanUpdates,
+                img: imageUrls.length > 0 ? imageUrls[0] : (updates.img || ''),
+                images: imageUrls,
+                updatedAt: Timestamp.now()
+            };
+
+            await updateDoc(doc(db, 'products', productId), payload);
+            set({ isLoading: false });
+        } catch (error) {
+            console.error("Update Product Error:", error);
+            set({ isLoading: false, error: "Failed to update product" });
             throw error;
         }
     },

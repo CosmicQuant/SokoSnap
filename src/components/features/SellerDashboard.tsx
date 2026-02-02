@@ -5,12 +5,10 @@ import {
     Package,
     Ticket,
     Wrench,
-    Copy,
     Bell,
     TrendingUp,
     CheckCircle2,
     ArrowUpRight,
-    MoreVertical,
     ChevronRight,
     ShieldCheck,
     Zap,
@@ -27,28 +25,327 @@ import {
     Eye,
     LayoutDashboard,
     ShoppingBag,
-    AlertTriangle,
-    Clock,
     QrCode,
     MessageCircle, // WhatsApp
     Instagram, // Instagram
-    Music, // TikTok
     Globe, // Web
-    Camera // AI Camera
+    Camera, // AI Camera
+    Pencil, // Edit Icon
+    Search, // Search Icon
+    Link, // Link Icon
+    Store,
+    FileText,
+    MapPin,
+    Upload,
+    Sparkles
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useSellerStore } from '../../store/sellerStore';
 import { AddProductModal, SmartScanModal, QRLinkModal } from './seller';
 import { slugify } from '../../utils/formatters';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../lib/firebase';
 
 // Add props interface for compatibility with SellerLandingPage
 interface SellerDashboardProps {
     onBack?: () => void;
 }
 
+// Extracted Component to avoid Hook issues
+const MerchantProfileView = ({ user, theme, isDarkMode, setActiveView, scrollToSettlement = false }: { user: any, theme: any, isDarkMode: boolean, setActiveView: (v: string) => void, scrollToSettlement?: boolean }) => {
+    const [formData, setFormData] = useState({
+        shopName: user?.shopName || user?.name || '',
+        shopLocation: user?.shopLocation || '',
+        email: user?.email || '',
+        contactPhone: user?.contactPhone || user?.phone || '',
+        contactPerson: user?.contactPerson || user?.name || '',
+        kraPin: user?.kraPin || '',
+        // Socials
+        whatsapp: user?.whatsapp || '',
+        instagram: user?.instagram || '',
+        facebook: user?.facebook || '',
+        tiktok: user?.tiktok || '',
+        // Payment
+        mpesaType: user?.mpesaType || 'personal', // personal, till, paybill
+        mpesaNumber: user?.mpesaNumber || '',
+        tillNumber: user?.tillNumber || '',
+        paybillNumber: user?.paybillNumber || '',
+        accountNumber: user?.accountNumber || '',
+    });
+    const [isSaving, setIsSaving] = useState(false);
+    const { updateUser } = useAuthStore();
+    const settlementRef = React.useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (scrollToSettlement && settlementRef.current) {
+            settlementRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [scrollToSettlement]);
+
+    const handleLocation = () => {
+        if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const loc = `Lat: ${pos.coords.latitude.toFixed(4)}, Long: ${pos.coords.longitude.toFixed(4)}`;
+                setFormData(prev => ({ ...prev, shopLocation: loc }));
+            });
+        }
+    };
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            // @ts-ignore
+            await updateUser(formData);
+            // toast success?
+            setActiveView('menu');
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
+            <div className="px-6 mb-6">
+                <button onClick={() => setActiveView('menu')} className="flex items-center gap-2 text-zinc-500 mb-4">
+                    <ChevronLeft size={16} /> <span className="text-xs font-bold uppercase">Back to Menu</span>
+                </button>
+                <h2 className="text-2xl font-black italic tracking-tighter uppercase">Merchant Profile</h2>
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Edit Business Details</p>
+            </div>
+
+            <div className="px-6 space-y-6">
+                {/* Business Details */}
+                <section className={`p-6 rounded-[2rem] border ${theme.card}`}>
+                    <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Store size={14} className="text-yellow-500" /> Business Details
+                    </h3>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-[10px] font-bold uppercase ml-3 mb-1 block opacity-50">Business Name</label>
+                            <input
+                                value={formData.shopName}
+                                onChange={e => setFormData({ ...formData, shopName: e.target.value })}
+                                className={`w-full p-4 rounded-xl font-bold text-sm outline-none border transition-all focus:border-yellow-500 ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-200'}`}
+                                placeholder="Enter business name"
+                            />
+                        </div>
+
+                        {/* Location Field */}
+                        <div>
+                            <label className="text-[10px] font-bold uppercase ml-3 mb-1 block opacity-50">Location</label>
+                            <div className="flex gap-2">
+                                <input
+                                    value={formData.shopLocation}
+                                    onChange={e => setFormData({ ...formData, shopLocation: e.target.value })}
+                                    className={`flex-1 p-4 rounded-xl font-bold text-sm outline-none border transition-all focus:border-yellow-500 ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-200'}`}
+                                    placeholder="City, Street or Building"
+                                />
+                                <button
+                                    onClick={handleLocation}
+                                    className={`p-4 rounded-xl border flex items-center justify-center ${theme.btnGhost} hover:bg-green-500/10 hover:text-green-500`}
+                                    title="Use Current Location"
+                                >
+                                    <MapPin size={20} />
+                                </button>
+                            </div>
+                            <button className="text-[10px] font-bold text-blue-500 mt-2 flex items-center gap-1 active:scale-95 transition-transform">
+                                <MapPin size={10} /> Pin manually on map
+                            </button>
+                        </div>
+
+                        <div>
+                            <label className="text-[10px] font-bold uppercase ml-3 mb-1 block opacity-50">Business Email</label>
+                            <input
+                                value={formData.email}
+                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                className={`w-full p-4 rounded-xl font-bold text-sm outline-none border transition-all focus:border-yellow-500 ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-200'}`}
+                                placeholder="Using primary account email"
+                                disabled
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-bold uppercase ml-3 mb-1 block opacity-50">KRA PIN</label>
+                            <input
+                                value={formData.kraPin}
+                                onChange={e => setFormData({ ...formData, kraPin: e.target.value })}
+                                className={`w-full p-4 rounded-xl font-bold text-sm outline-none border transition-all focus:border-yellow-500 ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-200'}`}
+                                placeholder="P0..."
+                            />
+                        </div>
+                    </div>
+                </section>
+
+                {/* Admin Details */}
+                <section className={`p-6 rounded-[2rem] border ${theme.card}`}>
+                    <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <UserIcon size={14} className="text-blue-500" /> Admin Details
+                    </h3>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-[10px] font-bold uppercase ml-3 mb-1 block opacity-50">Admin Name</label>
+                            <input
+                                value={formData.contactPerson}
+                                onChange={e => setFormData({ ...formData, contactPerson: e.target.value })}
+                                className={`w-full p-4 rounded-xl font-bold text-sm outline-none border transition-all focus:border-yellow-500 ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-200'}`}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-bold uppercase ml-3 mb-1 block opacity-50">Admin Phone</label>
+                            <input
+                                value={formData.contactPhone}
+                                onChange={e => setFormData({ ...formData, contactPhone: e.target.value })}
+                                className={`w-full p-4 rounded-xl font-bold text-sm outline-none border transition-all focus:border-yellow-500 ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-200'}`}
+                            />
+                        </div>
+                    </div>
+                </section>
+
+                {/* Socials */}
+                <section className={`p-6 rounded-[2rem] border ${theme.card}`}>
+                    <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Globe size={14} className="text-pink-500" /> Social Presence
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-[10px] font-bold uppercase ml-3 mb-1 block opacity-50">WhatsApp</label>
+                            <input
+                                value={formData.whatsapp}
+                                onChange={e => setFormData({ ...formData, whatsapp: e.target.value })}
+                                className={`w-full p-3 rounded-xl font-bold text-xs outline-none border transition-all focus:border-yellow-500 ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-200'}`}
+                                placeholder="wa.me/..."
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-bold uppercase ml-3 mb-1 block opacity-50">Instagram</label>
+                            <input
+                                value={formData.instagram}
+                                onChange={e => setFormData({ ...formData, instagram: e.target.value })}
+                                className={`w-full p-3 rounded-xl font-bold text-xs outline-none border transition-all focus:border-yellow-500 ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-200'}`}
+                                placeholder="@handle"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-bold uppercase ml-3 mb-1 block opacity-50">Facebook</label>
+                            <input
+                                value={formData.facebook}
+                                onChange={e => setFormData({ ...formData, facebook: e.target.value })}
+                                className={`w-full p-3 rounded-xl font-bold text-xs outline-none border transition-all focus:border-yellow-500 ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-200'}`}
+                                placeholder="Page URL"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-bold uppercase ml-3 mb-1 block opacity-50">TikTok</label>
+                            <input
+                                value={formData.tiktok}
+                                onChange={e => setFormData({ ...formData, tiktok: e.target.value })}
+                                className={`w-full p-3 rounded-xl font-bold text-xs outline-none border transition-all focus:border-yellow-500 ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-50 border-gray-200'}`}
+                                placeholder="@handle"
+                            />
+                        </div>
+                    </div>
+                </section>
+
+                {/* Payment Method - Radios */}
+                <section ref={settlementRef} className={`p-6 rounded-[2rem] border ${theme.card}`}>
+                    <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <CreditCard size={14} className="text-green-500" /> Settlement Account
+                    </h3>
+                    <p className="text-[10px] opacity-60 mb-4">Choose ONE default settlement method.</p>
+
+                    <div className="space-y-4">
+                        {/* Personal */}
+                        <label className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.mpesaType === 'personal' ? 'border-yellow-500 bg-yellow-500/5' : theme.subCard}`}>
+                            <input
+                                type="radio"
+                                name="mpesaType"
+                                checked={formData.mpesaType === 'personal'}
+                                onChange={() => setFormData({ ...formData, mpesaType: 'personal' })}
+                                className="mt-1"
+                            />
+                            <div className="flex-1">
+                                <span className="font-bold text-sm block">M-Pesa Personal</span>
+                                {formData.mpesaType === 'personal' && (
+                                    <input
+                                        value={formData.mpesaNumber}
+                                        onChange={e => setFormData({ ...formData, mpesaNumber: e.target.value })}
+                                        placeholder="07XX XXX XXX"
+                                        className="mt-2 w-full bg-transparent border-b border-zinc-300 dark:border-zinc-700 py-1 text-sm font-bold outline-none focus:border-yellow-500"
+                                    />
+                                )}
+                            </div>
+                        </label>
+
+                        {/* Till */}
+                        <label className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.mpesaType === 'till' ? 'border-yellow-500 bg-yellow-500/5' : theme.subCard}`}>
+                            <input
+                                type="radio"
+                                name="mpesaType"
+                                checked={formData.mpesaType === 'till'}
+                                onChange={() => setFormData({ ...formData, mpesaType: 'till' })}
+                                className="mt-1"
+                            />
+                            <div className="flex-1">
+                                <span className="font-bold text-sm block">Buy Goods (Till)</span>
+                                {formData.mpesaType === 'till' && (
+                                    <input
+                                        value={formData.tillNumber}
+                                        onChange={e => setFormData({ ...formData, tillNumber: e.target.value })}
+                                        placeholder="Till Number"
+                                        className="mt-2 w-full bg-transparent border-b border-zinc-300 dark:border-zinc-700 py-1 text-sm font-bold outline-none focus:border-yellow-500"
+                                    />
+                                )}
+                            </div>
+                        </label>
+
+                        {/* Paybill */}
+                        <label className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.mpesaType === 'paybill' ? 'border-yellow-500 bg-yellow-500/5' : theme.subCard}`}>
+                            <input
+                                type="radio"
+                                name="mpesaType"
+                                checked={formData.mpesaType === 'paybill'}
+                                onChange={() => setFormData({ ...formData, mpesaType: 'paybill' })}
+                                className="mt-1"
+                            />
+                            <div className="flex-1">
+                                <span className="font-bold text-sm block">Paybill</span>
+                                {formData.mpesaType === 'paybill' && (
+                                    <div className="flex gap-2 mt-2">
+                                        <input
+                                            value={formData.paybillNumber}
+                                            onChange={e => setFormData({ ...formData, paybillNumber: e.target.value })}
+                                            placeholder="Business No."
+                                            className="w-1/2 bg-transparent border-b border-zinc-300 dark:border-zinc-700 py-1 text-sm font-bold outline-none focus:border-yellow-500"
+                                        />
+                                        <input
+                                            value={formData.accountNumber}
+                                            onChange={e => setFormData({ ...formData, accountNumber: e.target.value })}
+                                            placeholder="Account No."
+                                            className="w-1/2 bg-transparent border-b border-zinc-300 dark:border-zinc-700 py-1 text-sm font-bold outline-none focus:border-yellow-500"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </label>
+                    </div>
+                </section>
+
+                <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="w-full py-4 rounded-2xl bg-yellow-500 text-black font-black uppercase tracking-widest shadow-xl active:scale-95 transition-transform flex items-center justify-center gap-2"
+                >
+                    {isSaving ? 'Saving...' : 'Save Profile Details'}
+                </button>
+            </div>
+        </div>
+    );
+};
+
 export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     const { user, logout, initialize } = useAuthStore();
-    const { links, orders, isLoading, fetchSellerData, createProduct } = useSellerStore();
+    const { links, orders, isLoading, fetchSellerData, createProduct, updateProduct } = useSellerStore();
 
     // Initialize Auth Listener within the component as well, to be safe
     useEffect(() => {
@@ -56,17 +353,55 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
         return () => unsubscribe();
     }, [initialize]);
 
-    const [activeView, setActiveView] = useState('home'); // home, orders, insights, menu
+    const [activeView, setActiveView] = useState('home'); // home, orders, insights, menu, links
     const [activeTab, setActiveTab] = useState('Products');
+    const [linksSearchTerm, setLinksSearchTerm] = useState('');
+    const [ordersSearchTerm, setOrdersSearchTerm] = useState('');
     // Orders Sub-tabs
     const [ordersFilter, setOrdersFilter] = useState<'ongoing' | 'completed' | 'disputed'>('ongoing');
 
     const [showCopyToast, setShowCopyToast] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
+    const [notificationsEnabled, setNotificationsEnabled] = useState(user?.notificationsEnabled ?? true);
+    const [verificationUploading, setVerificationUploading] = useState(false);
+
+    // UI Helpers
+    const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
+    const [scrollToSettlement, setScrollToSettlement] = useState(false);
+
+    // Sync notification state when user loads
+    useEffect(() => {
+        if (user) {
+            setNotificationsEnabled(user.notificationsEnabled ?? true);
+        }
+    }, [user]);
 
     // Modals State
     const [showAddProduct, setShowAddProduct] = useState(false);
     const [addProductInitialData, setAddProductInitialData] = useState<any>(null); // New state for pre-filling
+
+    const isProfileComplete = !!(user?.shopName && user?.shopLocation);
+
+    const checkVerification = () => {
+        if (!isProfileComplete) {
+            setShowVerificationPrompt(true);
+            return false;
+        }
+        return true;
+    };
+
+    const handleAiSnap = () => {
+        if (checkVerification()) {
+            setShowSmartScan(true);
+        }
+    };
+
+    const handleManualAdd = () => {
+        if (checkVerification()) {
+            setShowAddProduct(true);
+        }
+    };
+
     const [showSmartScan, setShowSmartScan] = useState(false);
     const [showQRLink, setShowQRLink] = useState(false);
 
@@ -103,16 +438,33 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
 
             // Prepare data payload (excluding raw files)
             const { images, videos, ...rest } = productData;
-            const payload = {
-                ...rest,
-                sellerId: user.id,
-                sellerName: user.name || 'Store',
-                // Keep existing URLs if any (though createProduct currently overwrites 'images')
-                existingImages: productData.images.filter((img: any) => typeof img === 'string')
-            };
 
-            console.log("Creating Product:", payload);
-            await createProduct(payload, filesToUpload);
+            // Check if this is an EDIT or CREATE
+            if (addProductInitialData?.id) {
+                console.log("Updating Product:", addProductInitialData.id, rest);
+
+                // Pass 'existingImages' separately so store knows what to keep
+                // In AddProductModal, we load existing images into 'images' array (as strings)
+                // We filter strings to identify existing images
+                const existingImages = productData.images.filter((img: any) => typeof img === 'string');
+
+                await updateProduct(addProductInitialData.id, {
+                    ...rest,
+                    existingImages
+                }, filesToUpload);
+
+            } else {
+                const payload = {
+                    ...rest,
+                    sellerId: user.id,
+                    sellerName: user.name || 'Store',
+                    // Keep existing URLs if any (though createProduct currently overwrites 'images')
+                    existingImages: productData.images.filter((img: any) => typeof img === 'string')
+                };
+
+                console.log("Creating Product:", payload);
+                await createProduct(payload, filesToUpload);
+            }
 
             // Reset and close
             setShowAddProduct(false);
@@ -135,16 +487,31 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
 
     // Filtered Orders Logic
     const getFilteredOrders = () => {
+        let relevantOrders = safeOrders;
+
         switch (ordersFilter) {
             case 'ongoing':
-                return safeOrders.filter(o => ['processing', 'in_transit', 'pending', 'escrow_held'].includes(o.status.toLowerCase()));
+                relevantOrders = safeOrders.filter(o => ['processing', 'in_transit', 'pending', 'escrow_held'].includes(o.status.toLowerCase()));
+                break;
             case 'completed':
-                return safeOrders.filter(o => ['delivered', 'completed'].includes(o.status.toLowerCase()));
+                relevantOrders = safeOrders.filter(o => ['delivered', 'completed'].includes(o.status.toLowerCase()));
+                break;
             case 'disputed':
-                return safeOrders.filter(o => ['disputed', 'cancelled', 'returned'].includes(o.status.toLowerCase()));
+                relevantOrders = safeOrders.filter(o => ['disputed', 'cancelled', 'returned'].includes(o.status.toLowerCase()));
+                break;
             default:
-                return safeOrders;
+                break;
         }
+
+        if (ordersSearchTerm.trim()) {
+            const lowerTerm = ordersSearchTerm.toLowerCase();
+            return relevantOrders.filter(o =>
+                o.id.toLowerCase().includes(lowerTerm) ||
+                o.items.some(i => i.product.name.toLowerCase().includes(lowerTerm))
+            );
+        }
+
+        return relevantOrders;
     };
 
     const filteredOrders = getFilteredOrders();
@@ -152,6 +519,36 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     const handleCopy = () => {
         setShowCopyToast(true);
         setTimeout(() => setShowCopyToast(false), 2000);
+    };
+
+    const handleToggleLink = async (link: any, e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            const newStatus = link.status === 'active' ? 'archived' : 'active';
+            await updateProduct(link.id, { status: newStatus });
+        } catch (error) {
+            console.error("Failed to toggle link status", error);
+        }
+    };
+
+    const handleShareLink = async (link: any, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const url = `${window.location.origin}/store/${slugify(user?.shopName || user?.name || '')}/${link.slug || link.id}`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: link.name,
+                    text: `Check out ${link.name} on SokoSnap!`,
+                    url: url
+                });
+            } catch (err) {
+                // Ignore aborts
+            }
+        } else {
+            navigator.clipboard.writeText(url);
+            handleCopy();
+        }
     };
 
     // --- THEME CLASSES ---
@@ -170,7 +567,132 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
 
     // --- VIEWS ---
 
-    const OrdersView = () => (
+    const renderLinksView = () => {
+        const filteredLinks = safeLinks.filter(link =>
+            link.name.toLowerCase().includes(linksSearchTerm.toLowerCase()) &&
+            // Filter by activeTab if needed, or show all. User said "List of links... which can be toggled"
+            // For now, let's show all and just search
+            true
+        );
+
+        return (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
+                <div className="px-6 mb-6">
+                    <h2 className="text-2xl font-black italic tracking-tighter uppercase">My Links</h2>
+                    <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Manage Checkout Links</p>
+                </div>
+
+                {/* Search Bar */}
+                <div className="px-6 mb-6">
+                    <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${theme.card}`}>
+                        <Search size={18} className={theme.textMuted} />
+                        <input
+                            type="text"
+                            placeholder="Search links..."
+                            value={linksSearchTerm}
+                            onChange={(e) => setLinksSearchTerm(e.target.value)}
+                            className={`flex-1 bg-transparent outline-none text-sm font-bold ${isDarkMode ? 'text-white placeholder:text-zinc-600' : 'text-black placeholder:text-gray-400'}`}
+                        />
+                    </div>
+                </div>
+
+                <div className="px-6 space-y-3">
+                    {filteredLinks.length > 0 ? (
+                        filteredLinks.map(link => (
+                            <div key={link.id} className={`p-4 rounded-[2rem] border transition-all ${theme.card} ${link.status === 'archived' ? 'opacity-70' : ''}`}>
+
+                                <div className="flex gap-4">
+                                    {/* Image */}
+                                    <div className={`h-16 w-16 rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden border ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-100 border-gray-100'}`}>
+                                        {link.img ? <img src={link.img} className="w-full h-full object-cover" /> : <Package size={20} className={theme.textMuted} />}
+                                    </div>
+
+                                    {/* Middle Content */}
+                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                        <h4 className="font-bold text-sm truncate pr-2 mb-0.5">{link.name}</h4>
+                                        <p className="text-xs font-black text-yellow-500 mb-1.5">KES {link.price?.toLocaleString()}</p>
+
+                                        {/* Compact Stats Row */}
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-1">
+                                                <Eye size={10} className="text-blue-500" />
+                                                <span className={`text-[9px] font-bold ${theme.textMuted}`}>{link.views || 0}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <MousePointer2 size={10} className="text-violet-500" />
+                                                <span className={`text-[9px] font-bold ${theme.textMuted}`}>{link.clicks || 0}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <ShoppingBag size={10} className="text-orange-500" />
+                                                <span className={`text-[9px] font-bold ${theme.textMuted}`}>{link.sales || 0}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <Zap size={10} className="text-green-500" />
+                                                <span className={`text-[9px] font-bold ${theme.textMuted}`}>
+                                                    {link.clicks > 0 ? ((link.sales / link.clicks) * 100).toFixed(0) : 0}%
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right Actions */}
+                                    <div className="flex flex-col items-end gap-2">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setAddProductInitialData(link);
+                                                setShowAddProduct(true);
+                                            }}
+                                            className={`h-8 w-8 rounded-full flex items-center justify-center ${theme.btnGhost}`}
+                                        >
+                                            <Pencil size={14} className="text-zinc-400 hover:text-blue-500" />
+                                        </button>
+
+                                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                            <button
+                                                onClick={(e) => handleShareLink(link, e)}
+                                                className="h-6 w-6 rounded-full flex items-center justify-center bg-blue-500/10 text-blue-500 mr-1 active:scale-95 transition-transform"
+                                            >
+                                                <Share2 size={12} strokeWidth={3} />
+                                            </button>
+                                            <span className={`text-[8px] font-bold uppercase tracking-wider ${link.status === 'active' ? 'text-green-500' : 'text-zinc-400'}`}>
+                                                {link.status === 'active' ? 'Live' : 'Hidden'}
+                                            </span>
+                                            <button
+                                                onClick={(e) => handleToggleLink(link, e)}
+                                                className={`h-5 w-9 rounded-full p-0.5 transition-colors flex items-center ${link.status === 'active' ? 'bg-green-500 justify-end' : 'bg-gray-300 dark:bg-zinc-700 justify-start'}`}
+                                            >
+                                                <div className="h-4 w-4 rounded-full bg-white shadow-sm" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Clickable Link */}
+                                <div className={`mt-3 py-2 px-3 rounded-xl text-center ${isDarkMode ? 'bg-zinc-800/50' : 'bg-blue-50'}`}>
+                                    <a
+                                        href={`${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}/${slugify(link.name)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-[10px] font-black text-blue-600 dark:text-blue-400 hover:underline block truncate"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        {window.location.host}/store/.../{slugify(link.name).slice(0, 15)}
+                                    </a>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center py-12 opacity-50">
+                            <p className="font-bold">No links found.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    const renderOrdersView = () => (
         <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
             <div className="px-6 mb-6">
                 <h2 className="text-2xl font-black italic tracking-tighter uppercase">My Orders</h2>
@@ -179,21 +701,29 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
 
             {/* Order Status Tabs */}
             <div className="px-6 mb-6">
-                <div className={`p-1 rounded-xl flex ${isDarkMode ? 'bg-zinc-900' : 'bg-gray-200'}`}>
-                    {[
-                        { id: 'ongoing', label: 'Ongoing', icon: Clock },
-                        { id: 'completed', label: 'Completed', icon: CheckCircle2 },
-                        { id: 'disputed', label: 'Disputed', icon: AlertTriangle }
-                    ].map((tab) => (
+                <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border mb-4 ${theme.card}`}>
+                    <Search size={18} className={theme.textMuted} />
+                    <input
+                        type="text"
+                        placeholder="Search orders by ID or Product Name"
+                        value={ordersSearchTerm}
+                        onChange={(e) => setOrdersSearchTerm(e.target.value)}
+                        className={`flex-1 bg-transparent outline-none text-sm font-bold ${isDarkMode ? 'text-white placeholder:text-zinc-600' : 'text-black placeholder:text-gray-400'}`}
+                    />
+                </div>
+
+                {/* Tabs */}
+                <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                    {['ongoing', 'completed', 'disputed'].map((status) => (
                         <button
-                            key={tab.id}
-                            onClick={() => setOrdersFilter(tab.id as any)}
-                            className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${ordersFilter === tab.id
-                                ? theme.activeTab
-                                : `${theme.textMuted} hover:text-gray-600`
+                            key={status}
+                            onClick={() => setOrdersFilter(status as any)}
+                            className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wide transition-colors whitespace-nowrap ${ordersFilter === status
+                                ? 'bg-yellow-500 text-black'
+                                : `${isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-gray-100 text-gray-500'}`
                                 }`}
                         >
-                            <tab.icon size={14} /> {tab.label}
+                            {status}
                         </button>
                     ))}
                 </div>
@@ -202,40 +732,40 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
             <div className="px-6 space-y-4">
                 {filteredOrders.length > 0 ? (
                     filteredOrders.map(order => (
-                        <div key={order.id} className={`p-4 rounded-2xl border ${theme.card}`}>
-                            <div className="flex justify-between items-start mb-3">
-                                <div className="flex gap-3">
-                                    <div className="h-10 w-10 bg-gray-100 rounded-lg overflow-hidden">
-                                        <div className="h-full w-full bg-slate-200" /> {/* Placeholder Image */}
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-sm">Order #...{order.id.slice(-4)}</p>
-                                        <p className={`text-[10px] uppercase font-bold ${theme.textMuted}`}>{order.items[0]?.product?.name || 'Item'}</p>
-                                    </div>
+                        <div key={order.id} className={`p-4 rounded-[2rem] border ${theme.card}`}>
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <p className="font-black text-xs uppercase text-zinc-400 mb-1">Order #{order.id.slice(0, 8)}</p>
+                                    <p className="font-black text-sm">KES {order.total.toLocaleString()}</p>
                                 </div>
-                                <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                                    order.status === 'processing' ? 'bg-blue-100 text-blue-700' :
-                                        'bg-yellow-100 text-yellow-700'
+                                <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase ${order.status === 'completed' ? 'bg-green-500/10 text-green-500' :
+                                    (order.status as string) === 'disputed' ? 'bg-red-500/10 text-red-500' :
+                                        'bg-yellow-500/10 text-yellow-600'
                                     }`}>
                                     {order.status}
                                 </span>
                             </div>
-                            <div className="flex justify-between items-end border-t border-gray-100 pt-3">
-                                <div>
-                                    <p className={`text-[9px] font-bold uppercase ${theme.textMuted}`}>Customer</p>
-                                    <p className="text-xs font-bold">{order.customerId.slice(0, 8)}...</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className={`text-[9px] font-bold uppercase ${theme.textMuted}`}>Total</p>
-                                    <p className="text-sm font-black">KES {order.total?.toLocaleString()}</p>
-                                </div>
+                            {/* Items */}
+                            <div className="space-y-2 mb-4">
+                                {order.items.map((item, i) => (
+                                    <div key={i} className="flex items-center gap-3">
+                                        <div className="h-10 w-10 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                            {item.product?.mediaUrl ? <img src={item.product.mediaUrl} className="w-full h-full object-cover" /> : <Package size={20} className="m-2 text-zinc-300" />}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold line-clamp-1">{item.product?.name || 'Product'}</p>
+                                            <p className="text-[10px] text-zinc-400">Qty: {item.quantity}</p>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
+                            <p className="text-[10px] text-zinc-400 text-right">{new Date(order.createdAt).toLocaleDateString()}</p>
                         </div>
                     ))
                 ) : (
                     <div className="text-center py-12 opacity-50">
-                        <Package size={48} className="mx-auto mb-4 text-gray-300" />
-                        <p className="font-bold text-gray-400">No {ordersFilter} orders found.</p>
+                        <ShoppingBag size={48} className="mx-auto mb-4 text-zinc-300" />
+                        <p className="font-bold">No {ordersFilter} orders found.</p>
                     </div>
                 )}
             </div>
@@ -243,57 +773,33 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     );
 
     const InsightsView = () => {
-        // Calculate dynamic trends for the last 7 days
-        const getLast7DaysRevenue = () => {
-            const days = Array(7).fill(0);
-            const today = new Date();
+        // Mock Data for Charts (Placeholders)
+        const revenueTrend = [
+            { day: 'Mon', revenue: 0, height: 10 },
+            { day: 'Tue', revenue: 0, height: 25 },
+            { day: 'Wed', revenue: 0, height: 15 },
+            { day: 'Thu', revenue: 0, height: 45 },
+            { day: 'Fri', revenue: 0, height: 30 },
+            { day: 'Sat', revenue: 0, height: 60 },
+            { day: 'Sun', revenue: 0, height: 20 },
+        ];
 
-            safeOrders.forEach(order => {
-                const orderDate = new Date(order.createdAt);
-                const diffTime = Math.abs(today.getTime() - orderDate.getTime());
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                if (diffDays <= 7 && diffDays > 0) {
-                    days[7 - diffDays] += order.total; // Map to the last 7 days array
-                }
-            });
-
-            // Normalize for visual graph (max height 100%)
-            const maxVal = Math.max(...days, 1); // Avoid div by zero
-            return days.map((val, i) => ({
-                day: new Date(today.getTime() - ((6 - i) * 24 * 60 * 60 * 1000)).toLocaleDateString('en-US', { weekday: 'narrow' }),
-                revenue: val,
-                height: val === 0 ? 5 : Math.floor((val / maxVal) * 100)
-            }));
-        };
-
-        const revenueTrend = getLast7DaysRevenue();
-
-        // Simulate Channel Stats based on actual totals but fixed distribution logic 
-        // (Since we don't have explicit referrer data yet, we model a standard distribution curve applied to REAL totals)
-        const channelStats = totalSettled > 0 ? [
-            { name: 'Web Store', icon: Globe, trafficShare: 45, revenue: Math.floor(totalSettled * 0.45), conversion: 2.4, bg: 'bg-violet-500/10', text: 'text-violet-500', barColor: 'bg-violet-500' },
-            { name: 'WhatsApp', icon: MessageCircle, trafficShare: 30, revenue: Math.floor(totalSettled * 0.35), conversion: 1.8, bg: 'bg-[#25D366]/10', text: 'text-[#25D366]', barColor: 'bg-[#25D366]' },
-            { name: 'Instagram', icon: Instagram, trafficShare: 15, revenue: Math.floor(totalSettled * 0.15), conversion: 1.2, bg: 'bg-[#E1306C]/10', text: 'text-[#E1306C]', barColor: 'bg-[#E1306C]' },
-            { name: 'TikTok', icon: Music, trafficShare: 10, revenue: Math.floor(totalSettled * 0.05), conversion: 0.8, bg: 'bg-black/10 dark:bg-white/10', text: 'text-black dark:text-white', barColor: 'bg-black dark:bg-white' },
-        ] : [
-            // Zero state placeholders
-            { name: 'Web Store', icon: Globe, trafficShare: 0, revenue: 0, conversion: 0, bg: 'bg-violet-500/10', text: 'text-violet-500', barColor: 'bg-violet-500' },
-            { name: 'WhatsApp', icon: MessageCircle, trafficShare: 0, revenue: 0, conversion: 0, bg: 'bg-[#25D366]/10', text: 'text-[#25D366]', barColor: 'bg-[#25D366]' },
-            { name: 'Instagram', icon: Instagram, trafficShare: 0, revenue: 0, conversion: 0, bg: 'bg-[#E1306C]/10', text: 'text-[#E1306C]', barColor: 'bg-[#E1306C]' },
-            { name: 'TikTok', icon: Music, trafficShare: 0, revenue: 0, conversion: 0, bg: 'bg-black/10 dark:bg-white/10', text: 'text-black dark:text-white', barColor: 'bg-black dark:bg-white' },
+        const channelStats = [
+            { name: 'WhatsApp', trafficShare: 65, revenue: 0, conversion: 0, bg: 'bg-green-500/10', text: 'text-green-500', barColor: 'bg-green-500', icon: MessageCircle },
+            { name: 'Instagram', trafficShare: 25, revenue: 0, conversion: 0, bg: 'bg-pink-500/10', text: 'text-pink-500', barColor: 'bg-pink-500', icon: Instagram },
+            { name: 'Direct', trafficShare: 10, revenue: 0, conversion: 0, bg: 'bg-blue-500/10', text: 'text-blue-500', barColor: 'bg-blue-500', icon: Globe },
         ];
 
         return (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
                 <div className="px-6 mb-6">
-                    <h2 className="text-2xl font-black italic tracking-tighter uppercase">Insights Pulse</h2>
-                    <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Real-time Merchant Performance</p>
+                    <h2 className="text-2xl font-black italic tracking-tighter uppercase">Pulse Insights</h2>
+                    <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Store Analytics & Growth</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 px-6 mb-6">
+                <div className="grid grid-cols-2 gap-4 px-6 mb-6">
                     <div className={`p-4 rounded-[2rem] border ${theme.card}`}>
-                        <div className="bg-yellow-500/10 text-yellow-500 h-8 w-8 rounded-lg flex items-center justify-center mb-3">
+                        <div className="bg-blue-500/10 text-blue-500 h-8 w-8 rounded-lg flex items-center justify-center mb-3">
                             <MousePointer2 size={16} />
                         </div>
                         <p className={`text-[9px] font-black uppercase tracking-widest ${theme.textMuted}`}>Total Clicks</p>
@@ -432,6 +938,8 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
         );
     };
 
+
+
     const HomeView = () => (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 px-6">
@@ -458,53 +966,68 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                <div className="flex flex-col gap-4">
+                            <div className="grid grid-cols-4 md:grid-cols-5 gap-4">
+                                <div className="flex flex-col gap-4 col-span-2 md:col-span-2">
                                     <div
                                         onClick={() => { setActiveView('orders'); setOrdersFilter('ongoing'); }}
-                                        className={`rounded-2xl p-3 border flex-1 cursor-pointer hover:scale-[1.05] active:scale-95 transition-all duration-300 group ${theme.subCard}`}
+                                        className={`rounded-2xl p-3 border flex-1 cursor-pointer transition-all duration-300 group ${theme.subCard}`}
                                     >
-                                        <p className={`text-[10px] font-bold uppercase mb-1 flex items-center gap-1 ${theme.textMuted}`}>
+                                        <p className={`text-[10px] font-black uppercase mb-1 flex items-center gap-1 ${isDarkMode ? 'text-white' : 'text-black'} group-hover:text-yellow-600 transition-colors`}>
                                             <ShieldCheck size={10} className="text-yellow-500 group-hover:rotate-12 transition-transform" /> Secure Hold
                                         </p>
                                         <p className="font-black text-sm group-hover:text-yellow-500 transition-colors">KES {secureHold.toLocaleString()}</p>
                                     </div>
-                                    <div className={`rounded-2xl p-3 border flex-1 cursor-pointer hover:scale-[1.05] active:scale-95 transition-all duration-300 group ${theme.subCard}`}>
-                                        <p className={`text-[10px] font-bold uppercase mb-1 ${theme.textMuted}`}>Avg. Settlement</p>
+                                    <div className={`rounded-2xl p-3 border flex-1 cursor-pointer transition-all duration-300 group ${theme.subCard}`}>
+                                        <p className={`text-[10px] font-black uppercase mb-1 ${isDarkMode ? 'text-white' : 'text-black'} group-hover:text-yellow-600 transition-colors`}>Avg. Settlement</p>
                                         <p className="font-black text-sm text-yellow-500 group-hover:text-green-500 transition-colors">Instant</p>
                                     </div>
                                 </div>
                                 {/* Performance Card: Channels & Links */}
-                                <div className={`border md:col-span-2 rounded-2xl px-3 py-3 flex flex-col justify-between ${theme.subCard}`}>
+                                <div className={`border col-span-2 md:col-span-3 rounded-2xl px-3 py-3 flex flex-col justify-between ${theme.subCard}`}>
                                     {/* Top Product Links Section (Priority) */}
                                     <div
                                         onClick={() => { setActiveView('home'); setActiveTab('Products'); }}
-                                        className="cursor-pointer group mb-3"
+                                        className="cursor-pointer group mb-1.5"
                                     >
-                                        <p className={`text-[9px] font-bold uppercase mb-2 ${theme.textMuted} group-hover:text-yellow-500 transition-colors`}>Top 3 Product Links</p>
-                                        <div className="space-y-2">
+                                        <p className={`text-[10px] font-black uppercase mb-1 ${isDarkMode ? 'text-white' : 'text-black'} group-hover:text-yellow-600 transition-colors`}>Top 3 Checkout Links</p>
+                                        <div className="space-y-0.5">
                                             {links.slice().sort((a, b) => (b.sales || 0) - (a.sales || 0)).slice(0, 3).map((link, i) => (
-                                                <div key={link.id || i} className="flex items-center gap-3">
-                                                    <div className="h-8 w-8 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                                                        <img src={link.img} alt={link.name} className="h-full w-full object-cover" />
+                                                <div key={link.id || i} className="flex items-center gap-2 py-1 border-b border-gray-100 dark:border-zinc-800/50 last:border-0 pl-0.5">
+                                                    {/* Image Container - Compact */}
+                                                    <div className="h-9 w-9 bg-white rounded-md overflow-hidden flex-shrink-0 border border-gray-200 flex items-center justify-center">
+                                                        <img src={link.img} alt={link.name} className="max-w-full max-h-full object-contain" />
                                                     </div>
-                                                    <div className="flex-1 min-w-0 flex justify-between items-center bg-gray-50/50 dark:bg-zinc-800/50 p-1.5 rounded-lg group-hover:bg-yellow-500/10 transition-colors">
-                                                        <div className="min-w-0">
-                                                            <p className="font-bold text-[10px] truncate max-w-[80px]">{link.name}</p>
+
+                                                    {/* Layout: Ultra Compact */}
+                                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                                        {/* Title - 2 Lines allowed */}
+                                                        <p className={`font-bold text-[10px] leading-3 line-clamp-2 mb-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>{link.name}</p>
+
+                                                        {/* Price & Share Row */}
+                                                        <div className="flex items-center justify-between">
+                                                            <p className={`font-black text-[10px] tracking-tight ${isDarkMode ? 'text-white' : 'text-black'}`}>KES {link.price?.toLocaleString()}</p>
+
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const productUrl = `${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}/${slugify(link.name)}`;
-                                                                    navigator.clipboard.writeText(`https://${productUrl}`);
-                                                                    setShowCopyToast(true);
-                                                                    setTimeout(() => setShowCopyToast(false), 2000);
+                                                                    if (navigator.share) {
+                                                                        navigator.share({
+                                                                            title: link.name,
+                                                                            text: `Check out ${link.name} for KES ${link.price}`,
+                                                                            url: `${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}/${slugify(link.name)}`
+                                                                        }).catch(err => console.log('Share dismissed', err));
+                                                                    } else {
+                                                                        const productUrl = `${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}/${slugify(link.name)}`;
+                                                                        navigator.clipboard.writeText(`${window.location.protocol}//${productUrl}`);
+                                                                        setShowCopyToast(true);
+                                                                        setTimeout(() => setShowCopyToast(false), 2000);
+                                                                    }
                                                                 }}
-                                                                className="text-[8px] text-blue-500 hover:text-blue-600 font-bold flex items-center gap-0.5 mt-0.5"
+                                                                className="h-6 w-6 rounded-full flex items-center justify-center bg-yellow-50 dark:bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 transition-all active:scale-90 border border-yellow-200 dark:border-yellow-500/30 shadow-sm"
                                                             >
-                                                                <Share2 size={8} /> Share
+                                                                <Share2 size={12} strokeWidth={2.5} />
                                                             </button>
                                                         </div>
-                                                        <p className="text-[10px] font-black">KES {link.price?.toLocaleString()}</p>
                                                     </div>
                                                 </div>
                                             ))}
@@ -520,7 +1043,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                         className="cursor-pointer group pt-3 border-t border-dashed border-gray-200 dark:border-zinc-800"
                                     >
                                         <div className="flex items-center justify-between mb-2">
-                                            <p className={`text-[9px] font-bold uppercase ${theme.textMuted} group-hover:text-yellow-500 transition-colors`}>Top 3 Channels</p>
+                                            <p className={`text-[10px] font-black uppercase ${isDarkMode ? 'text-white' : 'text-black'} group-hover:text-yellow-600 transition-colors`}>Top 3 Channels</p>
                                         </div>
                                         <div className="flex flex-wrap items-center justify-between gap-2 px-1">
                                             {/* Dynamic Channels Display utilizing totalClicks as proxy for activity distribution */}
@@ -551,7 +1074,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                             </div>
 
 
-                            <p className={`mt-4 text-[10px] text-center font-medium ${theme.textMuted}`}>Funds settled to your M-Pesa instantly after delivery.</p>
+                            <p className={`mt-4 text-[10px] text-center font-medium text-green-600`}>Funds settled to your M-Pesa instantly after delivery.</p>
                         </div>
                     </section>
 
@@ -560,10 +1083,20 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         <h3 className={`text-xs font-black uppercase tracking-widest mb-4 ${theme.textMuted}`}>Quick Actions</h3>
                         <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
                             {[
-                                { icon: <Camera />, label: 'Smart Snap', color: isDarkMode ? 'text-zinc-400' : 'text-gray-400', action: () => setShowSmartScan(true) },
-                                { icon: <Plus />, label: 'Manual Add', color: isDarkMode ? 'text-zinc-400' : 'text-gray-400', action: () => setShowAddProduct(true) },
-                                { icon: <QrCode />, label: 'Bio Link', color: isDarkMode ? 'text-zinc-400' : 'text-gray-400', action: () => setShowQRLink(true) },
-                                { icon: <ShoppingBag />, label: 'Orders', color: isDarkMode ? 'text-zinc-400' : 'text-gray-400', action: () => setActiveView('orders') }
+                                {
+                                    icon: (
+                                        <div className="relative">
+                                            <Camera />
+                                            <Sparkles size={14} className="absolute -top-2 -right-2 fill-current animate-pulse" />
+                                        </div>
+                                    ),
+                                    label: 'AI Snap',
+                                    color: 'text-yellow-500',
+                                    action: () => handleAiSnap()
+                                },
+                                { icon: <Plus />, label: 'Manual Add', color: 'text-blue-500', action: () => handleManualAdd() },
+                                { icon: <QrCode />, label: 'Bio Link', color: isDarkMode ? 'text-white' : 'text-black', action: () => setShowQRLink(true) },
+                                { icon: <ShoppingBag />, label: 'Orders', color: 'text-orange-500', action: () => setActiveView('orders') }
                             ].map((item, i) => (
                                 <button key={i} onClick={item.action} className="flex-shrink-0 flex flex-col items-center gap-3">
                                     <div className={`h-16 w-16 md:h-20 md:w-20 rounded-3xl flex items-center justify-center border shadow-xl active:scale-95 transition-transform ${theme.card}`}>
@@ -610,6 +1143,18 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                             ))}
                         </div>
 
+                        {/* Compact See All Button (Right under tabs) */}
+                        {activeTab === 'Products' && safeLinks.length > 0 && (
+                            <div className="flex justify-end px-2 mb-4">
+                                <button
+                                    onClick={() => setActiveView('links')}
+                                    className="text-[10px] font-black uppercase tracking-widest text-blue-500 hover:text-blue-600 flex items-center gap-1 active:scale-95 transition-transform"
+                                >
+                                    See All Links <ChevronRight size={12} />
+                                </button>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Filter Links: For now we show all links under 'Products', others empty */}
                             {activeTab === 'Products' && safeLinks.length === 0 && !isLoading && (
@@ -617,10 +1162,10 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                     <p className="text-sm font-bold">No checkout links yet.</p>
                                 </div>
                             )}
-                            {activeTab === 'Products' && safeLinks.map((item) => (
+                            {activeTab === 'Products' && safeLinks.slice(0, 5).map((item) => (
                                 <div key={item.id} className={`border p-4 rounded-[2.2rem] flex items-center gap-4 transition-colors group ${theme.card}`}>
                                     <div className={`h-16 w-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner group-hover:scale-105 transition-transform overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}>
-                                        {item.img ? <img src={item.img} alt={item.name} className="w-full h-full object-cover" /> : <Package size={24} />}
+                                        {item.img ? <img src={item.img} alt={item.name} className="w-full h-full object-contain p-1" /> : <Package size={24} />}
                                     </div>
 
                                     <div className="flex-1 overflow-hidden">
@@ -629,19 +1174,19 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
 
                                         <div className="flex items-center gap-3 mt-2 grid grid-cols-4">
                                             <div className="flex flex-col items-center gap-0.5">
-                                                <Eye size={10} className={theme.textMuted} />
+                                                <Eye size={10} className="text-blue-500" />
                                                 <span className={`text-[9px] font-bold ${theme.textMuted}`}>{item.views || 0}</span>
                                             </div>
                                             <div className="flex flex-col items-center gap-0.5">
-                                                <MousePointer2 size={10} className={theme.textMuted} />
+                                                <MousePointer2 size={10} className="text-violet-500" />
                                                 <span className={`text-[9px] font-bold ${theme.textMuted}`}>{item.clicks || 0}</span>
                                             </div>
                                             <div className="flex flex-col items-center gap-0.5">
-                                                <ShoppingBag size={10} className={theme.textMuted} />
+                                                <ShoppingBag size={10} className="text-orange-500" />
                                                 <span className={`text-[9px] font-bold ${theme.textMuted}`}>{item.sales || 0}</span>
                                             </div>
                                             <div className="flex flex-col items-center gap-0.5">
-                                                <Zap size={10} className={theme.textMuted} />
+                                                <Zap size={10} className="text-green-500" />
                                                 <span className={`text-[9px] font-bold ${theme.textMuted}`}>
                                                     {item.clicks > 0 ? ((item.sales / item.clicks) * 100).toFixed(0) : 0}%
                                                 </span>
@@ -650,15 +1195,48 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                     </div>
 
                                     <div className="flex flex-col gap-2">
-                                        <button onClick={handleCopy} className={`h-10 w-10 rounded-xl flex items-center justify-center text-yellow-500 transition-all active:scale-90 ${theme.btnGhost} hover:bg-yellow-500 hover:text-black`}>
-                                            <Copy size={16} />
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                // Pre-fill modal with product data for editing
+                                                setAddProductInitialData(item);
+                                                setShowAddProduct(true);
+                                            }}
+                                            className={`h-10 w-10 rounded-xl flex items-center justify-center text-blue-500 transition-all active:scale-90 ${theme.btnGhost} hover:bg-blue-50 dark:hover:bg-blue-500/10`}
+                                        >
+                                            <Pencil size={16} />
                                         </button>
-                                        <button className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all active:scale-90 ${theme.btnGhost} ${theme.textMuted} hover:text-yellow-500`}>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                // Handle Web Share
+                                                if (navigator.share) {
+                                                    navigator.share({
+                                                        title: item.name,
+                                                        text: `Buy ${item.name} for KES ${item.price}`,
+                                                        url: `${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}/${slugify(item.name)}`
+                                                    }).catch(err => console.log('Share dismissed', err));
+                                                } else {
+                                                    // Fallback to clipboard
+                                                    handleCopy();
+                                                }
+                                            }}
+                                            className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all active:scale-90 ${theme.btnGhost} ${theme.textMuted} hover:text-yellow-500`}
+                                        >
                                             <Share2 size={16} />
                                         </button>
                                     </div>
                                 </div>
                             ))}
+
+                            {activeTab === 'Products' && safeLinks.length > 5 && (
+                                <button
+                                    onClick={() => setActiveView('links')}
+                                    className="col-span-full py-4 text-xs font-black uppercase tracking-widest text-yellow-600 hover:text-yellow-500 transition-colors"
+                                >
+                                    See All Links ({safeLinks.length})
+                                </button>
+                            )}
 
                             {/* Fallback for other tabs */}
                             {activeTab !== 'Products' && (
@@ -745,6 +1323,180 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
         </div>
     );
 
+    // Read-only view for settlement
+    const renderSettlement = () => (
+        <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
+            <div className="px-6 mb-6">
+                <button onClick={() => setActiveView('menu')} className="flex items-center gap-2 text-zinc-500 mb-4">
+                    <ChevronLeft size={16} /> <span className="text-xs font-bold uppercase">Back to Menu</span>
+                </button>
+                <h2 className="text-2xl font-black italic tracking-tighter uppercase">Settlement</h2>
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Active Payment Method</p>
+            </div>
+
+            <div className="px-6">
+                <div className={`p-8 rounded-[2.5rem] border flex flex-col items-center text-center gap-4 ${theme.card}`}>
+                    <div className="h-20 w-20 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center mb-2">
+                        <CreditCard size={40} />
+                    </div>
+
+                    <h3 className="text-xl font-bold">Active Account</h3>
+
+                    {user?.mpesaType === 'personal' && (
+                        <div>
+                            <p className="text-xs font-bold uppercase opacity-50 mb-1">M-Pesa Personal</p>
+                            <p className="text-2xl font-black tracking-tight">{user?.mpesaNumber || 'Not Set'}</p>
+                        </div>
+                    )}
+
+                    {user?.mpesaType === 'till' && (
+                        <div>
+                            <p className="text-xs font-bold uppercase opacity-50 mb-1">Buy Goods Till</p>
+                            <p className="text-2xl font-black tracking-tight">{user?.tillNumber || 'Not Set'}</p>
+                        </div>
+                    )}
+
+                    {user?.mpesaType === 'paybill' && (
+                        <div>
+                            <p className="text-xs font-bold uppercase opacity-50 mb-1">Paybill</p>
+                            <p className="text-2xl font-black tracking-tight mb-2">{user?.paybillNumber || 'Not Set'}</p>
+                            <p className="text-sm font-bold bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full">Acc: {user?.accountNumber}</p>
+                        </div>
+                    )}
+
+                    {!user?.mpesaType && <p className="text-red-500 font-bold">No payment method configured.</p>}
+
+                    <button onClick={() => {
+                        setScrollToSettlement(true);
+                        setActiveView('profile');
+                    }} className="mt-8 text-xs font-black uppercase text-blue-500 hover:underline">
+                        Change Settlement Method
+                    </button>
+                </div>
+
+                <p className="text-center text-[10px] text-zinc-500 mt-6 px-10">
+                    Funds are automatically settled to this account instantly upon order completion.
+                </p>
+            </div>
+        </div>
+    );
+
+    const handleVerificationUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !user?.id) return;
+
+        setVerificationUploading(true);
+        try {
+            const fileRef = ref(storage, `verification/${user.id}/${Date.now()}_${file.name}`);
+            await uploadBytes(fileRef, file);
+            const url = await getDownloadURL(fileRef);
+
+            // @ts-ignore
+            await updateUser({ verificationDoc: url });
+        } catch (error) {
+            console.error("Verification upload failed", error);
+        } finally {
+            setVerificationUploading(false);
+        }
+    };
+
+    const renderVerification = () => (
+        <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
+            <div className="px-6 mb-6">
+                <button onClick={() => setActiveView('menu')} className="flex items-center gap-2 text-zinc-500 mb-4">
+                    <ChevronLeft size={16} /> <span className="text-xs font-bold uppercase">Back to Menu</span>
+                </button>
+                <h2 className="text-2xl font-black italic tracking-tighter uppercase">Identity</h2>
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Tier 2 Verification</p>
+            </div>
+
+            <div className="px-6 space-y-6">
+                <div className={`p-6 rounded-[2rem] border ${theme.card}`}>
+                    <div className="flex items-center justify-between mb-4">
+                        <span className="text-xs font-bold uppercase opacity-50">Current Status</span>
+                        <span className="px-3 py-1 rounded-full bg-green-500 text-black font-bold text-[10px] uppercase">Verified Merchant</span>
+                    </div>
+                    <div className="h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                        <div className="h-full w-full bg-green-500"></div>
+                    </div>
+                    <p className="mt-4 text-xs font-bold">You have full access to all seller features.</p>
+                </div>
+
+                <div className={`p-6 rounded-[2rem] border opacity-80 ${theme.subCard}`}>
+                    <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <FileText size={14} /> Documents
+                    </h3>
+
+                    <label className={`w-full border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-6 flex flex-col items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer ${verificationUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <input type="file" hidden accept="image/*,.pdf" onChange={handleVerificationUpload} />
+                        {verificationUploading ? (
+                            <div className="animate-spin h-6 w-6 border-2 border-yellow-500 rounded-full border-t-transparent"></div>
+                        ) : (
+                            <Upload size={24} className="opacity-50" />
+                        )}
+                        <span className="text-xs font-bold">{verificationUploading ? 'Uploading...' : 'Update Business Permit'}</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderSettings = () => (
+        <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
+            <div className="px-6 mb-6">
+                <button onClick={() => setActiveView('menu')} className="flex items-center gap-2 text-zinc-500 mb-4">
+                    <ChevronLeft size={16} /> <span className="text-xs font-bold uppercase">Back to Menu</span>
+                </button>
+                <h2 className="text-2xl font-black italic tracking-tighter uppercase">App Settings</h2>
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Preferences & Privacy</p>
+            </div>
+
+            <div className="px-6 space-y-4">
+                {/* Notifications */}
+                <div
+                    onClick={async () => {
+                        const newVal = !notificationsEnabled;
+                        setNotificationsEnabled(newVal);
+                        try {
+                            // @ts-ignore
+                            await updateUser({ notificationsEnabled: newVal });
+                        } catch (e) { console.error(e); }
+                    }}
+                    className={`p-4 rounded-3xl border flex items-center justify-between cursor-pointer ${theme.card}`}
+                >
+                    <div className="flex items-center gap-3">
+                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${theme.pill}`}>
+                            <Bell size={18} />
+                        </div>
+                        <div>
+                            <p className="font-bold text-sm">Push Notifications</p>
+                            <p className="text-[10px] opacity-50">Orders & Messages</p>
+                        </div>
+                    </div>
+                    <div className={`w-10 h-6 rounded-full relative transition-colors ${notificationsEnabled ? 'bg-green-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}>
+                        <div className={`absolute top-1 h-4 w-4 bg-white rounded-full shadow-sm transition-all ${notificationsEnabled ? 'right-1' : 'left-1'}`}></div>
+                    </div>
+                </div>
+
+                {/* Theme Mode */}
+                <div onClick={() => setIsDarkMode(!isDarkMode)} className={`p-4 rounded-3xl border flex items-center justify-between cursor-pointer ${theme.card}`}>
+                    <div className="flex items-center gap-3">
+                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${theme.pill}`}>
+                            {isDarkMode ? <Moon size={18} /> : <Sun size={18} />}
+                        </div>
+                        <div>
+                            <p className="font-bold text-sm">Appearance</p>
+                            <p className="text-[10px] opacity-50">{isDarkMode ? 'Dark Mode On' : 'Light Mode On'}</p>
+                        </div>
+                    </div>
+                    <div className={`w-10 h-6 rounded-full relative transition-colors ${isDarkMode ? 'bg-yellow-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}>
+                        <div className={`absolute top-1 h-4 w-4 bg-white rounded-full shadow-sm transition-all ${isDarkMode ? 'right-1' : 'left-1'}`}></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
     const MenuView = () => (
         <div className="px-6 pb-32 lg:pb-12 animate-in fade-in duration-300 max-w-2xl mx-auto">
             <div className="flex flex-col items-center mt-4 mb-8 text-center">
@@ -761,38 +1513,55 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
             </div>
 
             <div className="space-y-3">
-                {/* LIGHT MODE TOGGLE */}
-                <div className={`w-full p-4 rounded-3xl border flex items-center gap-4 ${theme.card}`}>
-                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${isDarkMode ? 'bg-zinc-800 text-yellow-500' : 'bg-gray-100 text-blue-500'}`}>
-                        {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
+                {/* MENU ITEMS */}
+                <button
+                    onClick={() => setActiveView('profile')}
+                    className={`w-full border p-4 rounded-3xl flex items-center gap-4 text-left active:scale-95 transition-transform ${theme.card}`}
+                >
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${theme.pill} text-zinc-400`}><UserIcon /></div>
+                    <div className="flex-1">
+                        <p className="text-sm font-bold">Merchant Profile</p>
+                        <p className={`text-[10px] ${theme.textMuted}`}>Edit bio, contact & social links</p>
                     </div>
-                    <div className="flex-1 text-left">
-                        <p className="text-sm font-bold">{isDarkMode ? 'Dark Mode' : 'Light Mode'}</p>
-                        <p className={`text-[10px] ${theme.textMuted}`}>{isDarkMode ? 'Easier on the eyes' : 'Maximum visibility'}</p>
-                    </div>
-                    <button
-                        onClick={() => setIsDarkMode(!isDarkMode)}
-                        className={`w-12 h-6 rounded-full relative transition-all border-2 ${isDarkMode ? 'bg-yellow-500 border-yellow-600' : 'bg-gray-200 border-gray-300'}`}
-                    >
-                        <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-all ${isDarkMode ? 'left-6' : 'left-0.5'}`}></div>
-                    </button>
-                </div>
+                    <ChevronRight className={theme.textMuted} size={18} />
+                </button>
 
-                {[
-                    { icon: <UserIcon />, title: 'Merchant Profile', desc: 'Edit your bio & location' },
-                    { icon: <CreditCard />, title: 'Settlement Account', desc: 'M-Pesa or Bank Details' },
-                    { icon: <ShieldCheck />, title: 'Identity Verification', desc: 'Level 2: Verified' },
-                    { icon: <Settings />, title: 'App Settings', desc: 'Notifications & Privacy' },
-                ].map((item, i) => (
-                    <button key={i} className={`w-full border p-4 rounded-3xl flex items-center gap-4 text-left active:scale-95 transition-transform ${theme.card}`}>
-                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${theme.pill} text-zinc-400`}>{item.icon}</div>
-                        <div className="flex-1">
-                            <p className="text-sm font-bold">{item.title}</p>
-                            <p className={`text-[10px] ${theme.textMuted}`}>{item.desc}</p>
-                        </div>
-                        <ChevronRight className={theme.textMuted} size={18} />
-                    </button>
-                ))}
+                <button
+                    onClick={() => setActiveView('settlement')}
+                    className={`w-full border p-4 rounded-3xl flex items-center gap-4 text-left active:scale-95 transition-transform ${theme.card}`}
+                >
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${theme.pill} text-zinc-400`}><CreditCard /></div>
+                    <div className="flex-1">
+                        <p className="text-sm font-bold">Settlement Account</p>
+                        <p className={`text-[10px] ${theme.textMuted}`}>View active payment method</p>
+                    </div>
+                    <ChevronRight className={theme.textMuted} size={18} />
+                </button>
+
+                <button
+                    onClick={() => setActiveView('identity')}
+                    className={`w-full border p-4 rounded-3xl flex items-center gap-4 text-left active:scale-95 transition-transform ${theme.card}`}
+                >
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${theme.pill} text-zinc-400`}><ShieldCheck /></div>
+                    <div className="flex-1">
+                        <p className="text-sm font-bold">Identity Verification</p>
+                        <p className={`text-[10px] ${theme.textMuted}`}>Level 2: Verified</p>
+                    </div>
+                    <ChevronRight className={theme.textMuted} size={18} />
+                </button>
+
+                <button
+                    onClick={() => setActiveView('settings')}
+                    className={`w-full border p-4 rounded-3xl flex items-center gap-4 text-left active:scale-95 transition-transform ${theme.card}`}
+                >
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${theme.pill} text-zinc-400`}><Settings /></div>
+                    <div className="flex-1">
+                        <p className="text-sm font-bold">App Settings</p>
+                        <p className={`text-[10px] ${theme.textMuted}`}>Notifications & Privacy</p>
+                    </div>
+                    <ChevronRight className={theme.textMuted} size={18} />
+                </button>
+
                 <button
                     onClick={() => {
                         logout();
@@ -833,6 +1602,38 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                 shopUrl={`${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}`}
             />
 
+            {/* Verification Prompt Modal */}
+            {showVerificationPrompt && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className={`w-full max-w-sm rounded-[2rem] p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-300 ${theme.bg} border-zinc-200 dark:border-zinc-800 border`}>
+                        <div className="h-12 w-12 rounded-full bg-yellow-500/10 text-yellow-500 flex items-center justify-center mb-4 mx-auto">
+                            <ShieldCheck size={24} />
+                        </div>
+                        <h3 className="text-xl font-black text-center mb-2 uppercase tracking-tight">Complete Setup</h3>
+                        <p className={`text-center text-sm mb-6 ${theme.textMuted}`}>
+                            You must complete your business profile setup to start generating smart checkout links.
+                        </p>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowVerificationPrompt(false);
+                                    setActiveView('profile');
+                                }}
+                                className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-xl active:scale-95 transition-all text-sm uppercase tracking-wide"
+                            >
+                                Get Verified Now
+                            </button>
+                            <button
+                                onClick={() => setShowVerificationPrompt(false)}
+                                className={`w-full py-3 font-bold rounded-xl active:scale-95 transition-all text-sm ${theme.btnGhost}`}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Sidebar - Desktop Only */}
             <aside className={`hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r z-50 transition-colors ${theme.sidebar}`}>
                 <div className="p-8">
@@ -849,6 +1650,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                 <nav className="flex-1 px-4 space-y-2">
                     {[
                         { id: 'home', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
+                        { id: 'links', icon: <Link size={20} />, label: 'Links' },
                         { id: 'orders', icon: <ShoppingBag size={20} />, label: 'Orders' },
                         { id: 'insights', icon: <BarChart3 size={20} />, label: 'Pulse Insights' },
                         { id: 'menu', icon: <Settings size={20} />, label: 'Settings' },
@@ -944,9 +1746,14 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                 {/* Main View Router */}
                 <main className="pt-2 pb-24 lg:pb-12 lg:px-6">
                     {activeView === 'home' && <HomeView />}
+                    {activeView === 'links' && renderLinksView()}
                     {activeView === 'insights' && <InsightsView />}
                     {activeView === 'menu' && <MenuView />}
-                    {activeView === 'orders' && <OrdersView />}
+                    {activeView === 'orders' && renderOrdersView()}
+                    {activeView === 'profile' && <MerchantProfileView user={user} theme={theme} isDarkMode={isDarkMode} setActiveView={setActiveView} scrollToSettlement={scrollToSettlement} />}
+                    {activeView === 'settlement' && renderSettlement()}
+                    {activeView === 'identity' && renderVerification()}
+                    {activeView === 'settings' && renderSettings()}
                 </main>
 
                 {/* Bottom Navigation - Mobile Only */}
@@ -963,6 +1770,32 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         </button>
 
                         <button
+                            onClick={() => setActiveView('links')}
+                            className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'links' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
+                        >
+                            <div className={`p-2 rounded-2xl ${activeView === 'links' ? 'bg-yellow-500/10' : ''}`}>
+                                <Link size={22} strokeWidth={activeView === 'links' ? 3 : 2} />
+                            </div>
+                            <span className="text-[9px] font-black uppercase tracking-tighter">Links</span>
+                        </button>
+
+                        {/* Central Action Button */}
+                        <div className="relative -top-10 group">
+                            <button
+                                onClick={() => handleAiSnap()}
+                                className="h-16 w-16 bg-yellow-500 text-black rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(234,179,8,0.4)] border-4 border-black active:scale-95 transition-all hover:scale-110 relative overflow-hidden group-hover:shadow-[0_0_40px_rgba(234,179,8,0.6)]">
+                                <span className="absolute inset-0 bg-white/30 animate-[ping_2s_ease-out_infinite] rounded-full opacity-20"></span>
+                                <div className="relative z-10 transition-transform duration-300 group-hover:rotate-12 flex items-center justify-center">
+                                    <Camera size={28} strokeWidth={2.5} />
+                                    <Sparkles size={16} className="absolute -top-1 -right-2 fill-black animate-pulse" strokeWidth={2} />
+                                </div>
+                            </button>
+                            <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-widest bg-black text-white px-2 py-0.5 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                                AI Snap
+                            </span>
+                        </div>
+
+                        <button
                             onClick={() => setActiveView('orders')}
                             className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'orders' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
                         >
@@ -972,21 +1805,6 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                             <span className="text-[9px] font-black uppercase tracking-tighter">Orders</span>
                         </button>
 
-                        {/* Central Action Button */}
-                        <div className="relative -top-10 group">
-                            <button
-                                onClick={() => setShowSmartScan(true)}
-                                className="h-16 w-16 bg-yellow-500 text-black rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(234,179,8,0.4)] border-4 border-black active:scale-95 transition-all hover:scale-110 relative overflow-hidden group-hover:shadow-[0_0_40px_rgba(234,179,8,0.6)]">
-                                <span className="absolute inset-0 bg-white/30 animate-[ping_2s_ease-out_infinite] rounded-full opacity-20"></span>
-                                <div className="relative z-10 transition-transform duration-300 group-hover:rotate-12">
-                                    <Camera size={28} strokeWidth={2.5} />
-                                </div>
-                            </button>
-                            <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-widest bg-black text-white px-2 py-0.5 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                                Smart Snap
-                            </span>
-                        </div>
-
                         <button
                             onClick={() => setActiveView('insights')}
                             className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'insights' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
@@ -995,16 +1813,6 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                 <BarChart3 size={22} strokeWidth={activeView === 'insights' ? 3 : 2} />
                             </div>
                             <span className="text-[9px] font-black uppercase tracking-tighter">Insights</span>
-                        </button>
-
-                        <button
-                            onClick={() => setActiveView('menu')}
-                            className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'menu' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
-                        >
-                            <div className={`p-2 rounded-2xl ${activeView === 'menu' ? 'bg-yellow-500/10' : ''}`}>
-                                <MoreVertical size={22} strokeWidth={activeView === 'menu' ? 3 : 2} />
-                            </div>
-                            <span className="text-[9px] font-black uppercase tracking-tighter">Menu</span>
                         </button>
                     </nav>
                 </div>
