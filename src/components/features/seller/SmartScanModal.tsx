@@ -12,7 +12,7 @@ TASK: Analyze the uploaded product image and generate a high-converting sales li
 OUTPUT FORMAT: JSON
 
 REQUIREMENTS:
-1. name: Write a SEO-optimized, click-worthy title (Include Brand, Model, Key Spec, Color).
+1. name: Write a concise product title. Constraint: MAXIMUM 5 words. MUST start with the specific Product Name/Model (e.g. "Oppo A18" not "Brand New Oppo A18"). Keep it short.
 2. price: Estimate fair market value in KES (Kenyan Shilling). Return as string number (e.g. "1500").
 3. category: Classify into one of: [fashion, electronics, home, beauty, automotive].
 4. condition: Assess visual wear. One of: [new, like-new, good, fair].

@@ -54,7 +54,7 @@ export const SellerProfileView: React.FC<SellerProfileProps> = ({ seller, onBack
                 <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-slate-50 to-transparent" />
             </div>
 
-            <div className="px-6 pt-40 relative z-10 pb-20">
+            <div className="px-4 pt-40 relative z-10 pb-20">
                 {/* Profile Header */}
                 <div className="flex items-end gap-4 mb-6">
                     <div className="w-24 h-24 rounded-2xl bg-white p-[2px] shadow-xl shadow-slate-200/50">

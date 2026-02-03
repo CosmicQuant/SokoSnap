@@ -41,7 +41,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
     const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'details' | 'media' | 'settings'>('media');
 
-    const { control, handleSubmit, setValue, watch, setError, clearErrors, reset, formState: { errors } } = useForm<ProductFormData>({
+    const { control, handleSubmit, setValue, watch, setError, clearErrors, reset, trigger, formState: { errors } } = useForm<ProductFormData>({
         resolver: zodResolver(productSchema),
         defaultValues: {
             name: '',
@@ -188,6 +188,24 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
             setIsLoading(false);
             onClose();
         }, 1500);
+    };
+
+    const handleNextClick = async () => {
+        if (activeTab === 'media') {
+            if (!isMediaValid) {
+                setError('images', { type: 'manual', message: 'Please upload at least one image or video first' });
+                return;
+            }
+            clearErrors('images');
+            setActiveTab('details');
+        } else if (activeTab === 'details') {
+            const isValid = await trigger(['name', 'price', 'description', 'stock']);
+            if (isValid) {
+                setActiveTab('settings');
+            }
+        } else {
+            handleSubmit(handleFormSubmit)();
+        }
     };
 
     const getPreviewImage = () => {
@@ -504,19 +522,12 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
                             <div className={`p-6 border-t z-10 ${isDarkMode ? 'border-zinc-800 bg-zinc-900' : 'border-gray-200 bg-white'}`}>
                                 <div className="flex gap-4">
                                     <button
-                                        type="button"
-                                        onClick={onClose}
-                                        className={`px-6 py-4 rounded-full font-bold transition-colors ${isDarkMode ? 'text-gray-400 hover:bg-zinc-800' : 'text-gray-500 hover:bg-gray-100'}`}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleSubmit(handleFormSubmit)} // Trigger validation on click
+                                        onClick={handleNextClick}
                                         className="flex-1 py-4 bg-yellow-500 hover:bg-yellow-400 text-black text-sm rounded-full font-black capitalize tracking-wide hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-yellow-500/20 flex items-center justify-center gap-2"
                                     >
                                         {isLoading ? <Loader2 className="animate-spin" /> : (
                                             <>
-                                                <span>{initialData?.id ? `Edit ${type} Link` : `Generate ${type} Link`}</span>
+                                                <span>{activeTab === 'settings' ? (initialData?.id ? `Edit ${type} Link` : `Generate ${type} Link`) : 'Next'}</span>
                                                 <ChevronRight size={18} />
                                             </>
                                         )}

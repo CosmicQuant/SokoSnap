@@ -22,11 +22,9 @@ import {
     Sun,
     Moon,
     MousePointer2,
-    Eye,
     LayoutDashboard,
     ShoppingBag,
     QrCode,
-    MessageCircle, // WhatsApp
     Instagram, // Instagram
     Globe, // Web
     Camera, // AI Camera
@@ -37,7 +35,8 @@ import {
     FileText,
     MapPin,
     Upload,
-    Sparkles
+    Sparkles,
+    AlertCircle
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useSellerStore } from '../../store/sellerStore';
@@ -107,17 +106,14 @@ const MerchantProfileView = ({ user, theme, isDarkMode, setActiveView, scrollToS
 
     return (
         <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
-            <div className="px-6 mb-6">
-                <button onClick={() => setActiveView('menu')} className="flex items-center gap-2 text-zinc-500 mb-4">
-                    <ChevronLeft size={16} /> <span className="text-xs font-bold uppercase">Back to Menu</span>
-                </button>
+            <div className="px-4 mb-6">
                 <h2 className="text-2xl font-black italic tracking-tighter uppercase">Merchant Profile</h2>
                 <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Edit Business Details</p>
             </div>
 
-            <div className="px-6 space-y-6">
+            <div className="px-4 space-y-6">
                 {/* Business Details */}
-                <section className={`p-6 rounded-[2rem] border ${theme.card}`}>
+                <section className={`p-4 rounded-[2rem] border ${theme.card}`}>
                     <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
                         <Store size={14} className="text-yellow-500" /> Business Details
                     </h3>
@@ -380,27 +376,30 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     const [showAddProduct, setShowAddProduct] = useState(false);
     const [addProductInitialData, setAddProductInitialData] = useState<any>(null); // New state for pre-filling
 
-    const isProfileComplete = !!(user?.shopName && user?.shopLocation);
+    // Verification Logic
+    const isProfileComplete = !!(user?.shopName && user?.shopLocation && user?.contactPerson);
+    const isVerified = user?.isVerified === true;
+    const isVerificationPending = !!user?.verificationDoc && !isVerified;
 
-    const checkVerification = () => {
-        if (!isProfileComplete) {
-            setShowVerificationPrompt(true);
-            return false;
+    // Gating Function
+    const handleRestrictedAction = (action: () => void) => {
+        if (!isVerified) {
+            // If they click a locked feature, explain why
+            // Instead of a modal, we shake the verification card or scroll to it
+            const verificationCard = document.getElementById('verification-card');
+            if (verificationCard) {
+                verificationCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                verificationCard.classList.add('animate-pulse');
+                setTimeout(() => verificationCard.classList.remove('animate-pulse'), 1000);
+            }
+            return;
         }
-        return true;
+        action();
     };
 
-    const handleAiSnap = () => {
-        if (checkVerification()) {
-            setShowSmartScan(true);
-        }
-    };
-
-    const handleManualAdd = () => {
-        if (checkVerification()) {
-            setShowAddProduct(true);
-        }
-    };
+    const handleAiSnap = () => handleRestrictedAction(() => setShowSmartScan(true));
+    const handleManualAdd = () => handleRestrictedAction(() => setShowAddProduct(true));
+    const handleQRLink = () => handleRestrictedAction(() => setShowQRLink(true));
 
     const [showSmartScan, setShowSmartScan] = useState(false);
     const [showQRLink, setShowQRLink] = useState(false);
@@ -533,7 +532,9 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
 
     const handleShareLink = async (link: any, e: React.MouseEvent) => {
         e.stopPropagation();
-        const url = `${window.location.origin}/store/${slugify(user?.shopName || user?.name || '')}/${link.slug || link.id}`;
+        // Force use of name-based slug if regular slug is missing, instead of ID
+        const finalSlug = link.slug || slugify(link.name);
+        const url = `${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || '')}/${finalSlug}`;
 
         if (navigator.share) {
             try {
@@ -577,13 +578,26 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
 
         return (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
-                <div className="px-6 mb-6">
+                <div className="px-4 mb-6">
                     <h2 className="text-2xl font-black italic tracking-tighter uppercase">My Links</h2>
                     <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Manage Checkout Links</p>
                 </div>
 
+                <div className="px-4 mb-6">
+                    <button
+                        onClick={() => handleRestrictedAction(() => setShowAddProduct(true))}
+                        className={`w-full py-4 rounded-[1.5rem] flex items-center justify-center gap-3 font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 ${isVerified
+                            ? 'bg-yellow-500 text-black hover:bg-yellow-400'
+                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 border border-zinc-200 dark:border-zinc-700 opacity-60'
+                            }`}
+                    >
+                        {isVerified ? <Plus size={18} strokeWidth={3} /> : <ShieldCheck size={18} />}
+                        <span>{isVerified ? 'Add New Link' : 'Verification Required'}</span>
+                    </button>
+                </div>
+
                 {/* Search Bar */}
-                <div className="px-6 mb-6">
+                <div className="px-4 mb-6">
                     <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${theme.card}`}>
                         <Search size={18} className={theme.textMuted} />
                         <input
@@ -596,28 +610,24 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                     </div>
                 </div>
 
-                <div className="px-6 space-y-3">
+                <div className="px-4 space-y-3">
                     {filteredLinks.length > 0 ? (
                         filteredLinks.map(link => (
-                            <div key={link.id} className={`p-4 rounded-[2rem] border transition-all ${theme.card} ${link.status === 'archived' ? 'opacity-70' : ''}`}>
+                            <div key={link.id} className={`p-4 rounded-[2rem] border transition-all ${theme.card} ${link.status === 'archived' ? 'opacity-60' : ''}`}>
 
                                 <div className="flex gap-4">
                                     {/* Image */}
                                     <div className={`h-16 w-16 rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden border ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-100 border-gray-100'}`}>
-                                        {link.img ? <img src={link.img} className="w-full h-full object-cover" /> : <Package size={20} className={theme.textMuted} />}
+                                        {link.img ? <img src={link.img} className="w-full h-full object-cover" style={{ filter: link.status === 'archived' ? 'grayscale(100%)' : 'none' }} /> : <Package size={20} className={theme.textMuted} />}
                                     </div>
 
                                     {/* Middle Content */}
                                     <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                        <h4 className="font-bold text-sm truncate pr-2 mb-0.5">{link.name}</h4>
+                                        <h4 className={`font-bold text-sm truncate pr-2 mb-0.5 ${link.status === 'archived' ? 'line-through text-zinc-500' : ''}`}>{link.name}</h4>
                                         <p className="text-xs font-black text-yellow-500 mb-1.5">KES {link.price?.toLocaleString()}</p>
 
-                                        {/* Compact Stats Row */}
+                                        {/* Compact Stats Row (3 Items Only) */}
                                         <div className="flex items-center gap-3">
-                                            <div className="flex items-center gap-1">
-                                                <Eye size={10} className="text-blue-500" />
-                                                <span className={`text-[9px] font-bold ${theme.textMuted}`}>{link.views || 0}</span>
-                                            </div>
                                             <div className="flex items-center gap-1">
                                                 <MousePointer2 size={10} className="text-violet-500" />
                                                 <span className={`text-[9px] font-bold ${theme.textMuted}`}>{link.clicks || 0}</span>
@@ -638,26 +648,26 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                     {/* Right Actions */}
                                     <div className="flex flex-col items-end gap-2">
                                         <button
+                                            disabled={link.status === 'archived'}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 setAddProductInitialData(link);
                                                 setShowAddProduct(true);
                                             }}
-                                            className={`h-8 w-8 rounded-full flex items-center justify-center ${theme.btnGhost}`}
+                                            className={`h-8 w-8 rounded-full flex items-center justify-center ${theme.btnGhost} ${link.status === 'archived' ? 'bg-transparent text-zinc-300 pointer-events-none' : ''}`}
                                         >
-                                            <Pencil size={14} className="text-zinc-400 hover:text-blue-500" />
+                                            <Pencil size={14} className={link.status === 'archived' ? "text-zinc-600" : "text-zinc-400 hover:text-blue-500"} />
                                         </button>
 
                                         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                             <button
+                                                disabled={link.status === 'archived'}
                                                 onClick={(e) => handleShareLink(link, e)}
-                                                className="h-6 w-6 rounded-full flex items-center justify-center bg-blue-500/10 text-blue-500 mr-1 active:scale-95 transition-transform"
+                                                className={`h-6 w-6 rounded-full flex items-center justify-center mr-1 active:scale-95 transition-transform ${link.status === 'archived' ? 'bg-zinc-100 text-zinc-300 pointer-events-none dark:bg-zinc-800 dark:text-zinc-600' : 'bg-blue-500/10 text-blue-500'}`}
                                             >
                                                 <Share2 size={12} strokeWidth={3} />
                                             </button>
-                                            <span className={`text-[8px] font-bold uppercase tracking-wider ${link.status === 'active' ? 'text-green-500' : 'text-zinc-400'}`}>
-                                                {link.status === 'active' ? 'Live' : 'Hidden'}
-                                            </span>
+                                            {/* Toggle Switch Only */}
                                             <button
                                                 onClick={(e) => handleToggleLink(link, e)}
                                                 className={`h-5 w-9 rounded-full p-0.5 transition-colors flex items-center ${link.status === 'active' ? 'bg-green-500 justify-end' : 'bg-gray-300 dark:bg-zinc-700 justify-start'}`}
@@ -669,12 +679,12 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                 </div>
 
                                 {/* Clickable Link */}
-                                <div className={`mt-3 py-2 px-3 rounded-xl text-center ${isDarkMode ? 'bg-zinc-800/50' : 'bg-blue-50'}`}>
+                                <div className={`mt-3 py-2 px-3 rounded-xl text-center ${isDarkMode ? 'bg-zinc-800/50' : 'bg-blue-50'} ${link.status === 'archived' ? 'opacity-50 pointer-events-none' : ''}`}>
                                     <a
                                         href={`${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}/${slugify(link.name)}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-[10px] font-black text-blue-600 dark:text-blue-400 hover:underline block truncate"
+                                        className={`text-[10px] font-black hover:underline block truncate ${isDarkMode ? 'text-blue-400' : 'text-blue-600'} ${link.status === 'archived' ? 'text-zinc-500' : ''}`}
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         {window.location.host}/store/.../{slugify(link.name).slice(0, 15)}
@@ -700,7 +710,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
             </div>
 
             {/* Order Status Tabs */}
-            <div className="px-6 mb-6">
+            <div className="px-4 mb-6">
                 <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border mb-4 ${theme.card}`}>
                     <Search size={18} className={theme.textMuted} />
                     <input
@@ -729,7 +739,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                 </div>
             </div>
 
-            <div className="px-6 space-y-4">
+            <div className="px-4 space-y-4">
                 {filteredOrders.length > 0 ? (
                     filteredOrders.map(order => (
                         <div key={order.id} className={`p-4 rounded-[2rem] border ${theme.card}`}>
@@ -759,7 +769,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                     </div>
                                 ))}
                             </div>
-                            <p className="text-[10px] text-zinc-400 text-right">{new Date(order.createdAt).toLocaleDateString()}</p>
+                            <p className="text-[10px] text-zinc-400 text-right">{new Date(order.createdAt as string | number | Date).toLocaleDateString()}</p>
                         </div>
                     ))
                 ) : (
@@ -773,31 +783,148 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     );
 
     const InsightsView = () => {
-        // Mock Data for Charts (Placeholders)
-        const revenueTrend = [
-            { day: 'Mon', revenue: 0, height: 10 },
-            { day: 'Tue', revenue: 0, height: 25 },
-            { day: 'Wed', revenue: 0, height: 15 },
-            { day: 'Thu', revenue: 0, height: 45 },
-            { day: 'Fri', revenue: 0, height: 30 },
-            { day: 'Sat', revenue: 0, height: 60 },
-            { day: 'Sun', revenue: 0, height: 20 },
-        ];
+        // --- 1. Real Data Aggregation ---
+        const last7Days = [...Array(7)].map((_, i) => {
+            const d = new Date();
+            d.setDate(d.getDate() - (6 - i));
+            return d.toISOString().split('T')[0] as string;
+        });
 
-        const channelStats = [
-            { name: 'WhatsApp', trafficShare: 65, revenue: 0, conversion: 0, bg: 'bg-green-500/10', text: 'text-green-500', barColor: 'bg-green-500', icon: MessageCircle },
-            { name: 'Instagram', trafficShare: 25, revenue: 0, conversion: 0, bg: 'bg-pink-500/10', text: 'text-pink-500', barColor: 'bg-pink-500', icon: Instagram },
-            { name: 'Direct', trafficShare: 10, revenue: 0, conversion: 0, bg: 'bg-blue-500/10', text: 'text-blue-500', barColor: 'bg-blue-500', icon: Globe },
-        ];
+        // Revenue Trend (Group Orders by Date)
+        const revenueData = last7Days.map(dateStr => {
+            const dayOrders = safeOrders.filter(o => {
+                if (!o.createdAt) return false;
+                try {
+                    return new Date(o.createdAt as string | number | Date).toISOString().split('T')[0] === dateStr;
+                } catch (e) { return false; }
+            });
+            const dailyTotal = dayOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+            return {
+                date: dateStr,
+                dayName: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short' }),
+                revenue: dailyTotal
+            };
+        });
+
+        const maxRevenue = Math.max(...revenueData.map(d => d.revenue), 100); // Avoid div by zero
+
+        // Top Performing Products
+        const topProducts = safeLinks
+            .sort((a, b) => (b.sales || 0) - (a.sales || 0))
+            .slice(0, 3);
+
+        // --- 2. AI Business Coach Logic ---
+        const handleShareStore = async () => {
+            const url = `${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}`;
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: user?.shopName || 'My Store',
+                        text: `Check out my store on SokoSnap!`,
+                        url
+                    });
+                } catch (e) { }
+            } else {
+                navigator.clipboard.writeText(url);
+                // Assuming setShowCopyToast is available in scope
+                setShowCopyToast(true);
+                setTimeout(() => setShowCopyToast(false), 2000);
+            }
+        };
+
+        const generateAiInsight = () => {
+            // Priority 0: Empty Store
+            if (safeLinks.length === 0) return {
+                title: "Empty Store",
+                msg: "Your store is empty. Customers can't buy anything until you add products. Create your first checkout link now.",
+                action: "Add Product",
+                handler: () => handleRestrictedAction(() => setShowAddProduct(true)),
+                color: "text-red-500",
+                bg: "bg-red-500/10",
+                icon: Plus
+            };
+
+            if (totalClicks === 0) return {
+                title: "Invisibility Alert",
+                msg: "Your store has zero traffic. The algorithm can't help you if no one sees your products. Share your store link on social media to kickstart traffic.",
+                action: "Share Store Link",
+                handler: handleShareStore,
+                color: "text-red-500",
+                bg: "bg-red-500/10",
+                icon: AlertCircle
+            };
+
+            if (totalClicks > 20 && safeOrders.length === 0) return {
+                title: "Conversion Gap",
+                msg: `You had ${totalClicks} visitors but 0 sales. Your prices might be too high or product photos aren't clear enough. Try lowering prices by 10%.`,
+                action: "Edit Products",
+                handler: () => setActiveView('links'),
+                color: "text-orange-500",
+                bg: "bg-orange-500/10",
+                icon: TrendingUp
+            };
+
+            if (safeOrders.length > 0) return {
+                title: "Growth Opportunity",
+                msg: `Great job! "${topProducts[0]?.name || 'Your top product'}" is winning. Bundling it with another item could increase your average order value by 30%.`,
+                action: "Create Bundle",
+                handler: () => setActiveView('links'),
+                color: "text-green-500",
+                bg: "bg-green-500/10",
+                icon: Sparkles
+            };
+
+            return {
+                title: "Gathering Data",
+                msg: "We are learning about your customers. Keep sharing links to build your profile.",
+                action: "Keep Sharing",
+                handler: handleShareStore,
+                color: "text-blue-500",
+                bg: "bg-blue-500/10",
+                icon: BarChart3
+            };
+        };
+
+        const aiInsight = generateAiInsight();
 
         return (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
-                <div className="px-6 mb-6">
+                <div className="px-4 mb-6">
                     <h2 className="text-2xl font-black italic tracking-tighter uppercase">Pulse Insights</h2>
-                    <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Store Analytics & Growth</p>
+                    <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Real-time Store Analytics</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 px-6 mb-6">
+                {/* AI Insight Card */}
+                <div className="px-4 mb-6">
+                    <div className={`p-5 rounded-[2rem] border relative overflow-hidden ${theme.card}`}>
+                        <div className={`absolute top-0 right-0 p-3 opacity-20 ${aiInsight.color}`}>
+                            <aiInsight.icon size={80} />
+                        </div>
+
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${aiInsight.bg} ${aiInsight.color}`}>
+                                    AI Insight
+                                </span>
+                                <span className={`text-[10px] font-black uppercase ${aiInsight.color}`}>{aiInsight.title}</span>
+                            </div>
+
+                            <p className="text-sm font-bold leading-relaxed pr-8 mb-4">
+                                {aiInsight.msg}
+                            </p>
+
+                            <button
+                                onClick={aiInsight.handler}
+                                className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1 hover:underline ${aiInsight.color}`}
+                            >
+                                {aiInsight.action} <ArrowUpRight size={12} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Key Metrics Grid */}
+                <div className="grid grid-cols-2 gap-3 px-4 mb-6">
                     <div className={`p-4 rounded-[2rem] border ${theme.card}`}>
                         <div className="bg-blue-500/10 text-blue-500 h-8 w-8 rounded-lg flex items-center justify-center mb-3">
                             <MousePointer2 size={16} />
@@ -805,132 +932,83 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         <p className={`text-[9px] font-black uppercase tracking-widest ${theme.textMuted}`}>Total Clicks</p>
                         <div className="flex items-end gap-2">
                             <p className="text-xl font-black italic">{totalClicks.toLocaleString()}</p>
-                            <span className="text-[9px] text-green-500 font-bold mb-1">+0%</span>
                         </div>
                     </div>
+
                     <div className={`p-4 rounded-[2rem] border ${theme.card}`}>
                         <div className="bg-green-500/10 text-green-500 h-8 w-8 rounded-lg flex items-center justify-center mb-3">
-                            <Zap size={16} />
+                            <CreditCard size={16} />
                         </div>
-                        <p className={`text-[9px] font-black uppercase tracking-widest ${theme.textMuted}`}>Conv. Rate</p>
+                        <p className={`text-[9px] font-black uppercase tracking-widest ${theme.textMuted}`}>Orders</p>
                         <div className="flex items-end gap-2">
-                            <p className="text-xl font-black italic">{conversionRate}%</p>
-                            <span className="text-[9px] text-blue-500 font-bold mb-1">Avg</span>
+                            <p className="text-xl font-black italic">{safeOrders.length}</p>
+                            <span className={`text-[9px] font-bold mb-1 ${parseFloat(conversionRate) > 2 ? 'text-green-500' : 'text-orange-500'}`}>
+                                {conversionRate}% Conv
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <section className="px-6 mb-6">
-                    <div className={`p-6 rounded-[2.5rem] border ${theme.card}`}>
-                        <h3 className={`text-[10px] font-black uppercase tracking-widest mb-6 ${theme.textMuted}`}>Revenue Trend (Last 7 Days)</h3>
-                        <div className="flex items-end justify-between h-32 px-2 gap-2">
-                            {totalSettled > 0 ? (
-                                revenueTrend.map((data, i) => (
-                                    <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                {/* Revenue Chart (Real Data) */}
+                <section className="px-4 mb-6">
+                    <div className={`p-5 rounded-[2.5rem] border ${theme.card}`}>
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className={`text-[10px] font-black uppercase tracking-widest ${theme.textMuted}`}>Revenue Trend (7d)</h3>
+                            <h3 className="text-xs font-black">KES {totalSettled.toLocaleString()}</h3>
+                        </div>
+
+                        <div className="flex items-end justify-between h-32 px-1 gap-1.5">
+                            {revenueData.map((data, i) => {
+                                const heightPercent = maxRevenue > 0 ? (data.revenue / maxRevenue) * 100 : 5;
+                                return (
+                                    <div key={i} className="flex-1 flex flex-col items-center gap-2 group relative">
                                         <div className="relative w-full h-full flex items-end">
                                             <div
-                                                className={`w-full rounded-t-lg transition-all duration-500 group-hover:bg-yellow-500 ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'} ${data.revenue > 0 ? 'bg-yellow-500/50' : ''}`}
-                                                style={{ height: `${data.height}%` }}
+                                                className={`w-full rounded-md transition-all duration-500 min-h-[4px] ${data.revenue > 0
+                                                    ? 'bg-yellow-500 group-hover:bg-yellow-400'
+                                                    : isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'
+                                                    }`}
+                                                style={{ height: `${heightPercent}%` }}
                                             ></div>
-                                            {/* Tooltip for value */}
-                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                        </div>
+                                        <span className={`text-[8px] font-bold uppercase ${theme.textMuted}`}>
+                                            {data.dayName.slice(0, 1)}
+                                        </span>
+                                        {/* Tooltip */}
+                                        {data.revenue > 0 && (
+                                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none">
                                                 {data.revenue.toLocaleString()}
                                             </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Top Products List */}
+                <section className="px-4 mb-6">
+                    <div className={`p-6 rounded-[2.5rem] border ${theme.card}`}>
+                        <h3 className={`text-[10px] font-black uppercase tracking-widest mb-4 ${theme.textMuted}`}>Top Performers</h3>
+                        <div className="space-y-4">
+                            {topProducts.length > 0 ? topProducts.map((prod, i) => (
+                                <div key={i} className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="font-black text-xs text-zinc-300 w-4">#{i + 1}</div>
+                                        <div className={`h-8 w-8 rounded-lg overflow-hidden border ${isDarkMode ? 'border-zinc-700' : 'border-gray-200'}`}>
+                                            <img src={prod.img || '/placeholder.png'} className="w-full h-full object-cover" />
                                         </div>
-                                        <span className={`text-[8px] font-bold uppercase ${theme.textMuted}`}>
-                                            {data.day}
-                                        </span>
+                                        <div>
+                                            <p className="text-xs font-bold line-clamp-1 max-w-[120px]">{prod.name}</p>
+                                            <p className={`text-[9px] ${theme.textMuted}`}>{prod.sales || 0} sold</p>
+                                        </div>
                                     </div>
-                                ))
-                            ) : (
-                                // Zero state placeholders for charts
-                                [5, 5, 5, 5, 5, 5, 5].map((height, i) => (
-                                    <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-                                        <div
-                                            className={`w-full rounded-t-lg transition-all duration-500 cursor-not-allowed ${isDarkMode ? 'bg-zinc-800/50' : 'bg-gray-100'}`}
-                                            style={{ height: `${height}%` }}
-                                        ></div>
-                                        <span className={`text-[8px] font-bold uppercase ${theme.textMuted}`}>
-                                            {['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}
-                                        </span>
-                                    </div>
-                                ))
+                                    <p className="text-xs font-black text-yellow-500">KES {((prod.price || 0) * (prod.sales || 0)).toLocaleString()}</p>
+                                </div>
+                            )) : (
+                                <p className="text-center text-[10px] italic text-zinc-500 py-4">No sales data yet.</p>
                             )}
-                        </div>
-                        {totalSettled === 0 && (
-                            <p className="text-center text-[10px] italic text-zinc-500 mt-4">Start selling to see revenue trends.</p>
-                        )}
-                    </div>
-                </section>
-
-                <section className="px-6 mb-6">
-                    <div className={`p-6 rounded-[2.5rem] border ${theme.card}`}>
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className={`text-[10px] font-black uppercase tracking-widest ${theme.textMuted}`}>Channel Performance</h3>
-                            <button className="text-xs text-yellow-500 font-bold">See All</button>
-                        </div>
-
-                        <div className="space-y-6">
-                            {channelStats.map((channel, i) => (
-                                <div key={i}>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`h-8 w-8 rounded-xl flex items-center justify-center ${channel.bg} ${channel.text}`}>
-                                                <channel.icon size={16} />
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-xs">{channel.name}</p>
-                                                <p className={`text-[9px] ${theme.textMuted}`}>{channel.trafficShare}% of traffic</p>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-bold text-xs">KES {channel.revenue.toLocaleString()}</p>
-                                            <p className={`text-[9px] ${theme.textMuted}`}>{channel.conversion}% conv.</p>
-                                        </div>
-                                    </div>
-                                    <div className={`h-1.5 w-full rounded-full overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}>
-                                        <div
-                                            className={`h-full rounded-full ${channel.barColor}`}
-                                            style={{ width: `${channel.trafficShare}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                <section className="px-6 mb-6">
-                    <div className={`p-6 rounded-[2.5rem] border ${theme.card}`}>
-                        <h3 className={`text-[10px] font-black uppercase tracking-widest mb-4 ${theme.textMuted}`}>Social Funnel</h3>
-                        <div className="space-y-4 max-w-2xl">
-                            <div className="relative">
-                                <div className="flex justify-between text-[10px] font-bold uppercase mb-1">
-                                    <span>Link Impressions</span>
-                                    <span>0</span>
-                                </div>
-                                <div className={`h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}>
-                                    <div className="h-full bg-yellow-500 w-[0%]"></div>
-                                </div>
-                            </div>
-                            <div className="relative">
-                                <div className="flex justify-between text-[10px] font-bold uppercase mb-1">
-                                    <span>Unique Clicks</span>
-                                    <span>{totalClicks}</span>
-                                </div>
-                                <div className={`h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}>
-                                    <div className="h-full bg-yellow-500 opacity-80" style={{ width: totalClicks > 0 ? '50%' : '0%' }}></div>
-                                </div>
-                            </div>
-                            <div className="relative">
-                                <div className="flex justify-between text-[10px] font-bold uppercase mb-1">
-                                    <span>Orders Completed</span>
-                                    <span>{safeOrders.length}</span>
-                                </div>
-                                <div className={`h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}>
-                                    <div className="h-full bg-green-500" style={{ width: safeOrders.length > 0 ? '20%' : '0%' }}></div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </section>
@@ -942,146 +1020,210 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
 
     const HomeView = () => (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 px-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 px-4">
                 {/* Wallet & Metrics */}
                 <div className="lg:col-span-8">
                     <section className="mb-8">
-                        <div className={`border p-6 rounded-[2.5rem] relative overflow-hidden ${theme.card}`}>
-                            <div className="absolute -right-8 -top-8 w-32 h-32 bg-green-500/10 rounded-full blur-3xl"></div>
-                            <div className="flex justify-between items-start mb-6">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className={`text-[10px] font-black uppercase tracking-widest ${theme.textMuted}`}>Total Settled (30d)</span>
-                                        <div className="bg-green-500/10 text-green-500 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold">
-                                            <ArrowUpRight size={10} /> +0%
-                                        </div>
+                        {!isVerified ? (
+                            <div id="verification-card" className={`p-6 rounded-[2rem] border-2 border-dashed ${isVerificationPending ? 'border-yellow-500/50 bg-yellow-500/5' : 'border-red-500/50 bg-red-500/5'}`}>
+                                <div className="flex items-start justify-between mb-4">
+                                    <div>
+                                        <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                                            <ShieldCheck size={16} className={isVerificationPending ? 'text-yellow-500' : 'text-red-500'} />
+                                            {isVerificationPending ? 'Verification Pending' : 'Setup Mode'}
+                                        </h3>
+                                        <p className="text-[10px] opacity-60 mt-1 max-w-[250px] leading-relaxed">
+                                            {isVerificationPending
+                                                ? "Your store is under review. Selling is disabled until verified. Typical wait: 2-24 hrs."
+                                                : "You are in Setup Mode. Complete the checklist below to unlock selling features."}
+                                        </p>
                                     </div>
-                                    <h2 className="text-4xl md:text-5xl font-black tracking-tight italic">
-                                        <span className={`text-sm md:text-base not-italic font-bold mr-1 ${theme.textMuted}`}>KES</span>
-                                        {totalSettled.toLocaleString()}
-                                    </h2>
+                                    <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${isVerificationPending ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                                        {isVerificationPending ? 'In Review' : 'Action Required'}
+                                    </div>
                                 </div>
-                                <div className="h-12 w-12 bg-green-500 rounded-2xl flex items-center justify-center text-black shadow-lg shadow-green-500/20">
-                                    <Zap size={24} />
+
+                                <div className="space-y-3 bg-white/50 dark:bg-black/20 p-4 rounded-xl">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`h-6 w-6 rounded-full flex items-center justify-center transition-colors ${isProfileComplete ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                                                {isProfileComplete ? <CheckCircle2 size={14} /> : <span className="text-[10px] font-bold">1</span>}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className={`text-xs font-bold ${isProfileComplete ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-500'}`}>Complete Business Profile</span>
+                                                {!isProfileComplete && <span className="text-[9px] text-red-400">Missing: Location, Contact Name</span>}
+                                            </div>
+                                        </div>
+                                        {!isProfileComplete && (
+                                            <button
+                                                onClick={() => setActiveView('profile')}
+                                                className="text-[10px] font-black uppercase text-blue-500 hover:underline"
+                                            >
+                                                Fix Now
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`h-6 w-6 rounded-full flex items-center justify-center transition-colors ${user?.verificationDoc ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                                                {user?.verificationDoc ? <CheckCircle2 size={14} /> : <span className="text-[10px] font-bold">2</span>}
+                                            </div>
+                                            <span className={`text-xs font-bold ${user?.verificationDoc ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-500'}`}>Upload KRA Certificate</span>
+                                        </div>
+                                        {!user?.verificationDoc && (
+                                            <label className="text-[10px] font-black uppercase text-blue-500 hover:underline cursor-pointer flex items-center gap-1">
+                                                {verificationUploading ? 'Uploading...' : 'Upload'}
+                                                <input
+                                                    type="file"
+                                                    accept="image/*,.pdf"
+                                                    className="hidden"
+                                                    onChange={handleVerificationUpload}
+                                                    disabled={verificationUploading}
+                                                />
+                                            </label>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-
-                            <div className="grid grid-cols-4 md:grid-cols-5 gap-4">
-                                <div className="flex flex-col gap-4 col-span-2 md:col-span-2">
-                                    <div
-                                        onClick={() => { setActiveView('orders'); setOrdersFilter('ongoing'); }}
-                                        className={`rounded-2xl p-3 border flex-1 cursor-pointer transition-all duration-300 group ${theme.subCard}`}
-                                    >
-                                        <p className={`text-[10px] font-black uppercase mb-1 flex items-center gap-1 ${isDarkMode ? 'text-white' : 'text-black'} group-hover:text-yellow-600 transition-colors`}>
+                        ) : (
+                            <div className={`border p-4 rounded-[2.5rem] relative overflow-hidden ${theme.card}`}>
+                                <div className="absolute -right-8 -top-8 w-32 h-32 bg-green-500/10 rounded-full blur-3xl"></div>
+                                <div className="flex justify-between items-start mb-6">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className={`text-[10px] font-black uppercase tracking-widest ${theme.textMuted}`}>Total Settled (30d)</span>
+                                            <div className="bg-green-500/10 text-green-500 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold">
+                                                <ArrowUpRight size={10} /> +0%
+                                            </div>
+                                        </div>
+                                        <h2 className="text-4xl md:text-5xl font-black tracking-tight italic">
+                                            <span className={`text-sm md:text-base not-italic font-bold mr-1 ${theme.textMuted}`}>KES</span>
+                                            {totalSettled.toLocaleString()}
+                                        </h2>
+                                    </div>
+                                    <div onClick={() => { setActiveView('orders'); setOrdersFilter('ongoing'); }} className={`flex flex-col items-end cursor-pointer group mr-2`}>
+                                        <p className={`text-[10px] font-black uppercase tracking-widest mb-1 flex items-center gap-1 ${theme.textMuted} transition-colors`}>
                                             <ShieldCheck size={10} className="text-yellow-500 group-hover:rotate-12 transition-transform" /> Secure Hold
                                         </p>
-                                        <p className="font-black text-sm group-hover:text-yellow-500 transition-colors">KES {secureHold.toLocaleString()}</p>
-                                    </div>
-                                    <div className={`rounded-2xl p-3 border flex-1 cursor-pointer transition-all duration-300 group ${theme.subCard}`}>
-                                        <p className={`text-[10px] font-black uppercase mb-1 ${isDarkMode ? 'text-white' : 'text-black'} group-hover:text-yellow-600 transition-colors`}>Avg. Settlement</p>
-                                        <p className="font-black text-sm text-yellow-500 group-hover:text-green-500 transition-colors">Instant</p>
+                                        <p className="font-black text-xl group-hover:text-yellow-500 transition-colors">KES {secureHold.toLocaleString()}</p>
                                     </div>
                                 </div>
-                                {/* Performance Card: Channels & Links */}
-                                <div className={`border col-span-2 md:col-span-3 rounded-2xl px-3 py-3 flex flex-col justify-between ${theme.subCard}`}>
-                                    {/* Top Product Links Section (Priority) */}
-                                    <div
-                                        onClick={() => { setActiveView('home'); setActiveTab('Products'); }}
-                                        className="cursor-pointer group mb-1.5"
-                                    >
-                                        <p className={`text-[10px] font-black uppercase mb-1 ${isDarkMode ? 'text-white' : 'text-black'} group-hover:text-yellow-600 transition-colors`}>Top 3 Checkout Links</p>
-                                        <div className="space-y-0.5">
-                                            {links.slice().sort((a, b) => (b.sales || 0) - (a.sales || 0)).slice(0, 3).map((link, i) => (
-                                                <div key={link.id || i} className="flex items-center gap-2 py-1 border-b border-gray-100 dark:border-zinc-800/50 last:border-0 pl-0.5">
-                                                    {/* Image Container - Compact */}
-                                                    <div className="h-9 w-9 bg-white rounded-md overflow-hidden flex-shrink-0 border border-gray-200 flex items-center justify-center">
-                                                        <img src={link.img} alt={link.name} className="max-w-full max-h-full object-contain" />
-                                                    </div>
 
-                                                    {/* Layout: Ultra Compact */}
-                                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                        {/* Title - 2 Lines allowed */}
-                                                        <p className={`font-bold text-[10px] leading-3 line-clamp-2 mb-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>{link.name}</p>
+                                <div className="flex flex-col gap-4">
+                                    {/* Performance Card: Channels & Links */}
+                                    <div className={`border rounded-2xl p-4 flex flex-col justify-between ${theme.subCard}`}>
+                                        {/* Top Product Links Section (Priority) */}
+                                        <div
+                                            onClick={() => setActiveView('links')}
+                                            className="cursor-pointer group mb-3"
+                                        >
+                                            <div className="flex items-center justify-between mb-3">
+                                                <p className={`text-[10px] font-black uppercase tracking-widest ${theme.textMuted} group-hover:text-yellow-600 transition-colors`}>Top 3 Checkout Links</p>
+                                                <span className="text-[9px] font-bold text-blue-500 uppercase flex items-center gap-0.5">View All <ChevronRight size={10} /></span>
+                                            </div>
 
-                                                        {/* Price & Share Row */}
-                                                        <div className="flex items-center justify-between">
-                                                            <p className={`font-black text-[10px] tracking-tight ${isDarkMode ? 'text-white' : 'text-black'}`}>KES {link.price?.toLocaleString()}</p>
+                                            <div className="grid grid-cols-3 gap-3">
+                                                {links.slice().sort((a, b) => (b.sales || 0) - (a.sales || 0)).slice(0, 3).map((link, i) => (
+                                                    <div key={link.id || i} className="group/card relative aspect-square rounded-xl overflow-hidden border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900 shadow-sm transition-all hover:shadow-md hover:border-yellow-500/30">
+                                                        {/* Image - Full Coverage */}
+                                                        <img
+                                                            src={link.img}
+                                                            alt={link.name}
+                                                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110"
+                                                        />
 
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    if (navigator.share) {
-                                                                        navigator.share({
-                                                                            title: link.name,
-                                                                            text: `Check out ${link.name} for KES ${link.price}`,
-                                                                            url: `${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}/${slugify(link.name)}`
-                                                                        }).catch(err => console.log('Share dismissed', err));
-                                                                    } else {
-                                                                        const productUrl = `${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}/${slugify(link.name)}`;
-                                                                        navigator.clipboard.writeText(`${window.location.protocol}//${productUrl}`);
-                                                                        setShowCopyToast(true);
-                                                                        setTimeout(() => setShowCopyToast(false), 2000);
-                                                                    }
-                                                                }}
-                                                                className="h-6 w-6 rounded-full flex items-center justify-center bg-yellow-50 dark:bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 transition-all active:scale-90 border border-yellow-200 dark:border-yellow-500/30 shadow-sm"
-                                                            >
-                                                                <Share2 size={12} strokeWidth={2.5} />
-                                                            </button>
+                                                        {/* Gradient Overlay */}
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover/card:opacity-80 transition-opacity" />
+
+                                                        {/* Content Overlay */}
+                                                        <div className="absolute inset-x-0 bottom-0 p-2 text-white transform transition-transform duration-300">
+                                                            <p className="font-bold text-[10px] leading-3 line-clamp-2 mb-1.5 text-white/90 group-hover/card:text-white">{link.name}</p>
+
+                                                            <div className="flex items-center justify-between">
+                                                                <p className="font-black text-[10px] text-yellow-400">KES {link.price?.toLocaleString()}</p>
+
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (navigator.share) {
+                                                                            navigator.share({
+                                                                                title: link.name,
+                                                                                text: `Check out ${link.name} for KES ${link.price}`,
+                                                                                url: `${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}/${slugify(link.name)}`
+                                                                            }).catch(err => console.log('Share dismissed', err));
+                                                                        } else {
+                                                                            const productUrl = `${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}/${slugify(link.name)}`;
+                                                                            navigator.clipboard.writeText(`${window.location.protocol}//${productUrl}`);
+                                                                            setShowCopyToast(true);
+                                                                            setTimeout(() => setShowCopyToast(false), 2000);
+                                                                        }
+                                                                    }}
+                                                                    className="h-5 w-5 rounded-full flex items-center justify-center bg-white/20 hover:bg-yellow-400 text-white hover:text-black backdrop-blur-md transition-all active:scale-95"
+                                                                >
+                                                                    <Share2 size={10} strokeWidth={2.5} />
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
-                                            {links.length === 0 && (
-                                                <p className={`text-[9px] italic ${theme.textMuted}`}>No products yet.</p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Channels Section */}
-                                    <div
-                                        onClick={() => setActiveView('insights')}
-                                        className="cursor-pointer group pt-3 border-t border-dashed border-gray-200 dark:border-zinc-800"
-                                    >
-                                        <div className="flex items-center justify-between mb-2">
-                                            <p className={`text-[10px] font-black uppercase ${isDarkMode ? 'text-white' : 'text-black'} group-hover:text-yellow-600 transition-colors`}>Top 3 Channels</p>
-                                        </div>
-                                        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-                                            {/* Dynamic Channels Display utilizing totalClicks as proxy for activity distribution */}
-                                            {[
-                                                { count: totalClicks > 0 ? Math.floor(totalClicks * 0.6) : 0, color: '#8b5cf6', bg: 'bg-violet-500/10', icon: Globe },
-                                                { count: totalClicks > 0 ? Math.floor(totalClicks * 0.25) : 0, color: '#25D366', bg: 'bg-[#25D366]/10', path: 'M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z' },
-                                                { count: totalClicks > 0 ? Math.floor(totalClicks * 0.15) : 0, color: '#E1306C', bg: 'bg-[#E1306C]/10', icon: Instagram }
-                                            ].map((social, i) => (
-                                                <div key={i} className="flex items-center gap-1.5">
-                                                    <div className={`h-6 w-6 rounded-full flex items-center justify-center ${social.bg}`}>
-                                                        {social.path ? (
-                                                            <svg viewBox="0 0 24 24" className="w-3 h-3" fill={social.color}>
-                                                                <path d={social.path} />
-                                                            </svg>
-                                                        ) : (
-                                                            // @ts-ignore
-                                                            <social.icon size={12} className={i === 0 ? "text-violet-500" : "text-[#E1306C]"} />
-                                                        )}
+                                                ))}
+                                                {links.length === 0 && (
+                                                    <div className="col-span-3 py-8 text-center border-2 border-dashed border-gray-100 dark:border-zinc-800 rounded-xl">
+                                                        <p className={`text-[9px] italic ${theme.textMuted}`}>No products active. <br />Create one to start selling.</p>
                                                     </div>
-                                                    <span className={`text-[10px] font-black ${theme.textMuted}`}>
-                                                        {social.count >= 1000 ? (social.count / 1000).toFixed(1) + 'k' : social.count}
-                                                    </span>
-                                                </div>
-                                            ))}
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Channels Section */}
+                                        <div
+                                            onClick={() => setActiveView('insights')}
+                                            className="cursor-pointer group pt-3 border-t border-dashed border-gray-200 dark:border-zinc-800"
+                                        >
+                                            <div className="flex items-center justify-between mb-2">
+                                                <p className={`text-[10px] font-black uppercase tracking-widest ${theme.textMuted} group-hover:text-yellow-600 transition-colors`}>Top 3 Channels</p>
+                                            </div>
+                                            <div className="flex flex-wrap items-center justify-start gap-3 px-1">
+                                                {/* Dynamic Channels Display utilizing totalClicks as proxy for activity distribution */}
+                                                {[
+                                                    { count: totalClicks > 0 ? Math.floor(totalClicks * 0.6) : 0, color: '#8b5cf6', bg: 'bg-violet-500/10', icon: Globe },
+                                                    { count: totalClicks > 0 ? Math.floor(totalClicks * 0.25) : 0, color: '#25D366', bg: 'bg-[#25D366]/10', path: 'M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z' },
+                                                    { count: totalClicks > 0 ? Math.floor(totalClicks * 0.15) : 0, color: '#E1306C', bg: 'bg-[#E1306C]/10', icon: Instagram }
+                                                ].map((social, i) => (
+                                                    <div key={i} className="flex items-center gap-1.5">
+                                                        <div className={`h-6 w-6 rounded-full flex items-center justify-center ${social.bg}`}>
+                                                            {social.path ? (
+                                                                <svg viewBox="0 0 24 24" className="w-3 h-3" fill={social.color}>
+                                                                    <path d={social.path} />
+                                                                </svg>
+                                                            ) : (
+                                                                // @ts-ignore
+                                                                <social.icon size={12} className={i === 0 ? "text-violet-500" : "text-[#E1306C]"} />
+                                                            )}
+                                                        </div>
+                                                        <span className={`text-[10px] font-black ${theme.textMuted}`}>
+                                                            {social.count >= 1000 ? (social.count / 1000).toFixed(1) + 'k' : social.count}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+
+
+                                <p className={`mt-4 text-[10px] text-center font-medium text-green-600`}>Funds settled to your M-Pesa instantly after delivery.</p>
                             </div>
-
-
-                            <p className={`mt-4 text-[10px] text-center font-medium text-green-600`}>Funds settled to your M-Pesa instantly after delivery.</p>
-                        </div>
+                        )}
                     </section>
 
                     {/* Quick Create Speed Zone */}
                     <section className="mb-10">
-                        <h3 className={`text-xs font-black uppercase tracking-widest mb-4 ${theme.textMuted}`}>Quick Actions</h3>
-                        <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+                        <h3 className={`text-xs font-black uppercase tracking-widest mb-4 flex items-center justify-between ${theme.textMuted}`}>
+                            Quick Actions
+                            {!isVerified && <span className="text-[9px] text-red-500 flex items-center gap-1"><ShieldCheck size={10} /> Verification Required</span>}
+                        </h3>
+                        <div className={`flex gap-4 overflow-x-auto pb-4 no-scrollbar ${!isVerified ? 'opacity-50 grayscale' : ''}`}>
                             {[
                                 {
                                     icon: (
@@ -1095,12 +1237,17 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                     action: () => handleAiSnap()
                                 },
                                 { icon: <Plus />, label: 'Manual Add', color: 'text-blue-500', action: () => handleManualAdd() },
-                                { icon: <QrCode />, label: 'Bio Link', color: isDarkMode ? 'text-white' : 'text-black', action: () => setShowQRLink(true) },
+                                { icon: <QrCode />, label: 'Bio Link', color: isDarkMode ? 'text-white' : 'text-black', action: () => handleQRLink() },
                                 { icon: <ShoppingBag />, label: 'Orders', color: 'text-orange-500', action: () => setActiveView('orders') }
                             ].map((item, i) => (
-                                <button key={i} onClick={item.action} className="flex-shrink-0 flex flex-col items-center gap-3">
+                                <button key={i} onClick={item.action} className="flex-shrink-0 flex flex-col items-center gap-3 group relative">
                                     <div className={`h-16 w-16 md:h-20 md:w-20 rounded-3xl flex items-center justify-center border shadow-xl active:scale-95 transition-transform ${theme.card}`}>
                                         <span className={item.color}>{item.icon}</span>
+                                        {!isVerified && item.label !== 'Orders' && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/5 rounded-3xl backdrop-blur-[1px]">
+                                                <ShieldCheck size={18} className="text-zinc-500" />
+                                            </div>
+                                        )}
                                     </div>
                                     <span className={`text-[11px] font-bold ${isDarkMode ? 'text-zinc-300' : 'text-gray-600'}`}>{item.label}</span>
                                 </button>
@@ -1162,69 +1309,83 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                     <p className="text-sm font-bold">No checkout links yet.</p>
                                 </div>
                             )}
-                            {activeTab === 'Products' && safeLinks.slice(0, 5).map((item) => (
-                                <div key={item.id} className={`border p-4 rounded-[2.2rem] flex items-center gap-4 transition-colors group ${theme.card}`}>
-                                    <div className={`h-16 w-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner group-hover:scale-105 transition-transform overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}>
-                                        {item.img ? <img src={item.img} alt={item.name} className="w-full h-full object-contain p-1" /> : <Package size={24} />}
-                                    </div>
+                            {activeTab === 'Products' && safeLinks.slice(0, 5).map((link) => (
+                                <div key={link.id} className={`p-4 rounded-[2rem] border transition-all ${theme.card} ${link.status === 'archived' ? 'opacity-60' : ''}`}>
 
-                                    <div className="flex-1 overflow-hidden">
-                                        <h4 className="font-bold text-sm truncate pr-2">{item.name}</h4>
-                                        <span className="text-yellow-500 font-black text-xs italic">KES {item.price?.toLocaleString() || '0'}</span>
+                                    <div className="flex gap-4">
+                                        {/* Image */}
+                                        <div className={`h-16 w-16 rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden border ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-100 border-gray-100'}`}>
+                                            {link.img ? <img src={link.img} className="w-full h-full object-cover" style={{ filter: link.status === 'archived' ? 'grayscale(100%)' : 'none' }} /> : <Package size={20} className={theme.textMuted} />}
+                                        </div>
 
-                                        <div className="flex items-center gap-3 mt-2 grid grid-cols-4">
-                                            <div className="flex flex-col items-center gap-0.5">
-                                                <Eye size={10} className="text-blue-500" />
-                                                <span className={`text-[9px] font-bold ${theme.textMuted}`}>{item.views || 0}</span>
+                                        {/* Middle Content */}
+                                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                            <h4 className={`font-bold text-sm truncate pr-2 mb-0.5 ${link.status === 'archived' ? 'line-through text-zinc-500' : ''}`}>{link.name}</h4>
+                                            <p className="text-xs font-black text-yellow-500 mb-1.5">KES {link.price?.toLocaleString()}</p>
+
+                                            {/* Compact Stats Row (3 Items Only) */}
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-1">
+                                                    <MousePointer2 size={10} className="text-violet-500" />
+                                                    <span className={`text-[9px] font-bold ${theme.textMuted}`}>{link.clicks || 0}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <ShoppingBag size={10} className="text-orange-500" />
+                                                    <span className={`text-[9px] font-bold ${theme.textMuted}`}>{link.sales || 0}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Zap size={10} className="text-green-500" />
+                                                    <span className={`text-[9px] font-bold ${theme.textMuted}`}>
+                                                        {link.clicks > 0 ? ((link.sales / link.clicks) * 100).toFixed(0) : 0}%
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="flex flex-col items-center gap-0.5">
-                                                <MousePointer2 size={10} className="text-violet-500" />
-                                                <span className={`text-[9px] font-bold ${theme.textMuted}`}>{item.clicks || 0}</span>
-                                            </div>
-                                            <div className="flex flex-col items-center gap-0.5">
-                                                <ShoppingBag size={10} className="text-orange-500" />
-                                                <span className={`text-[9px] font-bold ${theme.textMuted}`}>{item.sales || 0}</span>
-                                            </div>
-                                            <div className="flex flex-col items-center gap-0.5">
-                                                <Zap size={10} className="text-green-500" />
-                                                <span className={`text-[9px] font-bold ${theme.textMuted}`}>
-                                                    {item.clicks > 0 ? ((item.sales / item.clicks) * 100).toFixed(0) : 0}%
-                                                </span>
+                                        </div>
+
+                                        {/* Right Actions */}
+                                        <div className="flex flex-col items-end gap-2">
+                                            <button
+                                                disabled={link.status === 'archived'}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setAddProductInitialData(link);
+                                                    setShowAddProduct(true);
+                                                }}
+                                                className={`h-8 w-8 rounded-full flex items-center justify-center ${theme.btnGhost} ${link.status === 'archived' ? 'bg-transparent text-zinc-300 pointer-events-none' : ''}`}
+                                            >
+                                                <Pencil size={14} className={link.status === 'archived' ? "text-zinc-600" : "text-zinc-400 hover:text-blue-500"} />
+                                            </button>
+
+                                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                                <button
+                                                    disabled={link.status === 'archived'}
+                                                    onClick={(e) => handleShareLink(link, e)}
+                                                    className={`h-6 w-6 rounded-full flex items-center justify-center mr-1 active:scale-95 transition-transform ${link.status === 'archived' ? 'bg-zinc-100 text-zinc-300 pointer-events-none dark:bg-zinc-800 dark:text-zinc-600' : 'bg-blue-500/10 text-blue-500'}`}
+                                                >
+                                                    <Share2 size={12} strokeWidth={3} />
+                                                </button>
+                                                {/* Toggle Switch Only */}
+                                                <button
+                                                    onClick={(e) => handleToggleLink(link, e)}
+                                                    className={`h-5 w-9 rounded-full p-0.5 transition-colors flex items-center ${link.status === 'active' ? 'bg-green-500 justify-end' : 'bg-gray-300 dark:bg-zinc-700 justify-start'}`}
+                                                >
+                                                    <div className="h-4 w-4 rounded-full bg-white shadow-sm" />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col gap-2">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                // Pre-fill modal with product data for editing
-                                                setAddProductInitialData(item);
-                                                setShowAddProduct(true);
-                                            }}
-                                            className={`h-10 w-10 rounded-xl flex items-center justify-center text-blue-500 transition-all active:scale-90 ${theme.btnGhost} hover:bg-blue-50 dark:hover:bg-blue-500/10`}
+                                    {/* Clickable Link */}
+                                    <div className={`mt-3 py-2 px-3 rounded-xl text-center ${isDarkMode ? 'bg-zinc-800/50' : 'bg-blue-50'} ${link.status === 'archived' ? 'opacity-50 pointer-events-none' : ''}`}>
+                                        <a
+                                            href={`${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}/${slugify(link.name)}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={`text-[10px] font-black hover:underline block truncate ${isDarkMode ? 'text-blue-400' : 'text-blue-600'} ${link.status === 'archived' ? 'text-zinc-500' : ''}`}
+                                            onClick={(e) => e.stopPropagation()}
                                         >
-                                            <Pencil size={16} />
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                // Handle Web Share
-                                                if (navigator.share) {
-                                                    navigator.share({
-                                                        title: item.name,
-                                                        text: `Buy ${item.name} for KES ${item.price}`,
-                                                        url: `${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}/${slugify(item.name)}`
-                                                    }).catch(err => console.log('Share dismissed', err));
-                                                } else {
-                                                    // Fallback to clipboard
-                                                    handleCopy();
-                                                }
-                                            }}
-                                            className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all active:scale-90 ${theme.btnGhost} ${theme.textMuted} hover:text-yellow-500`}
-                                        >
-                                            <Share2 size={16} />
-                                        </button>
+                                            {window.location.host}/store/.../{slugify(link.name).slice(0, 15)}
+                                        </a>
                                     </div>
                                 </div>
                             ))}
@@ -1246,9 +1407,17 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                             )}
 
                             {/* Create New Button */}
-                            <button onClick={() => setShowAddProduct(true)} className={`w-full border-2 border-dashed py-8 rounded-[2.2rem] flex flex-col items-center justify-center gap-2 transition-all group ${theme.card} hover:border-yellow-500/30`}>
-                                <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-all group-hover:bg-yellow-500 group-hover:text-black ${isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-gray-100 text-gray-500'}`}>
+                            <button
+                                onClick={() => handleRestrictedAction(() => setShowAddProduct(true))}
+                                className={`w-full border-2 border-dashed py-8 rounded-[2.2rem] flex flex-col items-center justify-center gap-2 transition-all group ${theme.card} ${!isVerified ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:border-yellow-500/30 cursor-pointer'}`}
+                            >
+                                <div className={`relative h-12 w-12 rounded-full flex items-center justify-center transition-all group-hover:bg-yellow-500 group-hover:text-black ${isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-gray-100 text-gray-500'}`}>
                                     <Plus size={24} />
+                                    {!isVerified && (
+                                        <div className="absolute -top-1 -right-1 bg-zinc-200 dark:bg-zinc-700 rounded-full p-1">
+                                            <ShieldCheck size={12} className="text-zinc-500" />
+                                        </div>
+                                    )}
                                 </div>
                                 <span className={`text-xs font-black uppercase tracking-widest ${theme.textMuted} group-hover:text-yellow-500`}>Generate {activeTab.slice(0, -1)} Link</span>
                             </button>
@@ -1327,9 +1496,6 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     const renderSettlement = () => (
         <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
             <div className="px-6 mb-6">
-                <button onClick={() => setActiveView('menu')} className="flex items-center gap-2 text-zinc-500 mb-4">
-                    <ChevronLeft size={16} /> <span className="text-xs font-bold uppercase">Back to Menu</span>
-                </button>
                 <h2 className="text-2xl font-black italic tracking-tighter uppercase">Settlement</h2>
                 <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Active Payment Method</p>
             </div>
@@ -1403,55 +1569,95 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     const renderVerification = () => (
         <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
             <div className="px-6 mb-6">
-                <button onClick={() => setActiveView('menu')} className="flex items-center gap-2 text-zinc-500 mb-4">
-                    <ChevronLeft size={16} /> <span className="text-xs font-bold uppercase">Back to Menu</span>
-                </button>
                 <h2 className="text-2xl font-black italic tracking-tighter uppercase">Identity</h2>
                 <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Tier 2 Verification</p>
             </div>
 
             <div className="px-6 space-y-6">
-                <div className={`p-6 rounded-[2rem] border ${theme.card}`}>
-                    <div className="flex items-center justify-between mb-4">
-                        <span className="text-xs font-bold uppercase opacity-50">Current Status</span>
-                        <span className="px-3 py-1 rounded-full bg-green-500 text-black font-bold text-[10px] uppercase">Verified Merchant</span>
-                    </div>
-                    <div className="h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                        <div className="h-full w-full bg-green-500"></div>
-                    </div>
-                    <p className="mt-4 text-xs font-bold">You have full access to all seller features.</p>
-                </div>
+                {!isVerified ? (
+                    <>
+                        <div className={`p-6 rounded-[2rem] border ${theme.card} ${isVerificationPending ? 'border-yellow-500/50 bg-yellow-500/5' : 'border-red-500/50 bg-red-500/5'}`}>
+                            <div className="flex items-start justify-between mb-4">
+                                <div>
+                                    <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                                        <ShieldCheck size={16} className={isVerificationPending ? 'text-yellow-500' : 'text-red-500'} />
+                                        {isVerificationPending ? 'Verification Pending' : 'Action Required'}
+                                    </h3>
+                                    <p className="text-[10px] opacity-60 mt-1 max-w-[250px] leading-relaxed">
+                                        {isVerificationPending
+                                            ? "Your store is under review. Our team checks documents every 6 hours."
+                                            : "You are currently in Setup Mode. Upload your KRA Certificate to unlock selling."}
+                                    </p>
+                                </div>
+                                <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${isVerificationPending ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                                    {isVerificationPending ? 'In Review' : 'Tier 1'}
+                                </div>
+                            </div>
 
-                <div className={`p-6 rounded-[2rem] border opacity-80 ${theme.subCard}`}>
-                    <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <FileText size={14} /> Documents
-                    </h3>
+                            {!user?.verificationDoc && (
+                                <div className="mt-4">
+                                    <h4 className="text-[10px] font-bold uppercase opacity-50 mb-2">Upload Document</h4>
+                                    <label className={`w-full border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-6 flex flex-col items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer ${verificationUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                                        <input type="file" hidden accept="image/*,.pdf" onChange={handleVerificationUpload} />
+                                        {verificationUploading ? (
+                                            <div className="animate-spin h-6 w-6 border-2 border-yellow-500 rounded-full border-t-transparent"></div>
+                                        ) : (
+                                            <Upload size={24} className="opacity-50" />
+                                        )}
+                                        <span className="text-xs font-bold">{verificationUploading ? 'Uploading...' : 'Tap to Upload KRA Certificate'}</span>
+                                    </label>
+                                </div>
+                            )}
 
-                    <label className={`w-full border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-6 flex flex-col items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer ${verificationUploading ? 'opacity-50 pointer-events-none' : ''}`}>
-                        <input type="file" hidden accept="image/*,.pdf" onChange={handleVerificationUpload} />
-                        {verificationUploading ? (
-                            <div className="animate-spin h-6 w-6 border-2 border-yellow-500 rounded-full border-t-transparent"></div>
-                        ) : (
-                            <Upload size={24} className="opacity-50" />
-                        )}
-                        <span className="text-xs font-bold">{verificationUploading ? 'Uploading...' : 'Update Business Permit'}</span>
-                    </label>
-                </div>
+                            {user?.verificationDoc && (
+                                <div className="mt-4 bg-white/50 dark:bg-black/20 p-4 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center text-white">
+                                            <FileText size={14} />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold">Document Submitted</p>
+                                            <a href={user.verificationDoc} target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 underline">View Document</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+
+                        </div>
+                    </>
+                ) : (
+                    <div className={`p-6 rounded-[2rem] border ${theme.card}`}>
+                        <div className="flex items-center justify-between mb-4">
+                            <span className="text-xs font-bold uppercase opacity-50">Current Status</span>
+                            <span className="px-3 py-1 rounded-full bg-green-500 text-black font-bold text-[10px] uppercase">Verified Merchant</span>
+                        </div>
+                        <div className="h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                            <div className="h-full w-full bg-green-500"></div>
+                        </div>
+                        <p className="mt-4 text-xs font-bold">You have full access to all seller features.</p>
+
+                        <div className="mt-6 flex items-center gap-4 p-4 rounded-xl bg-green-500/10 text-green-600">
+                            <ShieldCheck size={24} />
+                            <div>
+                                <p className="text-xs font-black uppercase">Tier 2 Protection</p>
+                                <p className="text-[10px] opacity-70">Your account is verified and secured.</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
 
     const renderSettings = () => (
         <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
-            <div className="px-6 mb-6">
-                <button onClick={() => setActiveView('menu')} className="flex items-center gap-2 text-zinc-500 mb-4">
-                    <ChevronLeft size={16} /> <span className="text-xs font-bold uppercase">Back to Menu</span>
-                </button>
+            <div className="px-4 mb-6">
                 <h2 className="text-2xl font-black italic tracking-tighter uppercase">App Settings</h2>
                 <p className={`text-[10px] font-bold uppercase tracking-widest ${theme.textMuted}`}>Preferences & Privacy</p>
             </div>
 
-            <div className="px-6 space-y-4">
+            <div className="px-4 space-y-4">
                 {/* Notifications */}
                 <div
                     onClick={async () => {
@@ -1557,7 +1763,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                     <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${theme.pill} text-zinc-400`}><Settings /></div>
                     <div className="flex-1">
                         <p className="text-sm font-bold">App Settings</p>
-                        <p className={`text-[10px] ${theme.textMuted}`}>Notifications & Privacy</p>
+                        <p className={`text-[10px] ${theme.textMuted}`}>Notifications & Appearance</p>
                     </div>
                     <ChevronRight className={theme.textMuted} size={18} />
                 </button>
@@ -1600,6 +1806,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                 // Use current window host to ensure it points to the deployed environment
                 // Format: domain/store/[shop-name-slug]
                 shopUrl={`${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}`}
+                isDarkMode={isDarkMode}
             />
 
             {/* Verification Prompt Modal */}
@@ -1696,15 +1903,20 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                 {/* Mobile Header - Hidden on Desktop Sidebar View */}
                 <header className={`p-6 pt-8 flex justify-between items-center sticky top-0 backdrop-blur-md z-40 transition-colors lg:hidden ${theme.headerBg}`}>
                     <div>
-                        {activeView === 'home' ? (
+                        {['profile', 'settlement', 'identity', 'settings'].includes(activeView) ? (
+                            <button onClick={() => setActiveView('menu')} className="flex items-center gap-2 group">
+                                <ChevronLeft className="text-yellow-500 group-hover:-translate-x-1 transition-transform" />
+                                <span className="font-black uppercase tracking-widest text-xs">Back to Menu</span>
+                            </button>
+                        ) : activeView === 'home' ? (
                             <div className="animate-in fade-in slide-in-from-left-2 duration-300">
                                 <div className="flex items-center gap-2">
                                     <h1 className="text-2xl font-black tracking-tighter text-yellow-500 italic">SokoSnap</h1>
-                                    <span className="bg-yellow-500 text-black text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter shadow-sm">AI</span>
+                                    <span className="bg-yellow-500 text-black text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter shadow-sm">SELLER</span>
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-0.5">
                                     <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_#22c55e]"></span>
-                                    <p className={`text-[10px] font-black uppercase tracking-widest ${theme.textMuted}`}>AI Agent Active</p>
+                                    <p className={`text-[10px] font-black uppercase tracking-widest ${theme.textMuted}`}>Merchant Dashboard</p>
                                 </div>
                             </div>
                         ) : (

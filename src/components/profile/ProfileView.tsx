@@ -105,7 +105,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ onBack, onOrderHistory
     };
 
     return (
-        <div className="h-full w-full bg-slate-50 text-slate-900 pt-24 px-6 overflow-y-auto pb-32 relative">
+        <div className="h-full w-full bg-slate-50 text-slate-900 pt-24 px-4 overflow-y-auto pb-32 relative">
             {/* Back Button */}
             {onBack && (
                 <button

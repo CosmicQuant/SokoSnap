@@ -335,7 +335,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
                 {/* Smart Dots Indicator */}
                 {slides.length > 1 && !showBottomSheet && (
-                    <div className="w-full flex justify-center gap-1.5 mb-4 px-6 pointer-events-auto">
+                    <div className="w-full flex justify-center gap-1.5 mb-4 px-4 pointer-events-auto">
                         {slides.map((_: any, i: number) => (
                             <button
                                 key={i}
@@ -352,7 +352,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                     </div>
                 )}
 
-                <div className="px-6 space-y-1 max-w-[85%] transition-all duration-300">
+                <div className="px-4 space-y-1 max-w-[85%] transition-all duration-300">
                     {/* Title & Description */}
                     <div className="space-y-0.5">
                         <div

@@ -163,7 +163,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 </div>
             </header>
 
-            <div className="flex-1 p-6 space-y-6 pb-[calc(6rem+env(safe-area-inset-bottom))]">
+            <div className="flex-1 p-4 space-y-4 pb-[calc(6rem+env(safe-area-inset-bottom))]">
                 {/* Seller Actions */}
                 {user.type === 'verified_merchant' && (
                     <div className="grid grid-cols-2 gap-4">

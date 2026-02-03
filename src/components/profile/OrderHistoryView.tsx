@@ -183,7 +183,7 @@ export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({ onBack }) =>
                         </div>
 
                         {/* Modal Body */}
-                        <div className="p-6 overflow-y-auto space-y-6">
+                        <div className="p-4 overflow-y-auto space-y-4">
 
                             {/* Status Banner */}
                             <div className={`p-4 rounded-xl flex items-center gap-3 ${selectedOrder.status === 'ongoing' || selectedOrder.status === 'pending'
