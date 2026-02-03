@@ -126,6 +126,16 @@ export const useAuthStore = create<AuthState>()(
 
                             if (docSnap.exists()) {
                                 const userData = docSnap.data() as User;
+
+                                // Auto-heal: Ensure slug exists for existing users
+                                if (!userData.slug) {
+                                    const newSlug = slugify(userData.shopName || userData.name || '');
+                                    if (newSlug) {
+                                        await updateDoc(docRef, { slug: newSlug });
+                                        userData.slug = newSlug;
+                                    }
+                                }
+
                                 set({
                                     user: { ...userData, id: firebaseUser.uid },
                                     isAuthenticated: true,

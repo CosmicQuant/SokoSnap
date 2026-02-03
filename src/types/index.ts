@@ -28,6 +28,7 @@ export interface User {
     contactPerson?: string;
     contactPhone?: string;
     refundPolicy?: string;
+    slug?: string;
 
     // Computed / Extended settings
     verificationDoc?: string;

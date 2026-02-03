@@ -36,7 +36,8 @@ exports.shareLink = onRequest({ region: "us-central1" }, async (req, res) => {
                 if (!userQ.empty) {
                     const userData = userQ.docs[0].data();
                     const shopName = userData.shopName || userData.name || 'SokoSnap Store';
-                    const shopImage = userData.photoURL || ''; // Profile image
+                    // Check avatar first, then photoURL
+                    const shopImage = userData.avatar || userData.photoURL || '';
                     const shopDesc = userData.shopLocation
                         ? `Visit ${shopName} in ${userData.shopLocation}. Verified Merchant.`
                         : `Check out ${shopName} on SokoSnap.`;
