@@ -53,7 +53,7 @@ interface SellerDashboardProps {
 // Extracted Component to avoid Hook issues
 const MerchantProfileView = ({ user, theme, isDarkMode, setActiveView, scrollToSettlement = false }: { user: any, theme: any, isDarkMode: boolean, setActiveView: (v: string) => void, scrollToSettlement?: boolean }) => {
     const [formData, setFormData] = useState({
-        photoURL: user?.photoURL || '',
+        avatar: user?.avatar || user?.photoURL || '',
         shopName: user?.shopName || user?.name || '',
         shopLocation: user?.shopLocation || '',
         email: user?.email || '',
@@ -101,7 +101,14 @@ const MerchantProfileView = ({ user, theme, isDarkMode, setActiveView, scrollToS
             const fileRef = ref(storage, `profiles/${user.id}/${Date.now()}_${file.name}`);
             await uploadBytes(fileRef, file);
             const url = await getDownloadURL(fileRef);
-            setFormData(prev => ({ ...prev, photoURL: url }));
+
+            // 1. Update Local Form State
+            setFormData(prev => ({ ...prev, avatar: url }));
+
+            // 2. IMMEDIATE SAVE to Global Store & Firestore
+            // This ensures Header/Sidebar update immediately without hitting "Save" button
+            await updateUser({ avatar: url });
+
         } catch (error) {
             console.error("Profile upload failed", error);
             alert("Failed to upload image");
@@ -135,14 +142,28 @@ const MerchantProfileView = ({ user, theme, isDarkMode, setActiveView, scrollToS
                 {/* Profile Photo */}
                 <div className="flex flex-col items-center mb-6">
                     <label className="relative group cursor-pointer">
-                        <div className={`h-24 w-24 rounded-full border-2 overflow-hidden flex items-center justify-center ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-100 border-white shadow-lg'}`}>
-                            {formData.photoURL ? (
-                                <img src={formData.photoURL} alt="Profile" className="w-full h-full object-cover" />
-                            ) : (
+                        <div className={`h-24 w-24 rounded-full border-2 overflow-hidden flex items-center justify-center relative ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-100 border-white shadow-lg'}`}>
+                            {formData.avatar ? (
+                                <img
+                                    src={formData.avatar}
+                                    alt="Profile"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                        // Fallback to icon by modifying state or showing sibling
+                                        // Since we can't easily modify state in onError (loop risk), we hide img and show icon behind or via CSS
+                                        const parent = e.currentTarget.parentElement;
+                                        if (parent) parent.classList.add('image-error');
+                                    }}
+                                />
+                            ) : null}
+                            {/* Fallback Icon - Visible if avatar is missing OR if image error class added */}
+                            <div className={`absolute inset-0 flex items-center justify-center pointer-events-none ${formData.avatar ? '-z-10' : ''}`}>
                                 <UserIcon size={32} className="text-zinc-400" />
-                            )}
+                            </div>
+
                             {isUploading && (
-                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
                                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                 </div>
                             )}
@@ -1989,7 +2010,14 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         {activeView !== 'menu' && (
                             <button onClick={() => setActiveView('menu')} className="h-10 w-10 bg-gradient-to-tr from-yellow-500 to-yellow-200 rounded-full p-0.5 active:scale-90 transition-transform shadow-lg">
                                 <div className="h-full w-full rounded-full bg-black flex items-center justify-center overflow-hidden">
-                                    <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'Felix'}`} alt="profile" />
+                                    <img
+                                        src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'Felix'}`}
+                                        alt="profile"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'Fallback'}`;
+                                        }}
+                                    />
                                 </div>
                             </button>
                         )}

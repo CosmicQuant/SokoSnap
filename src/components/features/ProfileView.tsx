@@ -116,8 +116,21 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
                     {/* User Info */}
                     <div className="flex items-center gap-4 mb-6">
-                        <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center text-2xl font-bold border border-white/20 text-emerald-400">
-                            {getInitials(user.name)}
+                        <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold border border-white/20 text-emerald-400 overflow-hidden relative bg-white/10">
+                            {(user.avatar || user.photoURL) ? (
+                                <img
+                                    src={user.avatar || user.photoURL}
+                                    alt={user.name}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                        // Reveal initials behind
+                                    }}
+                                />
+                            ) : null}
+                            <div className={`absolute inset-0 flex items-center justify-center -z-10`}>
+                                {getInitials(user.name)}
+                            </div>
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold">{user.shopName || user.name}</h1>

@@ -104,6 +104,7 @@ const MOCK_PRODUCTS = [
 interface UserProfile {
   name: string;
   type: 'guest' | 'verified_buyer' | 'verified_merchant';
+  avatar?: string;
 }
 
 interface CheckoutFeedProps {
@@ -112,7 +113,7 @@ interface CheckoutFeedProps {
   onProfileClick: () => void;
 }
 
-export const CheckoutFeed: React.FC<CheckoutFeedProps> = ({ onBuyIntent, onProfileClick }) => {
+export const CheckoutFeed: React.FC<CheckoutFeedProps> = ({ user, onBuyIntent, onProfileClick }) => {
   const [activeTab, setActiveTab] = useState('foryou');
   const [view, setView] = useState<'feed' | 'cart' | 'success'>('feed');
 
@@ -442,9 +443,13 @@ export const CheckoutFeed: React.FC<CheckoutFeedProps> = ({ onBuyIntent, onProfi
         <div className="absolute top-0 left-0 right-0 z-40 px-4 pt-10 pb-4 flex justify-between items-start bg-gradient-to-b from-black/80 via-black/20 to-transparent pointer-events-none">
           <button
             onClick={onProfileClick}
-            className="pointer-events-auto p-2 text-white/90 hover:text-white transition-colors backdrop-blur-md bg-white/5 rounded-full"
+            className={`pointer-events-auto text-white/90 hover:text-white transition-colors backdrop-blur-md bg-white/5 rounded-full overflow-hidden flex items-center justify-center ${user?.avatar ? 'w-10 h-10' : 'p-2'}`}
           >
-            <User size={24} />
+            {user?.avatar ? (
+              <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <User size={24} />
+            )}
           </button>
 
           <div className="pointer-events-auto flex gap-6 pt-2">

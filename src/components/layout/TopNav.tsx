@@ -13,6 +13,7 @@ interface TopNavProps {
     currentSeller?: { name: string, handle: string };
     onBack?: () => void;
     isSeller?: boolean;
+    userProfileImage?: string;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -26,7 +27,8 @@ export const TopNav: React.FC<TopNavProps> = ({
     onCreateClick,
     currentSeller,
     onBack,
-    isSeller = false
+    isSeller = false,
+    userProfileImage
 }) => {
     return (
         <div className="absolute top-0 left-0 right-0 z-50 pt-6 pb-4 px-6 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
@@ -43,9 +45,13 @@ export const TopNav: React.FC<TopNavProps> = ({
                 <button
                     onClick={onProfileClick}
                     aria-label="View Profile"
-                    className="pointer-events-auto text-white/80 hover:text-white transition-colors p-2 bg-black/20 backdrop-blur-md rounded-full"
+                    className={`pointer-events-auto text-white/80 hover:text-white transition-colors bg-black/20 backdrop-blur-md rounded-full overflow-hidden flex items-center justify-center ${userProfileImage ? 'w-9 h-9' : 'p-2'}`}
                 >
-                    <User size={20} />
+                    {userProfileImage ? (
+                        <img src={userProfileImage} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                        <User size={20} />
+                    )}
                 </button>
             )}
 

@@ -31,7 +31,11 @@ const App = () => {
         return (
             <div className="h-screen w-full bg-black overflow-hidden relative">
                 <CheckoutFeed
-                    user={user ? { name: user.name, type: user.type === 'verified_merchant' ? 'verified_merchant' : 'verified_buyer' } : null}
+                    user={user ? {
+                        name: user.name,
+                        type: user.type === 'verified_merchant' ? 'verified_merchant' : 'verified_buyer',
+                        avatar: user.avatar || user.photoURL
+                    } : null}
                     onBuyIntent={() => true}
                     onProfileClick={() => { }}
                 />

@@ -24,16 +24,57 @@ exports.shareLink = onRequest({ region: "us-central1" }, async (req, res) => {
         let html = await indexResponse.text();
 
         if (!productSlug) {
-            // --- STORE VIEW ---
-            // TODO: Look up shop/user by slug if possible. 
-            // For now, serve generic store metadata or fallback.
-            // If we had 'users' collection with 'shopSlug' field, we'd query it here.
+            // --- STORE/BIO VIEW ---
+            try {
+                // Query Firestore for the seller data using the slug
+                // Note: We recently added 'slug' to users. If not found, it won't show the image.
+                const userQ = await db.collection('users')
+                    .where('slug', '==', shopSlug)
+                    .limit(1)
+                    .get();
 
-            // Just return the app as is for store root, or customize title
-            html = html.replace(
-                /<title>.*<\/title>/,
-                `<title>${shopSlug ? shopSlug + ' Store' : 'SokoSnap Store'}</title>`
-            );
+                if (!userQ.empty) {
+                    const userData = userQ.docs[0].data();
+                    const shopName = userData.shopName || userData.name || 'SokoSnap Store';
+                    const shopImage = userData.photoURL || ''; // Profile image
+                    const shopDesc = userData.shopLocation
+                        ? `Visit ${shopName} in ${userData.shopLocation}. Verified Merchant.`
+                        : `Check out ${shopName} on SokoSnap.`;
+
+                    // Replace Title
+                    html = html.replace(/<title>.*<\/title>/, `<title>${shopName}</title>`);
+
+                    // Replace OG Tags
+                    html = html.replace(
+                        /<meta property="og:title" content="[^"]*" \/>/,
+                        `<meta property="og:title" content="${shopName}" />`
+                    );
+                    html = html.replace(
+                        /<meta property="og:description" content="[^"]*" \/>/,
+                        `<meta property="og:description" content="${shopDesc}" />`
+                    );
+
+                    if (shopImage) {
+                        if (html.includes('<meta property="og:image"')) {
+                            html = html.replace(
+                                /<meta property="og:image" content="[^"]*" \/>/,
+                                `<meta property="og:image" content="${shopImage}" />`
+                            );
+                        } else {
+                            html = html.replace('</head>', `<meta property="og:image" content="${shopImage}" />\n</head>`);
+                        }
+                    }
+                } else {
+                    // Fallback
+                    html = html.replace(
+                        /<title>.*<\/title>/,
+                        `<title>${shopSlug ? shopSlug + ' Store' : 'SokoSnap Store'}</title>`
+                    );
+                }
+            } catch (error) {
+                console.error("Error fetching store data:", error);
+            }
+
             res.set('Cache-Control', 'public, max-age=300, s-maxage=600');
             res.send(html);
             return;

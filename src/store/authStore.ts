@@ -13,6 +13,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User } from '../types';
 import { auth, db, googleProvider } from '../lib/firebase';
+import { slugify } from '../utils/formatters';
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
@@ -331,7 +332,8 @@ export const useAuthStore = create<AuthState>()(
                         shopName: data.shopName,
                         shopLocation: data.shopLocation,
                         contactPerson: data.contactPerson || currentUser.name,
-                        contactPhone: data.contactPhone || currentUser.phone
+                        contactPhone: data.contactPhone || currentUser.phone,
+                        slug: slugify(data.shopName)
                     };
 
                     const docRef = doc(db, 'users', currentUser.id);
@@ -360,6 +362,16 @@ export const useAuthStore = create<AuthState>()(
             updateUser: async (updates) => {
                 const currentUser = get().user;
                 if (!currentUser) return;
+                // Ensure slug is updated if shopName or name changes
+                if (updates.shopName) {
+                    // @ts-ignore - slug is not main typed but we want it in DB
+                    updates.slug = slugify(updates.shopName);
+                } else if (updates.name && !currentUser.shopName && !updates.shopName) {
+                    // Only update slug from name if they don't have a shop name
+                    // @ts-ignore
+                    updates.slug = slugify(updates.name);
+                }
+
 
                 try {
                     await updateDoc(doc(db, 'users', currentUser.id), {
