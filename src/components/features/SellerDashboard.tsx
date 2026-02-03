@@ -85,9 +85,41 @@ const MerchantProfileView = ({ user, theme, isDarkMode, setActiveView, scrollToS
 
     const handleLocation = () => {
         if ('geolocation' in navigator) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                const loc = `Lat: ${pos.coords.latitude.toFixed(4)}, Long: ${pos.coords.longitude.toFixed(4)}`;
-                setFormData(prev => ({ ...prev, shopLocation: loc }));
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const { latitude, longitude } = pos.coords;
+
+                try {
+                    // Try to get a readable address
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+                    );
+                    const data = await response.json();
+
+                    if (data && data.address) {
+                        const addr = data.address;
+                        // Prioritize: Suburb/Area, City/Town
+                        const parts = [
+                            addr.suburb || addr.neighbourhood || addr.residential || addr.road,
+                            addr.city || addr.town || addr.municipality || addr.county,
+                            addr.country
+                        ].filter(Boolean);
+
+                        // Take top 2 relevant parts to keep it short, e.g. "Westlands, Nairobi"
+                        const locName = parts.slice(0, 2).join(', ');
+                        setFormData(prev => ({ ...prev, shopLocation: locName || data.display_name }));
+                    } else {
+                        // Fallback to coords if name fails
+                        const loc = `Lat: ${latitude.toFixed(4)}, Long: ${longitude.toFixed(4)}`;
+                        setFormData(prev => ({ ...prev, shopLocation: loc }));
+                    }
+                } catch (error) {
+                    // Fallback on network error
+                    const loc = `Lat: ${latitude.toFixed(4)}, Long: ${longitude.toFixed(4)}`;
+                    setFormData(prev => ({ ...prev, shopLocation: loc }));
+                }
+            }, (err) => {
+                console.error("Geolocation error:", err);
+                alert("Could not access location. Please check browser permissions.");
             });
         }
     };
