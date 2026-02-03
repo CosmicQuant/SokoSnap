@@ -19,6 +19,7 @@ export interface User {
     isVerified?: boolean; // Admin-controlled verification for sellers (enables link generation)
     type: UserType;
     avatar?: string;
+    photoURL?: string;
     location?: string;
 
     // Seller specific fields

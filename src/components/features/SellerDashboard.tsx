@@ -53,6 +53,7 @@ interface SellerDashboardProps {
 // Extracted Component to avoid Hook issues
 const MerchantProfileView = ({ user, theme, isDarkMode, setActiveView, scrollToSettlement = false }: { user: any, theme: any, isDarkMode: boolean, setActiveView: (v: string) => void, scrollToSettlement?: boolean }) => {
     const [formData, setFormData] = useState({
+        photoURL: user?.photoURL || '',
         shopName: user?.shopName || user?.name || '',
         shopLocation: user?.shopLocation || '',
         email: user?.email || '',
@@ -72,6 +73,7 @@ const MerchantProfileView = ({ user, theme, isDarkMode, setActiveView, scrollToS
         accountNumber: user?.accountNumber || '',
     });
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const { updateUser } = useAuthStore();
     const settlementRef = React.useRef<HTMLDivElement>(null);
 
@@ -87,6 +89,24 @@ const MerchantProfileView = ({ user, theme, isDarkMode, setActiveView, scrollToS
                 const loc = `Lat: ${pos.coords.latitude.toFixed(4)}, Long: ${pos.coords.longitude.toFixed(4)}`;
                 setFormData(prev => ({ ...prev, shopLocation: loc }));
             });
+        }
+    };
+
+    const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !user?.id) return;
+
+        setIsUploading(true);
+        try {
+            const fileRef = ref(storage, `profiles/${user.id}/${Date.now()}_${file.name}`);
+            await uploadBytes(fileRef, file);
+            const url = await getDownloadURL(fileRef);
+            setFormData(prev => ({ ...prev, photoURL: url }));
+        } catch (error) {
+            console.error("Profile upload failed", error);
+            alert("Failed to upload image");
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -112,6 +132,29 @@ const MerchantProfileView = ({ user, theme, isDarkMode, setActiveView, scrollToS
             </div>
 
             <div className="px-4 space-y-6">
+                {/* Profile Photo */}
+                <div className="flex flex-col items-center mb-6">
+                    <label className="relative group cursor-pointer">
+                        <div className={`h-24 w-24 rounded-full border-2 overflow-hidden flex items-center justify-center ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-100 border-white shadow-lg'}`}>
+                            {formData.photoURL ? (
+                                <img src={formData.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                <UserIcon size={32} className="text-zinc-400" />
+                            )}
+                            {isUploading && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="absolute bottom-0 right-0 bg-yellow-500 text-black p-1.5 rounded-full shadow-lg transform group-hover:scale-110 transition-transform">
+                            <Camera size={14} />
+                        </div>
+                        <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={isUploading} />
+                    </label>
+                    <p className="text-[10px] font-bold mt-2 opacity-50 uppercase">Tap to change logo</p>
+                </div>
+
                 {/* Business Details */}
                 <section className={`p-4 rounded-[2rem] border ${theme.card}`}>
                     <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -340,7 +383,7 @@ const MerchantProfileView = ({ user, theme, isDarkMode, setActiveView, scrollToS
 };
 
 export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
-    const { user, logout, initialize } = useAuthStore();
+    const { user, logout, initialize, updateUser } = useAuthStore();
     const { links, orders, isLoading, fetchSellerData, createProduct, updateProduct } = useSellerStore();
 
     // Initialize Auth Listener within the component as well, to be safe
@@ -412,6 +455,25 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     }, [user, fetchSellerData]);
 
     // --- DERIVED METRICS ---
+    const [scrollToProductId, setScrollToProductId] = useState<string | null>(null);
+
+    // Deep Scroll Logic (Moved to top-level to respect Rules of Hooks)
+    useEffect(() => {
+        if (scrollToProductId && activeView === 'links') {
+            const el = document.getElementById(`product-${scrollToProductId}`);
+            if (el) {
+                setTimeout(() => {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.classList.add('ring-2', 'ring-yellow-500', 'ring-offset-2');
+                    setTimeout(() => {
+                        el.classList.remove('ring-2', 'ring-yellow-500', 'ring-offset-2');
+                        setScrollToProductId(null);
+                    }, 2000);
+                }, 100);
+            }
+        }
+    }, [scrollToProductId]);
+
     const safeOrders = orders || [];
     const safeLinks = links || [];
 
@@ -537,12 +599,30 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
         const url = `${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || '')}/${finalSlug}`;
 
         if (navigator.share) {
+            let filesArray: File[] = [];
+            if (link.img) {
+                try {
+                    const response = await fetch(link.img);
+                    const blob = await response.blob();
+                    const file = new File([blob], "product.jpg", { type: blob.type });
+                    filesArray = [file];
+                } catch (error) {
+                    console.error("Error fetching image for share:", error);
+                }
+            }
+
             try {
-                await navigator.share({
+                const shareData: any = {
                     title: link.name,
                     text: `Check out ${link.name} on SokoSnap!`,
                     url: url
-                });
+                };
+
+                if (filesArray.length > 0 && navigator.canShare && navigator.canShare({ files: filesArray })) {
+                    shareData.files = filesArray;
+                }
+
+                await navigator.share(shareData);
             } catch (err) {
                 // Ignore aborts
             }
@@ -613,7 +693,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                 <div className="px-4 space-y-3">
                     {filteredLinks.length > 0 ? (
                         filteredLinks.map(link => (
-                            <div key={link.id} className={`p-4 rounded-[2rem] border transition-all ${theme.card} ${link.status === 'archived' ? 'opacity-60' : ''}`}>
+                            <div id={`product-${link.id}`} key={link.id} className={`p-4 rounded-[2rem] border transition-all ${theme.card} ${link.status === 'archived' ? 'opacity-60' : ''}`}>
 
                                 <div className="flex gap-4">
                                     {/* Image */}
@@ -659,7 +739,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                             <Pencil size={14} className={link.status === 'archived' ? "text-zinc-600" : "text-zinc-400 hover:text-blue-500"} />
                                         </button>
 
-                                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex items-center gap-2" onClick={(e) => { e.stopPropagation(); }}>
                                             <button
                                                 disabled={link.status === 'archived'}
                                                 onClick={(e) => handleShareLink(link, e)}
@@ -817,12 +897,30 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
         const handleShareStore = async () => {
             const url = `${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}`;
             if (navigator.share) {
+                let filesArray: File[] = [];
+                if (user?.photoURL) {
+                    try {
+                        const response = await fetch(user.photoURL);
+                        const blob = await response.blob();
+                        const file = new File([blob], "store_profile.jpg", { type: blob.type });
+                        filesArray = [file];
+                    } catch (error) {
+                        console.error("Error fetching profile image for share:", error);
+                    }
+                }
+
                 try {
-                    await navigator.share({
+                    const shareData: any = {
                         title: user?.shopName || 'My Store',
                         text: `Check out my store on SokoSnap!`,
                         url
-                    });
+                    };
+
+                    if (filesArray.length > 0 && navigator.canShare && navigator.canShare({ files: filesArray })) {
+                        shareData.files = filesArray;
+                    }
+
+                    await navigator.share(shareData);
                 } catch (e) { }
             } else {
                 navigator.clipboard.writeText(url);
@@ -1072,16 +1170,12 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                             <span className={`text-xs font-bold ${user?.verificationDoc ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-500'}`}>Upload KRA Certificate</span>
                                         </div>
                                         {!user?.verificationDoc && (
-                                            <label className="text-[10px] font-black uppercase text-blue-500 hover:underline cursor-pointer flex items-center gap-1">
-                                                {verificationUploading ? 'Uploading...' : 'Upload'}
-                                                <input
-                                                    type="file"
-                                                    accept="image/*,.pdf"
-                                                    className="hidden"
-                                                    onChange={handleVerificationUpload}
-                                                    disabled={verificationUploading}
-                                                />
-                                            </label>
+                                            <button
+                                                onClick={() => setActiveView('identity')}
+                                                className="text-[10px] font-black uppercase text-blue-500 hover:underline flex items-center gap-1"
+                                            >
+                                                Start <ChevronRight size={10} />
+                                            </button>
                                         )}
                                     </div>
                                 </div>
@@ -1125,7 +1219,14 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
 
                                             <div className="grid grid-cols-3 gap-3">
                                                 {links.slice().sort((a, b) => (b.sales || 0) - (a.sales || 0)).slice(0, 3).map((link, i) => (
-                                                    <div key={link.id || i} className="group/card relative aspect-square rounded-xl overflow-hidden border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900 shadow-sm transition-all hover:shadow-md hover:border-yellow-500/30">
+                                                    <div
+                                                        onClick={() => {
+                                                            setScrollToProductId(String(link.id));
+                                                            setActiveView('links');
+                                                        }}
+                                                        key={link.id || i}
+                                                        className="group/card relative aspect-square rounded-xl overflow-hidden border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900 shadow-sm transition-all hover:shadow-md hover:border-yellow-500/30 cursor-pointer"
+                                                    >
                                                         {/* Image - Full Coverage */}
                                                         <img
                                                             src={link.img}
@@ -1144,21 +1245,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                                                 <p className="font-black text-[10px] text-yellow-400">KES {link.price?.toLocaleString()}</p>
 
                                                                 <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        if (navigator.share) {
-                                                                            navigator.share({
-                                                                                title: link.name,
-                                                                                text: `Check out ${link.name} for KES ${link.price}`,
-                                                                                url: `${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}/${slugify(link.name)}`
-                                                                            }).catch(err => console.log('Share dismissed', err));
-                                                                        } else {
-                                                                            const productUrl = `${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}/${slugify(link.name)}`;
-                                                                            navigator.clipboard.writeText(`${window.location.protocol}//${productUrl}`);
-                                                                            setShowCopyToast(true);
-                                                                            setTimeout(() => setShowCopyToast(false), 2000);
-                                                                        }
-                                                                    }}
+                                                                    onClick={(e) => handleShareLink(link, e)}
                                                                     className="h-5 w-5 rounded-full flex items-center justify-center bg-white/20 hover:bg-yellow-400 text-white hover:text-black backdrop-blur-md transition-all active:scale-95"
                                                                 >
                                                                     <Share2 size={10} strokeWidth={2.5} />
@@ -1559,8 +1646,14 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
 
             // @ts-ignore
             await updateUser({ verificationDoc: url });
+
+            // Force local update if needed (though store handles it)
+            alert("Document uploaded successfully! Your verification is now pending.");
+            window.location.reload(); // Refresh to ensure state sync
+
         } catch (error) {
             console.error("Verification upload failed", error);
+            alert("Upload failed. Please try again.");
         } finally {
             setVerificationUploading(false);
         }
