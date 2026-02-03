@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, BrainCircuit, Loader2, Camera, CheckCircle2 } from 'lucide-react';
+import { X, BrainCircuit, Loader2, Camera, CheckCircle2, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -167,6 +167,12 @@ export const SmartScanModal: React.FC<SmartScanModalProps> = ({ isOpen, onClose,
             }
         }
     };
+
+    React.useEffect(() => {
+        if (isOpen && step === 'upload' && !isCameraOpen) {
+            startCamera();
+        }
+    }, [isOpen, step]);
 
     React.useEffect(() => {
         if (isCameraOpen && videoRef.current && stream) {
@@ -341,7 +347,7 @@ export const SmartScanModal: React.FC<SmartScanModalProps> = ({ isOpen, onClose,
                                         onChange={(e) => { stopCamera(); handleFile(e); }}
                                         accept="image/*"
                                     />
-                                    <CheckCircle2 size={24} />
+                                    <ImageIcon size={24} />
                                 </div>
                             </div>
                         </div>

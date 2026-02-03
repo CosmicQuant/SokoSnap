@@ -38,9 +38,7 @@ exports.shareLink = onRequest({ region: "us-central1" }, async (req, res) => {
                     const shopName = userData.shopName || userData.name || 'SokoSnap Store';
                     // Check avatar first, then photoURL
                     const shopImage = userData.avatar || userData.photoURL || '';
-                    const shopDesc = userData.shopLocation
-                        ? `Visit ${shopName} in ${userData.shopLocation}. Verified Merchant.`
-                        : `Check out ${shopName} on SokoSnap.`;
+                    const shopDesc = `Shop at ${shopName} on SokoSnap. Verified Merchant.`;
 
                     // Replace Title
                     html = html.replace(/<title>.*<\/title>/, `<title>${shopName}</title>`);

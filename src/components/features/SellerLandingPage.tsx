@@ -355,10 +355,9 @@ const SellerLandingPage = () => {
         if (!isInitialized) return;
 
         if (isAuthenticated && user) {
-            if (user.type === 'verified_merchant' && step === 'hero') {
+            // Allow any logged in user to access dashboard (Dashboard handles detailed locks)
+            if (step === 'hero') {
                 setStep('dashboard');
-            } else if (user.type !== 'verified_merchant' && step === 'dashboard') {
-                setStep('register');
             }
         }
     }, [isInitialized, isAuthenticated, user, step]);
@@ -450,11 +449,7 @@ const SellerLandingPage = () => {
 
     const handleCallToAction = () => {
         if (isAuthenticated && user) {
-            if (user.type === 'verified_merchant') {
-                setStep('dashboard');
-            } else {
-                setStep('register');
-            }
+            setStep('dashboard');
         } else {
             openAuthModal('register');
         }

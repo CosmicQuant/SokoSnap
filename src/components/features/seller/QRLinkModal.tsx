@@ -41,7 +41,7 @@ export const QRLinkModal: React.FC<QRLinkModalProps> = ({ isOpen, onClose, shopN
                 // Try sharing link
                 await navigator.share({
                     title: shopName || 'My Store',
-                    text: `Shop at ${shopName} on SokoSnap!`,
+                    text: `Shop at ${shopName} on SokoSnap. Verified Merchant.`,
                     url: url
                 });
             } catch (err) {
