@@ -599,32 +599,13 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
         const url = `${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || '')}/${finalSlug}`;
 
         if (navigator.share) {
-            let filesArray: File[] = [];
-            if (link.img) {
-                try {
-                    const response = await fetch(link.img);
-                    const blob = await response.blob();
-                    const file = new File([blob], "product.jpg", { type: blob.type });
-                    filesArray = [file];
-                } catch (error) {
-                    console.error("Error fetching image for share:", error);
-                }
-            }
-
             try {
-                const shareData: any = {
+                await navigator.share({
                     title: link.name,
-                    text: `Check out ${link.name} on SokoSnap!`,
                     url: url
-                };
-
-                if (filesArray.length > 0 && navigator.canShare && navigator.canShare({ files: filesArray })) {
-                    shareData.files = filesArray;
-                }
-
-                await navigator.share(shareData);
+                });
             } catch (err) {
-                // Ignore aborts
+                console.error("Share failed:", err);
             }
         } else {
             navigator.clipboard.writeText(url);
@@ -897,30 +878,11 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
         const handleShareStore = async () => {
             const url = `${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}`;
             if (navigator.share) {
-                let filesArray: File[] = [];
-                if (user?.photoURL) {
-                    try {
-                        const response = await fetch(user.photoURL);
-                        const blob = await response.blob();
-                        const file = new File([blob], "store_profile.jpg", { type: blob.type });
-                        filesArray = [file];
-                    } catch (error) {
-                        console.error("Error fetching profile image for share:", error);
-                    }
-                }
-
                 try {
-                    const shareData: any = {
+                    await navigator.share({
                         title: user?.shopName || 'My Store',
-                        text: `Check out my store on SokoSnap!`,
                         url
-                    };
-
-                    if (filesArray.length > 0 && navigator.canShare && navigator.canShare({ files: filesArray })) {
-                        shareData.files = filesArray;
-                    }
-
-                    await navigator.share(shareData);
+                    });
                 } catch (e) { }
             } else {
                 navigator.clipboard.writeText(url);

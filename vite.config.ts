@@ -116,18 +116,32 @@ export default defineConfig(({ mode }) => {
           seller: path.resolve(__dirname, 'seller.html'),
         },
         output: {
-          manualChunks: {
-            'vendor-react': ['react', 'react-dom'],
-            'vendor-maps': ['leaflet', 'react-leaflet'],
-            'vendor-state': ['zustand', 'zod', '@tanstack/react-query'],
-            'vendor-capacitor': [
-              '@capacitor/core',
-              '@capacitor/app',
-              '@capacitor/camera',
-              '@capacitor/geolocation',
-              '@capacitor/filesystem',
-              '@capacitor/share',
-            ],
+          manualChunks: (id) => {
+            if (id.includes('node_modules')) {
+              // 1. Firebase (Largest chunk, standalone)
+              if (id.includes('firebase') || id.includes('@firebase')) {
+                return 'vendor-firebase';
+              }
+
+              // 2. Maps (Large, specific usage)
+              if (id.includes('leaflet') || id.includes('react-leaflet') || id.includes('react-google-maps')) {
+                return 'vendor-maps';
+              }
+
+              // 3. Capacitor (Native bridge)
+              if (id.includes('@capacitor') || id.includes('@codetrix-studio')) {
+                return 'vendor-capacitor';
+              }
+
+              // 4. AI (Specific usage)
+              if (id.includes('@google/generative-ai')) {
+                return 'vendor-ai';
+              }
+
+              // 5. Core Vendor (React + UI + State + Utils)
+              // Grouping these avoids circular dependencies between React and its ecosystem
+              return 'vendor-core';
+            }
           },
         },
       },

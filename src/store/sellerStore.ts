@@ -19,6 +19,7 @@ import {
     uploadBytes,
     getDownloadURL
 } from 'firebase/storage';
+import { slugify } from '../utils/formatters';
 // We need to fetch User types from index, but LinkItem and Order need to be flexible for now
 // or we update types.ts to support Firestore-style string IDs
 import { LinkItem, Order } from '../types';
@@ -120,6 +121,7 @@ export const useSellerStore = create<SellerState>((set, get) => ({
                 ...productData,
                 img: imageUrls[0] || '', // Main image
                 images: imageUrls,
+                slug: slugify(productData.name),
                 createdAt: Timestamp.now(),
                 views: 0,
                 clicks: 0,
@@ -174,8 +176,10 @@ export const useSellerStore = create<SellerState>((set, get) => ({
                 ...cleanUpdates,
                 img: imageUrls.length > 0 ? imageUrls[0] : (updates.img || ''),
                 images: imageUrls,
+                ...(cleanUpdates.name ? { slug: slugify(cleanUpdates.name) } : {}),
                 updatedAt: Timestamp.now()
             };
+
 
             await updateDoc(doc(db, 'products', productId), payload);
             set({ isLoading: false });

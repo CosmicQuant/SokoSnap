@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import {
   Heart,
   MessageCircle,
@@ -174,6 +175,20 @@ export const CheckoutFeed: React.FC<CheckoutFeedProps> = ({ onBuyIntent, onProfi
 
     return (
       <div className="h-full w-full snap-start relative flex flex-col bg-black shrink-0">
+        <Helmet>
+          <title>{product.name} | SokoSnap</title>
+          <meta name="description" content={product.description} />
+          <meta property="og:title" content={product.name} />
+          <meta property="og:description" content={product.description} />
+          <meta property="og:image" content={product.media} />
+          <meta property="og:type" content="product" />
+          <meta property="og:price:amount" content={product.price.toString()} />
+          <meta property="og:price:currency" content="KES" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:image" content={product.media} />
+          <meta name="twitter:title" content={product.name} />
+          <meta name="twitter:description" content={product.description} />
+        </Helmet>
         {/* Media Layer */}
         <div className="absolute inset-0 z-0">
           {product.type === 'video' ? (

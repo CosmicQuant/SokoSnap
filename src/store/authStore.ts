@@ -197,8 +197,8 @@ export const useAuthStore = create<AuthState>()(
             loginWithGoogle: async () => {
                 set({ isLoading: true, error: null });
                 try {
-                    // Ensure persistence
-                    await setPersistence(auth, browserLocalPersistence);
+                    // Note: Removed await setPersistence to avoid popup blocking
+                    // Firebase Auth defaults to local persistence, and awaiting it disconnects the user click event.
 
                     // Use Popup
                     let result;

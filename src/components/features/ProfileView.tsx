@@ -120,7 +120,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                             {getInitials(user.name)}
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold">{user.name}</h1>
+                            <h1 className="text-2xl font-bold">{user.shopName || user.name}</h1>
                             <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 bg-emerald-500/10 px-2 py-1 rounded-full w-fit mt-1">
                                 {user.type === 'verified_merchant' ? (
                                     <>
