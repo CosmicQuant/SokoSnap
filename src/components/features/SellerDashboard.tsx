@@ -1122,9 +1122,22 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         <h3 className={`text-[10px] font-black uppercase tracking-widest mb-4 ${theme.textMuted}`}>Social Media Conversion</h3>
                         <div className="h-64 w-full">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={channelData}>
-                                    <XAxis dataKey="name" tick={{ fontSize: 9 }} interval={0} stroke="#888888" axisLine={false} tickLine={false} />
-                                    <YAxis tick={{ fontSize: 10 }} stroke="#888888" axisLine={false} tickLine={false} />
+                                <BarChart data={channelData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+                                    <XAxis
+                                        dataKey="name"
+                                        interval={0}
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={({ x, y, payload }) => {
+                                            const channel = channelData.find(c => c.name === payload.value);
+                                            return (
+                                                <text x={x} y={y} dy={12} textAnchor="middle" fill={channel?.color || '#888'} fontSize={9} fontWeight="900">
+                                                    {payload.value}
+                                                </text>
+                                            );
+                                        }}
+                                    />
+                                    <YAxis width={30} tick={{ fontSize: 10 }} stroke="#888888" axisLine={false} tickLine={false} />
                                     <Tooltip
                                         cursor={{ fill: 'transparent' }}
                                         contentStyle={{ backgroundColor: isDarkMode ? '#27272a' : '#fff', borderRadius: '12px', border: `1px solid ${isDarkMode ? '#3f3f46' : '#e5e7eb'}` }}
