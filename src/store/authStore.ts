@@ -23,6 +23,7 @@ import {
     signOut,
     onAuthStateChanged,
     sendPasswordResetEmail,
+    sendEmailVerification,
     updateProfile,
     browserLocalPersistence,
     setPersistence,
@@ -284,10 +285,18 @@ export const useAuthStore = create<AuthState>()(
                         updatedAt: serverTimestamp()
                     });
 
+                    // Send Email Verification
+                    try {
+                        await sendEmailVerification(firebaseUser);
+                    } catch (emailError) {
+                        console.error('[Auth] Verification email failed:', emailError);
+                        // Continue anyway, user can resend later
+                    }
+
                     // Success
                     set({
                         isAuthModalOpen: false,
-                        successMessage: "Account created successfully!"
+                        successMessage: "Account created! Please verify your email."
                     });
                 } catch (error: any) {
                     console.error('[Auth] Register error:', error);
@@ -318,7 +327,13 @@ export const useAuthStore = create<AuthState>()(
                     localStorage.removeItem('sokosnap-auth');
 
                     // Force navigation to Seller Landing Page
-                    window.location.href = '/seller.html';
+                    // Use replace to prevent back-button navigation to authenticated content
+                    // And ensure a fresh load to clear any lingering Firebase Auth state
+                    if (window.location.pathname.includes('seller.html')) {
+                        window.location.reload();
+                    } else {
+                        window.location.replace('/seller.html');
+                    }
                 } catch (error) {
                     console.error('[Auth] Logout error:', error);
                     set({ isLoading: false });
@@ -418,7 +433,21 @@ export const useAuthStore = create<AuthState>()(
             clearSuccess: () => set({ successMessage: null }),
 
             // Legacy/Unused dummy to satisfy types if needed or re-implement
-            resendVerificationEmail: async () => { console.log("Verification email resend not implemented in V2"); }
+            resendVerificationEmail: async () => {
+                set({ isLoading: true, error: null });
+                try {
+                    if (auth.currentUser) {
+                        await sendEmailVerification(auth.currentUser);
+                        set({ successMessage: "Verification email sent!" });
+                    } else {
+                        throw new Error("No user logged in");
+                    }
+                } catch (e: any) {
+                    set({ error: e.message || "Failed to send verification email" });
+                } finally {
+                    set({ isLoading: false });
+                }
+            }
         }),
         {
             name: 'sokosnap-auth',
