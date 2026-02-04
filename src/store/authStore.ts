@@ -17,6 +17,7 @@ import { slugify } from '../utils/formatters';
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
+    signInWithPopup,
     signInWithRedirect,
     getRedirectResult,
     signOut,
@@ -113,15 +114,19 @@ export const useAuthStore = create<AuthState>()(
             initialize: () => {
                 console.log('[Auth] Initializing listener...');
 
+                // State tracker to coordinate Redirect vs AuthListener
+                // We don't want to show the Landing Page if a redirect is still validating
+                // let redirectCheckComplete = false;
+
                 // Handle Redirect Result (Mobile Auth Flow)
                 getRedirectResult(auth).then(async (result) => {
                     if (result && result.user) {
                         console.log('[Auth] Recovered from redirect:', result.user.uid);
-                        // Profile creation logic handled by onAuthStateChanged below, 
-                        // but we can ensure persistence here if needed.
+                        // The user is signed in, onAuthStateChanged will handle the rest
                     }
                 }).catch(error => {
                     console.error('[Auth] Redirect login error:', error);
+                    set({ error: "Mobile login failed. Please try again." });
                 });
 
                 // Set persistence to local (survives browser restart)
@@ -131,6 +136,7 @@ export const useAuthStore = create<AuthState>()(
 
                 const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
                     if (firebaseUser) {
+                        // User Found
                         try {
                             // Fetch user profile from Firestore
                             const docRef = doc(db, 'users', firebaseUser.uid);
@@ -167,7 +173,6 @@ export const useAuthStore = create<AuthState>()(
                             }
                         } catch (error) {
                             console.error('[Auth] Profile fetch error:', error);
-                            // Keep the user logged in but show error? Or fallback to basic profile?
                             // Fallback to basic profile to prevent loop
                             const basicUser: User = {
                                 id: firebaseUser.uid,
@@ -189,7 +194,14 @@ export const useAuthStore = create<AuthState>()(
                             });
                         }
                     } else {
-                        console.log('[Auth] No user signed in.');
+                        // NO User Found
+                        // Only set isInitialized=true if the redirect check is also done.
+                        // However, onAuthStateChanged often fires 'null' first before the redirect consumes.
+                        // We will add a small artificial delay if it's potentially a redirect flow
+
+                        // If we are definitely not expecting a redirect (or it failed), show landing page
+                        console.log('[Auth] No active session found.');
+
                         set({
                             user: null,
                             isAuthenticated: false,
@@ -221,9 +233,30 @@ export const useAuthStore = create<AuthState>()(
                 set({ isLoading: true, error: null });
                 try {
                     await setPersistence(auth, browserLocalPersistence);
-                    // Use Redirect for better Mobile support
-                    await signInWithRedirect(auth, googleProvider);
-                    // Execution stops here as page redirects
+
+                    // Detect Mobile Device
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+                    if (isMobile) {
+                        console.log('[Auth] Detected mobile device, using Redirect...');
+                        // Use Redirect for Mobile Stability
+                        await signInWithRedirect(auth, googleProvider);
+                        return; // Execution stops as page redirects
+                    }
+
+                    // Use Popup for Desktop (Better UX, avoids redirect issues)
+                    try {
+                        await signInWithPopup(auth, googleProvider);
+                        set({ isAuthModalOpen: false }); // Close modal on success
+                    } catch (popupError: any) {
+                        // Fallback to redirect if popup is blocked/closed
+                        if (popupError.code === 'auth/popup-blocked') {
+                            await signInWithRedirect(auth, googleProvider);
+                            return;
+                        }
+                        throw popupError;
+                    }
+
                 } catch (error: any) {
                     console.error('[Auth] Google login error:', error);
                     set({ error: error.message, isLoading: false });
@@ -290,8 +323,8 @@ export const useAuthStore = create<AuthState>()(
                     // Clear local storage for safety
                     localStorage.removeItem('sokosnap-auth');
 
-                    // Force navigation to root (Landing Page)
-                    window.location.href = '/';
+                    // Force navigation to Seller Landing Page
+                    window.location.href = '/seller.html';
                 } catch (error) {
                     console.error('[Auth] Logout error:', error);
                     set({ isLoading: false });

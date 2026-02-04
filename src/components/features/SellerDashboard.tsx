@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import {
     Share2,
     Plus,
@@ -452,10 +453,15 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     // Orders Sub-tabs
     const [ordersFilter, setOrdersFilter] = useState<'ongoing' | 'completed' | 'disputed'>('ongoing');
 
-    const [showCopyToast, setShowCopyToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState<string | null>(null);
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [notificationsEnabled, setNotificationsEnabled] = useState(user?.notificationsEnabled ?? true);
     const [verificationUploading, setVerificationUploading] = useState(false);
+
+    const showToast = (msg: string) => {
+        setToastMessage(msg);
+        setTimeout(() => setToastMessage(null), 3000);
+    };
 
     // UI Helpers
     const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
@@ -481,12 +487,15 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     const handleRestrictedAction = (action: () => void) => {
         if (!isVerified) {
             // If they click a locked feature, explain why
-            // Instead of a modal, we shake the verification card or scroll to it
+            // If the card is visible (Home view), scroll to it
             const verificationCard = document.getElementById('verification-card');
             if (verificationCard) {
                 verificationCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 verificationCard.classList.add('animate-pulse');
                 setTimeout(() => verificationCard.classList.remove('animate-pulse'), 1000);
+            } else {
+                // If not visible (e.g. Insights View), show notification
+                showToast("⚠️ Verification Required: Complete setup to continue.");
             }
             return;
         }
@@ -631,8 +640,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
     const filteredOrders = getFilteredOrders();
 
     const handleCopy = () => {
-        setShowCopyToast(true);
-        setTimeout(() => setShowCopyToast(false), 2000);
+        showToast("Link Copied!");
     };
 
     const handleToggleLink = async (link: any, e: React.MouseEvent) => {
@@ -927,6 +935,15 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
             .sort((a, b) => (b.sales || 0) - (a.sales || 0))
             .slice(0, 3);
 
+        // Channel Distribution (Proxy Data)
+        const channelData = [
+            { name: 'WhatsApp', conversions: totalClicks > 0 ? Math.floor(totalClicks * 0.45) : 0, color: '#25D366' },
+            { name: 'TikTok', conversions: totalClicks > 0 ? Math.floor(totalClicks * 0.25) : 0, color: isDarkMode ? '#ffffff' : '#000000' },
+            { name: 'Instagram', conversions: totalClicks > 0 ? Math.floor(totalClicks * 0.15) : 0, color: '#E1306C' },
+            { name: 'Facebook', conversions: totalClicks > 0 ? Math.floor(totalClicks * 0.10) : 0, color: '#1877F2' },
+            { name: 'Web', conversions: totalClicks > 0 ? Math.floor(totalClicks * 0.05) : 0, color: '#8b5cf6' }
+        ];
+
         // --- 2. AI Business Coach Logic ---
         const handleShareStore = async () => {
             const url = `${window.location.protocol}//${window.location.host}/store/${slugify(user?.shopName || user?.name || 'store')}`;
@@ -940,8 +957,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
             } else {
                 navigator.clipboard.writeText(url);
                 // Assuming setShowCopyToast is available in scope
-                setShowCopyToast(true);
-                setTimeout(() => setShowCopyToast(false), 2000);
+                showToast("Store Link Copied!");
             }
         };
 
@@ -949,8 +965,8 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
             // Priority 0: Empty Store
             if (safeLinks.length === 0) return {
                 title: "Empty Store",
-                msg: "Your store is empty. Customers can't buy anything until you add products. Create your first checkout link now.",
-                action: "Add Product",
+                msg: "Your store is empty. Customers can't buy anything until you add a checkout link. Create your first checkout link now.",
+                action: "Add Checkout Link",
                 handler: () => handleRestrictedAction(() => setShowAddProduct(true)),
                 color: "text-red-500",
                 bg: "bg-red-500/10",
@@ -1096,6 +1112,31 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                     </div>
                                 );
                             })}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Social Media Conversion Chart */}
+                <section className="px-4 mb-6">
+                    <div className={`p-6 rounded-[2.5rem] border ${theme.card}`}>
+                        <h3 className={`text-[10px] font-black uppercase tracking-widest mb-4 ${theme.textMuted}`}>Social Media Conversion</h3>
+                        <div className="h-64 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={channelData}>
+                                    <XAxis dataKey="name" tick={{ fontSize: 9 }} interval={0} stroke="#888888" axisLine={false} tickLine={false} />
+                                    <YAxis tick={{ fontSize: 10 }} stroke="#888888" axisLine={false} tickLine={false} />
+                                    <Tooltip
+                                        cursor={{ fill: 'transparent' }}
+                                        contentStyle={{ backgroundColor: isDarkMode ? '#27272a' : '#fff', borderRadius: '12px', border: `1px solid ${isDarkMode ? '#3f3f46' : '#e5e7eb'}` }}
+                                        itemStyle={{ color: isDarkMode ? '#fff' : '#000', fontSize: '12px', fontWeight: 'bold' }}
+                                    />
+                                    <Bar dataKey="conversions" radius={[4, 4, 4, 4]} barSize={40}>
+                                        {channelData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
                         </div>
                     </div>
                 </section>
@@ -1271,7 +1312,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                                 ))}
                                                 {links.length === 0 && (
                                                     <div className="col-span-3 py-8 text-center border-2 border-dashed border-gray-100 dark:border-zinc-800 rounded-xl">
-                                                        <p className={`text-[9px] italic ${theme.textMuted}`}>No products active. <br />Create one to start selling.</p>
+                                                        <p className={`text-[9px] italic ${theme.textMuted}`}>No checkout links active. <br />Create one to start selling.</p>
                                                     </div>
                                                 )}
                                             </div>
@@ -1279,11 +1320,10 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
 
                                         {/* Channels Section */}
                                         <div
-                                            onClick={() => setActiveView('insights')}
-                                            className="cursor-pointer group pt-3 border-t border-dashed border-gray-200 dark:border-zinc-800"
+                                            className="pt-3 border-t border-dashed border-gray-200 dark:border-zinc-800"
                                         >
                                             <div className="flex items-center justify-between mb-2">
-                                                <p className={`text-[10px] font-black uppercase tracking-widest ${theme.textMuted} group-hover:text-yellow-600 transition-colors`}>Top 3 Channels</p>
+                                                <p className={`text-[10px] font-black uppercase tracking-widest ${theme.textMuted}`}>Top 3 Channels</p>
                                             </div>
                                             <div className="flex flex-wrap items-center justify-start gap-3 px-1">
                                                 {/* Dynamic Channels Display utilizing totalClicks as proxy for activity distribution */}
@@ -2002,9 +2042,10 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
             {/* Main Content Area */}
             <div className="flex-1 min-w-0 flex flex-col overflow-y-auto">
                 {/* Toast Notification */}
-                <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[60] transition-all duration-300 ${showCopyToast ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
-                    <div className="bg-yellow-500 text-black px-6 py-2 rounded-full font-bold shadow-2xl flex items-center gap-2">
-                        <CheckCircle2 size={18} /> Link Copied!
+                <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[60] transition-all duration-300 ${toastMessage ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
+                    <div className="bg-zinc-900 text-white border border-zinc-800 px-6 py-3 rounded-full font-bold shadow-2xl flex items-center gap-3 whitespace-nowrap">
+                        {toastMessage && toastMessage.includes('⚠️') ? <ShieldCheck size={18} className="text-yellow-500" /> : <CheckCircle2 size={18} className="text-green-500" />}
+                        {toastMessage?.replace('⚠️', '').trim()}
                     </div>
                 </div>
 

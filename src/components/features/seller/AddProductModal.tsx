@@ -445,25 +445,6 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
                                                     )}
                                                 />
                                             </div>
-
-                                            <div className="space-y-2">
-                                                <label className={`text-sm font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Condition</label>
-                                                <div className="flex gap-3">
-                                                    {['new', 'like-new', 'good', 'fair'].map(c => (
-                                                        <button
-                                                            key={c}
-                                                            type="button"
-                                                            onClick={() => setValue('condition', c)}
-                                                            className={`px-4 py-2 rounded-lg border text-sm font-bold capitalize transition-all ${formData.condition === c
-                                                                ? (isDarkMode ? 'bg-white text-black border-white' : 'bg-black text-white border-black')
-                                                                : (isDarkMode ? 'bg-zinc-900 text-gray-400 border-zinc-700 hover:border-zinc-600' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300')
-                                                                }`}
-                                                        >
-                                                            {c.replace('-', ' ')}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
                                         </motion.div>
                                     )}
 

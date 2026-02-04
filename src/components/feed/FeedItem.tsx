@@ -14,6 +14,7 @@ import { CommentsOverlay } from './CommentsOverlay';
 import { Share } from '@capacitor/share';
 import { Capacitor } from '@capacitor/core';
 import mpesaLogo from '../../assets/41.png';
+import { CachedImage } from '../common/CachedImage';
 
 interface FeedItemProps {
     product: any;
@@ -268,7 +269,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                                     loading="lazy"
                                 />
                                 {/* Main Image - Properly contained */}
-                                <img
+                                <CachedImage
                                     src={slide.url}
                                     className="relative z-10 w-full h-full object-contain"
                                     alt={product.name}

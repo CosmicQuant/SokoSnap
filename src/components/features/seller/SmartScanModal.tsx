@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, BrainCircuit, Loader2, Camera, CheckCircle2, Image as ImageIcon } from 'lucide-react';
+import { X, BrainCircuit, Loader2, CheckCircle2, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -143,6 +143,13 @@ export const SmartScanModal: React.FC<SmartScanModalProps> = ({ isOpen, onClose,
         setIsCameraOpen(false);
     };
 
+    // Ensure camera stops when modal closes (via prop change)
+    React.useEffect(() => {
+        if (!isOpen && isCameraOpen) {
+            stopCamera();
+        }
+    }, [isOpen]);
+
     const capturePhoto = () => {
         if (videoRef.current && canvasRef.current) {
             const video = videoRef.current;
@@ -273,111 +280,114 @@ export const SmartScanModal: React.FC<SmartScanModalProps> = ({ isOpen, onClose,
         }, 500);
     };
 
+    const handleClose = () => {
+        stopCamera();
+        onClose();
+    };
+
     if (!isOpen) return null;
 
     // Use "Light Mode" by default (white bg) + Gold Branding as requested
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black">
             <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="bg-white border border-gray-200 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl relative text-black max-h-[90vh] flex flex-col"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="w-full h-full bg-black relative flex flex-col"
             >
-                <div className="p-4 border-b border-gray-200 flex justify-between items-center shrink-0">
+                {/* Header Overlay */}
+                <div className="absolute top-0 left-0 right-0 p-4 z-50 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent">
                     <div className="flex items-center gap-2">
-                        <BrainCircuit className="text-yellow-600" size={20} />
-                        <h3 className="font-bold text-lg text-gray-900">Smart Scan AI</h3>
+                        <BrainCircuit className="text-yellow-400 drop-shadow-lg" size={24} />
+                        <h3 className="font-bold text-lg text-white drop-shadow-lg">AI Snap</h3>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                        <X size={20} className="text-gray-400" />
+                    <button onClick={handleClose} className="p-2 bg-black/40 backdrop-blur rounded-full text-white/80 hover:bg-black/60 transition-colors">
+                        <X size={24} />
                     </button>
                 </div>
 
-
-                <div className="p-6 min-h-[400px] flex flex-col overflow-y-auto custom-scrollbar">
-                    {step === 'upload' && !isCameraOpen && (
-                        <div className="flex-1 flex flex-col gap-4">
-                            {/* Camera Option */}
-                            <button
-                                onClick={startCamera}
-                                className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl hover:border-yellow-500/50 hover:bg-yellow-50 transition-all p-6 group"
-                            >
-                                <div className="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm">
-                                    <Camera size={28} />
-                                </div>
-                                <p className="font-bold text-lg text-gray-900">Open Camera</p>
-                                <p className="text-gray-500 text-xs text-center">Take a photo instantly</p>
-                            </button>
-
-                            {/* Gallery Option */}
-                            <div className="relative">
-                                <button className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="file"
-                                            className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                            onChange={handleFile}
-                                            accept="image/*"
-                                        />
-                                        <Loader2 size={18} className="animate-spin hidden" /> {/* Placeholder icon */}
-                                        <span>Upload from Gallery</span>
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 'upload' && isCameraOpen && (
-                        <div className="flex-1 flex flex-col bg-black rounded-2xl overflow-hidden relative">
-                            <video ref={videoRef} autoPlay playsInline className="absolute inset-0 w-full h-full object-cover" />
+                <div className="flex-1 relative overflow-hidden">
+                    {/* Camera / Upload View */}
+                    {step === 'upload' && (
+                        <div className="absolute inset-0 bg-black">
+                            <video
+                                ref={videoRef}
+                                autoPlay
+                                playsInline
+                                className="w-full h-full object-cover"
+                            />
                             <canvas ref={canvasRef} className="hidden" />
 
-                            <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center gap-8 z-20">
-                                <button onClick={stopCamera} className="p-3 rounded-full bg-white/20 backdrop-blur text-white hover:bg-white/30">
-                                    <X size={24} />
-                                </button>
-                                <button onClick={capturePhoto} className="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center bg-white/20 backdrop-blur active:scale-95 transition-transform">
-                                    <div className="w-12 h-12 bg-white rounded-full"></div>
-                                </button>
-                                <div className="relative p-3 rounded-full bg-white/20 backdrop-blur text-white hover:bg-white/30 cursor-pointer overflow-hidden">
+                            {/* Camera Controls */}
+                            <div className="absolute bottom-0 left-0 right-0 p-8 pb-12 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-center justify-center gap-12 z-20">
+
+                                <div className="relative group">
+                                    <button className="p-4 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 border border-white/20 transition-all active:scale-95">
+                                        <ImageIcon size={24} />
+                                    </button>
                                     <input
                                         type="file"
-                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                                         onChange={(e) => { stopCamera(); handleFile(e); }}
                                         accept="image/*"
                                     />
-                                    <ImageIcon size={24} />
+                                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs font-medium text-white/80 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-black/50 px-2 py-1 rounded">Gallery</span>
                                 </div>
+
+                                <button
+                                    onClick={capturePhoto}
+                                    className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center bg-white/20 backdrop-blur active:scale-90 transition-all shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:bg-white/30"
+                                >
+                                    <div className="w-16 h-16 bg-white rounded-full"></div>
+                                </button>
+
+                                <button onClick={handleClose} className="p-4 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 border border-white/20 transition-all active:scale-95">
+                                    <X size={24} />
+                                </button>
                             </div>
+
+                            {!isCameraOpen && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black z-10">
+                                    <Loader2 className="animate-spin text-white/50" size={40} />
+                                    <p className="absolute mt-16 text-white/50 text-sm font-medium">Starting Camera...</p>
+                                </div>
+                            )}
                         </div>
                     )}
 
                     {step === 'scanning' && (
-                        <div className="flex-1 flex flex-col items-center justify-center relative bg-gray-100 rounded-2xl overflow-hidden">
-                            <img src={preview} className="absolute inset-0 w-full h-full object-cover opacity-20 filter blur-sm" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-white via-white/50 to-transparent" />
+                        <div className="absolute inset-0 bg-black flex flex-col items-center justify-center relative overflow-hidden">
+                            {/* Background Blur */}
+                            <img src={preview} className="absolute inset-0 w-full h-full object-cover opacity-40 blur-xl scale-110" />
+                            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-                            <div className="relative z-10 w-full px-8 flex flex-col items-center gap-6">
-                                <div className="w-24 h-24 rounded-full border-4 border-yellow-500/20 flex items-center justify-center relative bg-white backdrop-blur-sm">
-                                    <div className="absolute inset-0 border-t-4 border-yellow-500 rounded-full animate-spin" />
-                                    <BrainCircuit size={40} className="text-yellow-600" />
-                                </div>
+                            <div className="relative z-10 w-full max-w-sm px-8 flex flex-col items-center gap-8">
+                                <motion.div
+                                    initial={{ scale: 0.8, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    className="w-32 h-32 rounded-full border-4 border-yellow-500/30 flex items-center justify-center relative bg-black/40 backdrop-blur shadow-[0_0_40px_rgba(234,179,8,0.2)]"
+                                >
+                                    <div className="absolute inset-0 border-t-4 border-yellow-500 rounded-full animate-spin" style={{ animationDuration: '1.5s' }} />
+                                    <div className="absolute inset-2 border-r-4 border-yellow-500/50 rounded-full animate-spin" style={{ animationDuration: '2.5s', animationDirection: 'reverse' }} />
+                                    <BrainCircuit size={48} className="text-yellow-400 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
+                                </motion.div>
 
-                                <div className="w-full space-y-3">
+                                <div className="w-full space-y-4">
                                     {scanLog.map((log, i) => (
                                         <motion.div
                                             key={i}
-                                            initial={{ opacity: 0, scale: 0.9 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            className="flex items-center gap-3 text-xs font-mono text-yellow-900 bg-yellow-50 p-2 rounded-lg border border-yellow-200 shadow-sm"
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            className="flex items-center gap-3 text-xs font-mono text-yellow-100/90 bg-white/5 p-3 rounded-xl border border-white/10 shadow-sm backdrop-blur-md"
                                         >
-                                            <CheckCircle2 size={12} className="text-yellow-600 shrink-0" />
-                                            <span>{log}</span>
+                                            <CheckCircle2 size={14} className="text-yellow-400 shrink-0" />
+                                            <span className="tracking-wide">{log}</span>
                                         </motion.div>
                                     ))}
-                                    <div className="flex items-center gap-3 text-xs font-mono text-yellow-600 opacity-70 animate-pulse px-2">
-                                        <Loader2 size={12} className="animate-spin" /> Processing...
+                                    <div className="flex items-center gap-3 text-xs font-mono text-yellow-400 opacity-80 animate-pulse px-3">
+                                        <Loader2 size={14} className="animate-spin" />
+                                        <span className="uppercase tracking-widest">Processing...</span>
                                     </div>
                                 </div>
                             </div>
@@ -385,36 +395,50 @@ export const SmartScanModal: React.FC<SmartScanModalProps> = ({ isOpen, onClose,
                     )}
 
                     {step === 'success' && aiResult && (
-                        <div className="flex-1 flex flex-col pt-2">
-                            <div className="flex gap-3 mb-6">
-                                <div className="w-1/2 aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden relative border border-gray-200 group">
-                                    <img src={preview} alt="Result" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
-                                    <div className="absolute top-2 left-2 bg-black/50 backdrop-blur px-2 py-0.5 rounded text-[8px] font-bold uppercase text-white">Original</div>
-                                </div>
-                                <div className="w-1/2 aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden relative border border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.15)] group">
-                                    <img src={preview} alt="Result" className="w-full h-full object-cover saturate-[1.2] contrast-[1.15]" />
-                                    <div className="absolute inset-0 bg-gradient-to-tr from-yellow-500/10 to-transparent mix-blend-overlay" />
-                                    <div className="absolute top-2 right-2 bg-yellow-400 text-black px-2 py-0.5 rounded text-[8px] font-black uppercase shadow-lg">AI Enhanced</div>
-                                </div>
-                            </div>
+                        <div className="absolute inset-0 bg-zinc-900 flex flex-col overflow-y-auto">
+                            <div className="flex-1 p-6 flex flex-col">
+                                <h3 className="text-white font-bold text-xl mb-6 flex items-center gap-2">
+                                    <CheckCircle2 className="text-green-500" />
+                                    Analysis Complete
+                                </h3>
 
-                            <div className="space-y-4 mb-6">
-                                <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
-                                    <label className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Detected Product</label>
-                                    <p className="text-lg font-black italic tracking-tight text-gray-900">{aiResult.name}</p>
+                                <div className="flex gap-4 mb-8">
+                                    <div className="w-1/2 aspect-[4/5] bg-gray-800 rounded-2xl overflow-hidden relative border border-gray-700/50">
+                                        <img src={preview} alt="Result" className="w-full h-full object-cover opacity-60" />
+                                        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                                            <span className="text-[10px] font-bold uppercase text-white/70">Original</span>
+                                        </div>
+                                    </div>
+                                    <div className="w-1/2 aspect-[4/5] bg-gray-900 rounded-2xl overflow-hidden relative border border-yellow-500/50 shadow-[0_0_30px_rgba(234,179,8,0.1)]">
+                                        <img src={preview} alt="Result" className="w-full h-full object-cover saturate-[1.2] contrast-[1.15]" />
+                                        <div className="absolute inset-0 bg-gradient-to-tr from-yellow-500/10 to-transparent mix-blend-overlay" />
+                                        <div className="absolute top-3 right-3 bg-yellow-400 text-black px-2 py-0.5 rounded text-[8px] font-black uppercase shadow-lg z-10">AI Enhanced</div>
+                                    </div>
                                 </div>
-                                <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
-                                    <label className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Market Price</label>
-                                    <p className="text-lg font-bold text-green-600">KES {aiResult.price}</p>
-                                </div>
-                            </div>
 
-                            <button
-                                onClick={handleConfirm}
-                                className="mt-auto w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-yellow-500/20 active:scale-95 flex items-center justify-center gap-2"
-                            >
-                                <CheckCircle2 size={18} /> Review to Generate
-                            </button>
+                                <div className="space-y-4 mb-8">
+                                    <div className="bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Detected Product</label>
+                                        <p className="text-xl font-medium text-white leading-tight">{aiResult.name}</p>
+                                    </div>
+                                    <div className="bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm flex justify-between items-center">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Market Price</label>
+                                            <p className="text-2xl font-bold text-green-400">KES {aiResult.price}</p>
+                                        </div>
+                                        <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
+                                            <span className="text-lg font-bold">K</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={handleConfirm}
+                                    className="mt-auto w-full py-5 bg-yellow-500 hover:bg-yellow-400 text-black font-black uppercase tracking-widest rounded-2xl transition-all shadow-[0_0_20px_rgba(234,179,8,0.3)] active:scale-95 flex items-center justify-center gap-3 text-sm"
+                                >
+                                    Review Listing <CheckCircle2 size={20} />
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
