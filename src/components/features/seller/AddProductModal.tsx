@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     X, Upload, Loader2, ChevronRight,
-    Image as ImageIcon, Video, Tag,
+    Image as ImageIcon, Video,
     Type, Sparkles, Smartphone, Eye,
     AlertCircle
 } from 'lucide-react';
@@ -19,8 +19,7 @@ const productSchema = z.object({
     condition: z.string(),
     returnPolicy: z.string().min(1, "Return policy is required"),
     images: z.array(z.any()).min(1, "At least one image is required"),
-    videos: z.array(z.any()),
-    tags: z.array(z.string())
+    videos: z.array(z.any())
 }).refine(data => data.images.length > 0 || data.videos.length > 0, {
     message: "At least one media file (image or video) is required",
     path: ["images"]
@@ -39,9 +38,9 @@ interface AddProductModalProps {
 
 export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, onSubmit, initialData, type = 'product', isDarkMode = false }) => {
     const [isLoading, setIsLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState<'details' | 'media' | 'settings'>('media');
+    const [activeTab, setActiveTab] = useState<'details' | 'media'>('media');
 
-    const { control, handleSubmit, setValue, watch, setError, clearErrors, reset, trigger, formState: { errors } } = useForm<ProductFormData>({
+    const { control, handleSubmit, setValue, watch, setError, clearErrors, reset, formState: { errors } } = useForm<ProductFormData>({
         resolver: zodResolver(productSchema),
         defaultValues: {
             name: '',
@@ -52,8 +51,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
             condition: 'new',
             returnPolicy: 'No Returns',
             images: [],
-            videos: [],
-            tags: []
+            videos: []
         }
     });
 
@@ -61,31 +59,15 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
 
     // Validation Checks for Blocking Steps
     const isMediaValid = formData.images.length > 0 || formData.videos.length > 0;
-    const isDetailsValid = !!formData.name && !!formData.price && !!formData.stock && (formData.description?.length >= 10);
 
-    const handleTabChange = (tabId: 'media' | 'details' | 'settings') => {
+    // Explicitly typed tabId to match state
+    const handleTabChange = (tabId: 'media' | 'details') => {
         if (tabId === 'details') {
             if (!isMediaValid) {
                 setError('images', { type: 'manual', message: 'Please upload at least one image or video first' });
                 return;
             }
             clearErrors('images');
-        }
-
-        if (tabId === 'settings') {
-            if (!isMediaValid) {
-                setActiveTab('media');
-                setError('images', { type: 'manual', message: 'Please upload at least one image or video first' });
-                return;
-            }
-            if (!isDetailsValid) {
-                setActiveTab('details');
-                // Trigger validation for visible fields
-                if (!formData.name) setError('name', { type: 'required', message: 'Product Title is required' });
-                if (!formData.price) setError('price', { type: 'required', message: 'Price is required' });
-                if (!formData.description || formData.description.length < 10) setError('description', { type: 'required', message: 'Description is required (min 10 chars)' });
-                return;
-            }
         }
 
         setActiveTab(tabId);
@@ -144,15 +126,14 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
                 condition: initialData.condition || 'new',
                 returnPolicy: initialData.returnPolicy || 'No Returns',
                 images: loadedImages,
-                videos: [],
-                tags: initialData.tags || []
+                videos: []
             });
         } else if (!isOpen) {
             reset({
                 name: '', price: '', description: '',
                 category: 'fashion', stock: '1', condition: 'new',
                 returnPolicy: 'No Returns',
-                images: [], videos: [], tags: []
+                images: [], videos: []
             });
             setActiveTab('media');
         }
@@ -198,11 +179,6 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
             }
             clearErrors('images');
             setActiveTab('details');
-        } else if (activeTab === 'details') {
-            const isValid = await trigger(['name', 'price', 'description', 'stock']);
-            if (isValid) {
-                setActiveTab('settings');
-            }
         } else {
             handleSubmit(handleFormSubmit)();
         }
@@ -257,8 +233,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
                                 <div className={`flex gap-6 border-b ${isDarkMode ? 'border-zinc-800' : 'border-gray-100'}`}>
                                     {[
                                         { id: 'media', label: 'Media', icon: ImageIcon },
-                                        { id: 'details', label: 'Details', icon: Type },
-                                        { id: 'settings', label: 'Settings', icon: Tag }
+                                        { id: 'details', label: 'Details', icon: Type }
                                     ].map(tab => (
                                         <button
                                             key={tab.id}
@@ -431,15 +406,8 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
                                                 />
                                                 {errors.description && <p className="text-red-500 text-xs font-bold flex items-center gap-1"><AlertCircle size={10} /> {errors.description.message}</p>}
                                             </div>
-                                        </motion.div>
-                                    )}
 
-                                    {activeTab === 'settings' && (
-                                        <motion.div
-                                            initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
-                                            className="space-y-6"
-                                            key="settings"
-                                        >
+                                            {/* Merged Settings Fields */}
                                             <div className="space-y-2">
                                                 <label className={`text-sm font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Category</label>
                                                 <Controller
@@ -459,7 +427,6 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
                                                 />
                                             </div>
 
-                                            {/* Return Policy Field */}
                                             <div className="space-y-2">
                                                 <label className={`text-sm font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Return Policy</label>
                                                 <Controller
@@ -477,7 +444,6 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
                                                         </select>
                                                     )}
                                                 />
-                                                {errors.returnPolicy && <p className="text-red-500 text-xs font-bold flex items-center gap-1"><AlertCircle size={10} /> {errors.returnPolicy.message}</p>}
                                             </div>
 
                                             <div className="space-y-2">
@@ -498,23 +464,9 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
                                                     ))}
                                                 </div>
                                             </div>
-
-                                            <div className="space-y-3">
-                                                <label className={`text-sm font-bold flex justify-between ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                                    SEO Tags
-                                                    <span className="text-xs text-gray-400 font-normal">Separate with Enter</span>
-                                                </label>
-                                                <div className={`p-2 border rounded-xl min-h-[50px] flex flex-wrap gap-2 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-200'}`}>
-                                                    {/* Fake tags for visualization */}
-                                                    {['viral', 'trending', 'sale'].map(tag => (
-                                                        <span key={tag} className={`px-2 py-1 text-xs font-bold rounded-md flex items-center gap-1 ${isDarkMode ? 'bg-yellow-900/30 text-yellow-200' : 'bg-yellow-100 text-yellow-800'}`}>
-                                                            #{tag} <X size={10} className="cursor-pointer" />
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
                                         </motion.div>
                                     )}
+
                                 </AnimatePresence>
                             </form>
 
@@ -527,7 +479,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClos
                                     >
                                         {isLoading ? <Loader2 className="animate-spin" /> : (
                                             <>
-                                                <span>{activeTab === 'settings' ? (initialData?.id ? `Edit ${type} Link` : `Generate ${type} Link`) : 'Next'}</span>
+                                                <span>{activeTab === 'details' ? (initialData?.id ? `Edit ${type} Link` : `Generate ${type} Link`) : 'Next'}</span>
                                                 <ChevronRight size={18} />
                                             </>
                                         )}

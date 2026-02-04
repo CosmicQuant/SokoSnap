@@ -17,7 +17,8 @@ import { slugify } from '../utils/formatters';
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     signOut,
     onAuthStateChanged,
     sendPasswordResetEmail,
@@ -111,6 +112,17 @@ export const useAuthStore = create<AuthState>()(
              */
             initialize: () => {
                 console.log('[Auth] Initializing listener...');
+
+                // Handle Redirect Result (Mobile Auth Flow)
+                getRedirectResult(auth).then(async (result) => {
+                    if (result && result.user) {
+                        console.log('[Auth] Recovered from redirect:', result.user.uid);
+                        // Profile creation logic handled by onAuthStateChanged below, 
+                        // but we can ensure persistence here if needed.
+                    }
+                }).catch(error => {
+                    console.error('[Auth] Redirect login error:', error);
+                });
 
                 // Set persistence to local (survives browser restart)
                 setPersistence(auth, browserLocalPersistence).catch(err =>
@@ -208,47 +220,13 @@ export const useAuthStore = create<AuthState>()(
             loginWithGoogle: async () => {
                 set({ isLoading: true, error: null });
                 try {
-                    // Note: Removed await setPersistence to avoid popup blocking
-                    // Firebase Auth defaults to local persistence, and awaiting it disconnects the user click event.
-
-                    // Use Popup
-                    let result;
-                    try {
-                        result = await signInWithPopup(auth, googleProvider);
-                    } catch (popupError: any) {
-                        if (popupError.code === 'auth/popup-blocked' || popupError.code === 'auth/popup-closed-by-user') {
-                            console.warn('[Auth] Popup blocked/closed');
-                            set({
-                                error: "Sign-in popup was closed or blocked. Please allow popups for this site and try again.",
-                                isLoading: false
-                            });
-                            return;
-                        }
-                        throw popupError;
-                    }
-
-                    const firebaseUser = result.user;
-
-                    // Check if new user or existing
-                    const docRef = doc(db, 'users', firebaseUser.uid);
-                    try {
-                        const docSnap = await getDoc(docRef);
-                        if (!docSnap.exists()) {
-                            await createDefaultUser(firebaseUser);
-                        }
-                    } catch (fsError) {
-                        // If firestore fails, we rely on initialize's auto-handler or basic fallback
-                        console.error("Firestore check failed during login", fsError);
-                    }
-
-                    set({ isAuthModalOpen: false });
-                    // onAuthStateChanged will update the store
+                    await setPersistence(auth, browserLocalPersistence);
+                    // Use Redirect for better Mobile support
+                    await signInWithRedirect(auth, googleProvider);
+                    // Execution stops here as page redirects
                 } catch (error: any) {
-                    console.error('[Auth] Google Sign In error:', error);
-                    set({
-                        error: "Sign in failed. " + getFriendlyErrorMessage(error),
-                        isLoading: false
-                    });
+                    console.error('[Auth] Google login error:', error);
+                    set({ error: error.message, isLoading: false });
                 }
             },
 
@@ -297,15 +275,23 @@ export const useAuthStore = create<AuthState>()(
                 set({ isLoading: true });
                 try {
                     await signOut(auth);
+                    // Full State Reset
                     set({
                         user: null,
                         isAuthenticated: false,
                         isLoading: false,
+                        isInitialized: true,
                         authMode: null,
-                        isAuthModalOpen: false
+                        isAuthModalOpen: false,
+                        error: null,
+                        successMessage: null
                     });
-                    // Clear local storage for safety if needed
+
+                    // Clear local storage for safety
                     localStorage.removeItem('sokosnap-auth');
+
+                    // Force navigation to root (Landing Page)
+                    window.location.href = '/';
                 } catch (error) {
                     console.error('[Auth] Logout error:', error);
                     set({ isLoading: false });
