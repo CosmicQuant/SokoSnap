@@ -37,7 +37,8 @@ import {
     MapPin,
     Upload,
     Sparkles,
-    AlertCircle
+    AlertCircle,
+    Mail
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useSellerStore } from '../../store/sellerStore';
@@ -446,7 +447,13 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
         return () => unsubscribe();
     }, [initialize]);
 
-    const [activeView, setActiveView] = useState('home'); // home, orders, insights, menu, links
+    const [activeView, setActiveView] = useState('home');
+
+    // Standard navigation reset wrapper
+    const navigateTo = (view: string) => {
+        setScrollToSettlement(false);
+        setActiveView(view);
+    };
     const [activeTab, setActiveTab] = useState('Products');
     const [linksSearchTerm, setLinksSearchTerm] = useState('');
     const [ordersSearchTerm, setOrdersSearchTerm] = useState('');
@@ -987,7 +994,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                 title: "Conversion Gap",
                 msg: `You had ${totalClicks} visitors but 0 sales. Your prices might be too high or product photos aren't clear enough. Try lowering prices by 10%.`,
                 action: "Edit Products",
-                handler: () => setActiveView('links'),
+                handler: () => navigateTo('links'),
                 color: "text-orange-500",
                 bg: "bg-orange-500/10",
                 icon: TrendingUp
@@ -997,7 +1004,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                 title: "Growth Opportunity",
                 msg: `Great job! "${topProducts[0]?.name || 'Your top product'}" is winning. Bundling it with another item could increase your average order value by 30%.`,
                 action: "Create Bundle",
-                handler: () => setActiveView('links'),
+                handler: () => navigateTo('links'),
                 color: "text-green-500",
                 bg: "bg-green-500/10",
                 icon: Sparkles
@@ -1187,6 +1194,21 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
 
     const HomeView = () => (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Email Verification Banner */}
+            {!user?.isEmailVerified && (
+                <div className="mx-4 mb-6 p-4 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-orange-500 text-white rounded-full">
+                            <Mail size={16} />
+                        </div>
+                        <div>
+                            <p className="font-bold text-sm text-orange-900 dark:text-orange-500">Email Verification Required</p>
+                            <p className="text-xs opacity-70">Verify your email to unlock all features.</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 px-4">
                 {/* Wallet & Metrics */}
                 <div className="lg:col-span-8">
@@ -1265,7 +1287,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                             {totalSettled.toLocaleString()}
                                         </h2>
                                     </div>
-                                    <div onClick={() => { setActiveView('orders'); setOrdersFilter('ongoing'); }} className={`flex flex-col items-end cursor-pointer group mr-2`}>
+                                    <div onClick={() => { navigateTo('orders'); setOrdersFilter('ongoing'); }} className={`flex flex-col items-end cursor-pointer group mr-2`}>
                                         <p className={`text-[10px] font-black uppercase tracking-widest mb-1 flex items-center gap-1 ${theme.textMuted} transition-colors`}>
                                             <ShieldCheck size={10} className="text-yellow-500 group-hover:rotate-12 transition-transform" /> Secure Hold
                                         </p>
@@ -1278,7 +1300,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                     <div className={`border rounded-2xl p-4 flex flex-col justify-between ${theme.subCard}`}>
                                         {/* Top Product Links Section (Priority) */}
                                         <div
-                                            onClick={() => setActiveView('links')}
+                                            onClick={() => navigateTo('links')}
                                             className="cursor-pointer group mb-3"
                                         >
                                             <div className="flex items-center justify-between mb-3">
@@ -1291,7 +1313,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                                     <div
                                                         onClick={() => {
                                                             setScrollToProductId(String(link.id));
-                                                            setActiveView('links');
+                                                            navigateTo('links');
                                                         }}
                                                         key={link.id || i}
                                                         className="group/card relative aspect-square rounded-xl overflow-hidden border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900 shadow-sm transition-all hover:shadow-md hover:border-yellow-500/30 cursor-pointer"
@@ -1393,7 +1415,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                 },
                                 { icon: <Plus />, label: 'Manual Add', color: 'text-blue-500', action: () => handleManualAdd() },
                                 { icon: <QrCode />, label: 'Bio Link', color: isDarkMode ? 'text-white' : 'text-black', action: () => handleQRLink() },
-                                { icon: <ShoppingBag />, label: 'Orders', color: 'text-orange-500', action: () => setActiveView('orders') }
+                                { icon: <ShoppingBag />, label: 'Orders', color: 'text-orange-500', action: () => navigateTo('orders') }
                             ].map((item, i) => (
                                 <button key={i} onClick={item.action} className="flex-shrink-0 flex flex-col items-center gap-3 group relative">
                                     <div className={`h-16 w-16 md:h-20 md:w-20 rounded-3xl flex items-center justify-center border shadow-xl active:scale-95 transition-transform ${theme.card}`}>
@@ -1449,7 +1471,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         {activeTab === 'Products' && safeLinks.length > 0 && (
                             <div className="flex justify-end px-2 mb-4">
                                 <button
-                                    onClick={() => setActiveView('links')}
+                                    onClick={() => navigateTo('links')}
                                     className="text-[10px] font-black uppercase tracking-widest text-blue-500 hover:text-blue-600 flex items-center gap-1 active:scale-95 transition-transform"
                                 >
                                     See All Links <ChevronRight size={12} />
@@ -1547,7 +1569,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
 
                             {activeTab === 'Products' && safeLinks.length > 5 && (
                                 <button
-                                    onClick={() => setActiveView('links')}
+                                    onClick={() => navigateTo('links')}
                                     className="col-span-full py-4 text-xs font-black uppercase tracking-widest text-yellow-600 hover:text-yellow-500 transition-colors"
                                 >
                                     See All Links ({safeLinks.length})
@@ -1882,7 +1904,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
             <div className="space-y-3">
                 {/* MENU ITEMS */}
                 <button
-                    onClick={() => setActiveView('profile')}
+                    onClick={() => navigateTo('profile')}
                     className={`w-full border p-4 rounded-3xl flex items-center gap-4 text-left active:scale-95 transition-transform ${theme.card}`}
                 >
                     <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${theme.pill} text-zinc-400`}><UserIcon /></div>
@@ -1894,7 +1916,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                 </button>
 
                 <button
-                    onClick={() => setActiveView('settlement')}
+                    onClick={() => navigateTo('settlement')}
                     className={`w-full border p-4 rounded-3xl flex items-center gap-4 text-left active:scale-95 transition-transform ${theme.card}`}
                 >
                     <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${theme.pill} text-zinc-400`}><CreditCard /></div>
@@ -1906,7 +1928,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                 </button>
 
                 <button
-                    onClick={() => setActiveView('identity')}
+                    onClick={() => navigateTo('identity')}
                     className={`w-full border p-4 rounded-3xl flex items-center gap-4 text-left active:scale-95 transition-transform ${theme.card}`}
                 >
                     <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${theme.pill} text-zinc-400`}><ShieldCheck /></div>
@@ -1918,7 +1940,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                 </button>
 
                 <button
-                    onClick={() => setActiveView('settings')}
+                    onClick={() => navigateTo('settings')}
                     className={`w-full border p-4 rounded-3xl flex items-center gap-4 text-left active:scale-95 transition-transform ${theme.card}`}
                 >
                     <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${theme.pill} text-zinc-400`}><Settings /></div>
@@ -1985,7 +2007,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                             <button
                                 onClick={() => {
                                     setShowVerificationPrompt(false);
-                                    setActiveView('profile');
+                                    navigateTo('profile');
                                 }}
                                 className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-xl active:scale-95 transition-all text-sm uppercase tracking-wide"
                             >
@@ -2025,7 +2047,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                     ].map((item) => (
                         <button
                             key={item.id}
-                            onClick={() => setActiveView(item.id)}
+                            onClick={() => navigateTo(item.id)}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all group ${activeView === item.id
                                 ? 'bg-yellow-500 text-black font-black'
                                 : `${isDarkMode ? 'text-zinc-500' : 'text-zinc-600'} hover:bg-yellow-500/10 hover:text-yellow-500`
@@ -2066,7 +2088,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                 <header className={`p-6 pt-8 flex justify-between items-center sticky top-0 backdrop-blur-md z-40 transition-colors lg:hidden ${theme.headerBg}`}>
                     <div>
                         {['profile', 'settlement', 'identity', 'settings'].includes(activeView) ? (
-                            <button onClick={() => setActiveView('menu')} className="flex items-center gap-2 group">
+                            <button onClick={() => navigateTo('menu')} className="flex items-center gap-2 group">
                                 <ChevronLeft className="text-yellow-500 group-hover:-translate-x-1 transition-transform" />
                                 <span className="font-black uppercase tracking-widest text-xs">Back to Menu</span>
                             </button>
@@ -2082,7 +2104,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                                 </div>
                             </div>
                         ) : (
-                            <button onClick={() => setActiveView('home')} className="flex items-center gap-2 group">
+                            <button onClick={() => navigateTo('home')} className="flex items-center gap-2 group">
                                 <ChevronLeft className="text-yellow-500 group-hover:-translate-x-1 transition-transform" />
                                 <span className="font-black uppercase tracking-widest text-xs">Back Home</span>
                             </button>
@@ -2094,7 +2116,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                             <span className="absolute top-0 right-0 h-3 w-3 bg-red-500 rounded-full border-2 border-black"></span>
                         </button>
                         {activeView !== 'menu' && (
-                            <button onClick={() => setActiveView('menu')} className="h-10 w-10 bg-gradient-to-tr from-yellow-500 to-yellow-200 rounded-full p-0.5 active:scale-90 transition-transform shadow-lg">
+                            <button onClick={() => navigateTo('menu')} className="h-10 w-10 bg-gradient-to-tr from-yellow-500 to-yellow-200 rounded-full p-0.5 active:scale-90 transition-transform shadow-lg">
                                 <div className="h-full w-full rounded-full bg-black flex items-center justify-center overflow-hidden">
                                     <img
                                         src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'Felix'}`}
@@ -2131,7 +2153,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                     {activeView === 'insights' && <InsightsView />}
                     {activeView === 'menu' && <MenuView />}
                     {activeView === 'orders' && renderOrdersView()}
-                    {activeView === 'profile' && <MerchantProfileView user={user} theme={theme} isDarkMode={isDarkMode} setActiveView={setActiveView} scrollToSettlement={scrollToSettlement} />}
+                    {activeView === 'profile' && <MerchantProfileView user={user} theme={theme} isDarkMode={isDarkMode} setActiveView={navigateTo} scrollToSettlement={scrollToSettlement} />}
                     {activeView === 'settlement' && renderSettlement()}
                     {activeView === 'identity' && renderVerification()}
                     {activeView === 'settings' && renderSettings()}
@@ -2141,7 +2163,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                 <div className="fixed bottom-6 left-6 right-6 z-50 lg:hidden">
                     <nav className={`backdrop-blur-xl border rounded-[2.5rem] p-2 flex justify-between items-center shadow-2xl px-6 py-3 transition-colors ${theme.navBg}`}>
                         <button
-                            onClick={() => setActiveView('home')}
+                            onClick={() => navigateTo('home')}
                             className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'home' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
                         >
                             <div className={`p-2 rounded-2xl ${activeView === 'home' ? 'bg-yellow-500/10' : ''}`}>
@@ -2151,7 +2173,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         </button>
 
                         <button
-                            onClick={() => setActiveView('links')}
+                            onClick={() => navigateTo('links')}
                             className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'links' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
                         >
                             <div className={`p-2 rounded-2xl ${activeView === 'links' ? 'bg-yellow-500/10' : ''}`}>
@@ -2177,7 +2199,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         </div>
 
                         <button
-                            onClick={() => setActiveView('orders')}
+                            onClick={() => navigateTo('orders')}
                             className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'orders' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
                         >
                             <div className={`p-2 rounded-2xl ${activeView === 'orders' ? 'bg-yellow-500/10' : ''}`}>
@@ -2187,7 +2209,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ onBack }) => {
                         </button>
 
                         <button
-                            onClick={() => setActiveView('insights')}
+                            onClick={() => navigateTo('insights')}
                             className={`flex flex-col items-center gap-1 transition-colors ${activeView === 'insights' ? 'text-yellow-500' : isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}
                         >
                             <div className={`p-2 rounded-2xl ${activeView === 'insights' ? 'bg-yellow-500/10' : ''}`}>

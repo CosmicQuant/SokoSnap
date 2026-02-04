@@ -156,7 +156,11 @@ export const useAuthStore = create<AuthState>()(
                                 }
 
                                 set({
-                                    user: { ...userData, id: firebaseUser.uid },
+                                    user: {
+                                        ...userData,
+                                        id: firebaseUser.uid,
+                                        isEmailVerified: firebaseUser.emailVerified // Sync latest Firebase status
+                                    },
                                     isAuthenticated: true,
                                     isLoading: false,
                                     isInitialized: true
@@ -219,7 +223,16 @@ export const useAuthStore = create<AuthState>()(
                 set({ isLoading: true, error: null });
                 try {
                     await setPersistence(auth, browserLocalPersistence);
-                    await signInWithEmailAndPassword(auth, email, password);
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+                    if (!userCredential.user.emailVerified) {
+                        // Optional: You can logout immediately if you want strictly NO access
+                        // await signOut(auth); 
+                        // throw new Error("Please verify your email address first.");
+
+                        // OR: Allow login but show warning (Current behavior)
+                    }
+
                     set({ isAuthModalOpen: false });
                 } catch (error: any) {
                     console.error('[Auth] Login error:', error);
