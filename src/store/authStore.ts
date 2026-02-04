@@ -234,23 +234,17 @@ export const useAuthStore = create<AuthState>()(
                 try {
                     await setPersistence(auth, browserLocalPersistence);
 
-                    // Detect Mobile Device
-                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-                    if (isMobile) {
-                        console.log('[Auth] Detected mobile device, using Redirect...');
-                        // Use Redirect for Mobile Stability
-                        await signInWithRedirect(auth, googleProvider);
-                        return; // Execution stops as page redirects
-                    }
-
-                    // Use Popup for Desktop (Better UX, avoids redirect issues)
+                    // Start with Popup (better for state preservation)
+                    // Modern mobile browsers handle this well generally
                     try {
                         await signInWithPopup(auth, googleProvider);
-                        set({ isAuthModalOpen: false }); // Close modal on success
+                        set({ isAuthModalOpen: false });
                     } catch (popupError: any) {
-                        // Fallback to redirect if popup is blocked/closed
-                        if (popupError.code === 'auth/popup-blocked') {
+                        console.warn('[Auth] Popup failed, falling back to redirect:', popupError);
+
+                        // Fallback to redirect if popup is blocked/closed or not supported
+                        // This ensures we still support strict mobile browsers that block popups
+                        if (popupError.code === 'auth/popup-blocked' || popupError.code === 'auth/operation-not-supported-in-this-environment') {
                             await signInWithRedirect(auth, googleProvider);
                             return;
                         }
