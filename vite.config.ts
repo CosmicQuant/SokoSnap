@@ -10,8 +10,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     // Base path: '/' for Vercel/Web/Dev to support nested routes of SPA, './' for Capacitor Production Builds
-    // We use '/' for development to avoid issues with deep links failing to load assets (Uncaught SyntaxError <)
-    base: isVercel || mode === 'development' ? '/' : './',
+    // Default to '/' to ensure Firebase/Web deep links work.
+    // For Mobile builds, we rely on the relative path behavior if configured, or you can manually switch this locally.
+    base: process.env.CAPACITOR_BUILD ? './' : '/',
 
     // Development server configuration
     server: {

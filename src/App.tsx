@@ -44,7 +44,6 @@ const App = () => {
                 <div className="h-screen w-full bg-black overflow-hidden relative">
                     <CheckoutFeed
                         user={currentFeedUser}
-                        onBuyIntent={() => true}
                     />
                 </div>
             } />

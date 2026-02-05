@@ -44,7 +44,6 @@ interface UserProfile {
 
 interface CheckoutFeedProps {
   user: UserProfile | null;
-  onBuyIntent: () => boolean;
 }
 
 // Display Product Interface (Computed UI state)
@@ -301,7 +300,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
         )}
       </div>
 
-      <div className="feed-info relative z-20 mt-auto px-1 pb-0 space-y-1 w-full mx-auto">
+      <div className="feed-info relative z-20 mt-auto pl-0.5 pr-0.5 pb-0 space-y-1 w-full mx-auto">
         {/* REPLACES OLD SELLER TAG - Now INTEGRATED IN CAPTION OR REMOVED FROM HERE since avatar is on right now? 
             Wait, user said "Where we are displaying this the seller's name on the caption... on the left side of this we have the profile image".
             The previous design had the avatar in the caption area.
@@ -309,7 +308,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
             BUT, standard TikTok UI has the avatar on the RIGHT sidebar.
             I will keep the small avatar in the caption as requested "Just above the title of the product... next to each user name verified... left side of this we have the profile image".
         */}
-        <div className="feed-seller-tag flex items-center gap-2 mb-1 animate-in slide-in-from-bottom duration-500 delay-100">
+        <div className="feed-seller-tag flex items-center gap-1.5 mb-1 animate-in slide-in-from-bottom duration-500 delay-100">
           <div className="w-9 h-9 rounded-full border border-white/50 overflow-hidden p-0.5 bg-black/20 backdrop-blur-sm shadow-sm shrink-0">
             {/* Use photoURL if available (adding type support if needed or trusting 'any') */}
             {/* Note: DisplayProduct doesn't normally have photoURL, we rely on sellerAvatar mapped field */}
@@ -354,7 +353,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
         </div>
       </div>
 
-      <div className="mt-0.5 animate-in slide-in-from-bottom duration-500 delay-300 relative group/commerce flex flex-col items-stretch gap-0 w-full px-1 drop-shadow-2xl">
+      <div className="mt-0 animate-in slide-in-from-bottom duration-500 delay-300 relative group/commerce flex flex-col items-stretch gap-0 w-full pl-0.5 pr-0.5 drop-shadow-2xl">
         <div className="w-full z-30 mb-0 pb-0 relative">
 
           {/* CENTERED HINT TEXT with START Button */}
