@@ -214,7 +214,7 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                 ref={drawerRef}
                 className={`${isKeyboardOpen
                     ? 'fixed left-0 right-0 z-[9999]'
-                    : 'absolute bottom-full left-0 right-0 mb-0 z-[200]'
+                    : 'absolute bottom-full left-0 right-0 mb-0 z-[200] px-2'
                     } animate-in slide-in-from-bottom duration-150`}
                 style={isKeyboardOpen ? {
                     bottom: bottomPosition,
@@ -263,7 +263,7 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                                     placeholder={isCOD ? "Phone for delivery" : "M-Pesa Number (0712...)"}
                                     value={userData.phone}
                                     onChange={(e) => setUserData(prev => ({ ...prev, phone: e.target.value }))}
-                                    className="w-full h-[32px] bg-black/40 border border-white/20 rounded-lg py-1.5 pl-7 pr-2 text-[11px] font-bold text-white placeholder:text-yellow-100/90 placeholder:font-bold outline-none focus:border-yellow-400/80 transition-all backdrop-blur-md shadow-inner"
+                                    className="w-full h-[32px] bg-black/80 border border-white/30 rounded-lg py-1.5 pl-7 pr-2 text-[11px] font-bold text-white placeholder:text-white/70 placeholder:font-semibold outline-none focus:border-yellow-400/80 transition-all backdrop-blur-md shadow-inner"
                                 />
                             </div>
                             {/* Cash on Delivery Button - Emerald green when active */}
@@ -296,7 +296,7 @@ export const InputFloatingCard: React.FC<InputFloatingCardProps> = ({
                                     placeholder="Delivery Location"
                                     value={userData.location}
                                     onChange={(e) => setUserData(prev => ({ ...prev, location: e.target.value }))}
-                                    className="w-full h-[32px] bg-black/40 border border-white/20 rounded-lg py-1.5 pl-7 pr-2 text-[11px] font-bold text-white placeholder:text-yellow-100/90 placeholder:font-bold outline-none focus:border-yellow-400/80 transition-all backdrop-blur-md shadow-inner"
+                                    className="w-full h-[32px] bg-black/80 border border-white/30 rounded-lg py-1.5 pl-7 pr-2 text-[11px] font-bold text-white placeholder:text-white/70 placeholder:font-semibold outline-none focus:border-yellow-400/80 transition-all backdrop-blur-md shadow-inner"
                                 />
                             </div>
                             {/* GPS Button */}

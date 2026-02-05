@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { SellerDashboard } from './components/features/SellerDashboard';
 import SellerLandingPage from './components/features/SellerLandingPage';
@@ -8,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 const App = () => {
     const { user, initialize, isLoading } = useAuthStore();
     const [isInitialized, setIsInitialized] = useState(false);
+    const location = useLocation();
 
     useEffect(() => {
         const unsubscribe = initialize();
@@ -15,35 +17,19 @@ const App = () => {
         return () => unsubscribe();
     }, [initialize]);
 
-    // Simple Client-Side Routing for Store/Checkout Pages
-    const path = window.location.pathname;
-    const isStorePage = path.startsWith('/store/');
+    // Derived State
+    const isPublicRoute = location.pathname.startsWith('/store');
+    const isAuthLoading = (!isInitialized || isLoading) && !user;
 
-    // Extract Product/Store Context from URL
-    // URL Format: /store/[business-name] or /store/[business-name]/[product-slug]
-    // const pathSegments = path.split('/').filter(Boolean); // Clean up unused vars
-    // pathSegments[0] = 'store'
-    // pathSegments[1] = business-name (slug)
-    // pathSegments[2] = product-slug (optional)
+    // Transform user for CheckoutFeed
+    const currentFeedUser = user ? {
+        name: user.name,
+        type: user.type === 'verified_merchant' ? 'verified_merchant' : 'verified_buyer' as 'verified_merchant' | 'verified_buyer',
+        avatar: user.avatar || user.photoURL
+    } : null;
 
-    // Render Store Page Immediately (Don't wait for full auth init if public)
-    if (isStorePage) {
-        return (
-            <div className="h-screen w-full bg-black overflow-hidden relative">
-                <CheckoutFeed
-                    user={user ? {
-                        name: user.name,
-                        type: user.type === 'verified_merchant' ? 'verified_merchant' : 'verified_buyer',
-                        avatar: user.avatar || user.photoURL
-                    } : null}
-                    onBuyIntent={() => true}
-                    onProfileClick={() => { }}
-                />
-            </div>
-        );
-    }
-
-    if (!isInitialized || isLoading) {
+    // Show Loader only if loading AND NOT on a public route (Store)
+    if (isAuthLoading && !isPublicRoute) {
         return (
             <div className='min-h-screen flex items-center justify-center bg-black text-white'>
                 <Loader2 className='animate-spin text-yellow-500' size={48} />
@@ -51,11 +37,27 @@ const App = () => {
         );
     }
 
-    if (!user) {
-        return <SellerLandingPage />;
-    }
+    return (
+        <Routes>
+            {/* Public Store/Checkout Routes */}
+            <Route path="/store/:storeId/:productId?" element={
+                <div className="h-screen w-full bg-black overflow-hidden relative">
+                    <CheckoutFeed
+                        user={currentFeedUser}
+                        onBuyIntent={() => true}
+                    />
+                </div>
+            } />
 
-    return <SellerDashboard />;
+            {/* Main App Routes */}
+            <Route path="/" element={
+                user ? <SellerDashboard /> : <SellerLandingPage />
+            } />
+
+            {/* Default Catch-All */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+    );
 };
 
 export default App;

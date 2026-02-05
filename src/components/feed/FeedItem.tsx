@@ -286,7 +286,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
 
 
             {/* Comments Overlay */}
-            {showComments && <CommentsOverlay onClose={() => setShowComments(false)} />}
+            {showComments && <CommentsOverlay productId={product.id} onClose={() => setShowComments(false)} />}
 
 
             {/* Action Sidebar - Hide when keyboard is active, move up when drawer is open, hidden in checkout mode */}
@@ -353,9 +353,9 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                     </div>
                 )}
 
-                <div className="px-4 space-y-1 max-w-[85%] transition-all duration-300">
+                <div className="px-2 space-y-1 transition-all duration-300">
                     {/* Title & Description */}
-                    <div className="space-y-0.5">
+                    <div className="space-y-0.5 pr-12">
                         <div
                             className="w-fit flex items-center gap-2 mb-1 cursor-pointer active:scale-95 transition-transform origin-left"
                             onClick={(e) => {
@@ -394,7 +394,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                     </div>
 
                     {/* ACTION BUTTON - Opens Bottom Sheet if data missing */}
-                    <div className={`relative w-[120%] group/btn ${hasUserData ? 'mt-8' : ''}`}>
+                    <div className={`relative w-full group/btn ${hasUserData ? 'mt-8' : ''}`}>
                         {/* INPUT DRAWER - Shows above button when open */}
                         <InputFloatingCard
                             isOpen={showBottomSheet}
@@ -422,7 +422,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                                     e.stopPropagation();
                                     setShowBottomSheet(true);
                                 }}
-                                className="absolute bottom-full mb-[-2px] inset-x-0 z-0 bg-yellow-400 border border-yellow-300 rounded-t-xl py-0.5 flex items-center justify-center cursor-pointer hover:bg-yellow-300 transition-colors"
+                                className="absolute bottom-full mb-[-2px] inset-x-2 z-0 bg-yellow-400 border border-yellow-300 rounded-t-xl py-0.5 flex items-center justify-center cursor-pointer hover:bg-yellow-300 transition-colors"
                             >
                                 <span className="text-[10px] font-bold text-slate-900 tracking-tight flex items-center gap-1.5 px-2">
                                     <span className="truncate max-w-[220px]">
@@ -438,7 +438,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({
                             id={`btn-${product.id}`}
                             onClick={handleActionClick}
                             className={`
-                                w-full border-y-[2px] border-x-[1px] py-1.5 px-3 flex flex-col items-center gap-0.5 shadow-lg relative overflow-hidden z-10
+                                w-[calc(100%-16px)] mx-2 border-y-[2px] border-x-[1px] py-1.5 px-3 flex flex-col items-center gap-0.5 shadow-lg relative overflow-hidden z-10
                                 ${hasUserData
                                     ? 'bg-black/10 backdrop-blur-[2px] border-yellow-400/90 text-white shadow-yellow-400/10 active:scale-[0.98]'
                                     : 'bg-black/10 backdrop-blur-[2px] border-yellow-400/60 text-white hover:border-yellow-300 active:bg-yellow-400/10 transition-all'

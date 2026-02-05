@@ -9,3 +9,4 @@ export { useUIStore, useCurrentView, useActiveTab, useIsCheckoutOpen, useIsProce
 export { useSellerStore } from './sellerStore';
 export { useProductStore } from './productStore';
 export { useOrderStore } from './orderStore';
+export { usePreferenceStore } from './preferenceStore';

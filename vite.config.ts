@@ -9,8 +9,9 @@ export default defineConfig(({ mode }) => {
   const isVercel = process.env.VERCEL === '1';
 
   return {
-    // Base path: '/' for Vercel/Web to support nested routes (e.g. /p/1), './' for Capacitor/Builds
-    base: isVercel ? '/' : './',
+    // Base path: '/' for Vercel/Web/Dev to support nested routes of SPA, './' for Capacitor Production Builds
+    // We use '/' for development to avoid issues with deep links failing to load assets (Uncaught SyntaxError <)
+    base: isVercel || mode === 'development' ? '/' : './',
 
     // Development server configuration
     server: {

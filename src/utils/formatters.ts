@@ -8,7 +8,7 @@
  * @returns Formatted currency string
  */
 export function formatCurrency(amount: number): string {
-    return `KES ${amount.toLocaleString('en-KE')}`;
+    return `KES ${amount.toLocaleString('en-US')}`;
 }
 
 /**
