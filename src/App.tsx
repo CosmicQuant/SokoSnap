@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { SellerDashboard } from './components/features/SellerDashboard';
-import SellerLandingPage from './components/features/SellerLandingPage';
 import { CheckoutFeed } from './components/CheckoutFeed';
 import { Loader2 } from 'lucide-react';
 
@@ -41,7 +40,7 @@ const App = () => {
         <Routes>
             {/* Public Store/Checkout Routes */}
             <Route path="/store/:storeId/:productId?" element={
-                <div className="h-screen w-full bg-black overflow-hidden relative">
+                <div className="h-[100dvh] w-full bg-black overflow-hidden relative">
                     <CheckoutFeed
                         user={currentFeedUser}
                     />
@@ -50,7 +49,13 @@ const App = () => {
 
             {/* Main App Routes */}
             <Route path="/" element={
-                user ? <SellerDashboard /> : <SellerLandingPage />
+                <div className="h-[100dvh] w-full bg-black overflow-hidden relative">
+                    <CheckoutFeed user={currentFeedUser} />
+                </div>
+            } />
+
+            <Route path="/dashboard" element={
+                user ? <SellerDashboard /> : <Navigate to="/" replace />
             } />
 
             {/* Default Catch-All */}

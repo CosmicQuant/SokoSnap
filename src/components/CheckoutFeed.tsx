@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 import { db } from '../lib/firebase';
-import { collection, query, where, getDocs, getDoc, doc, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, getDoc, doc, limit, orderBy } from 'firebase/firestore';
 import type { Product } from '../types';
 import lipaNaMpesaLogo from '../assets/41.png';
 import { formatCurrency } from '../utils/formatters';
@@ -300,7 +300,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
         )}
       </div>
 
-      <div className="feed-info relative z-20 mt-auto pl-0.5 pr-0.5 pb-0 space-y-1 w-full mx-auto">
+      <div className="feed-info relative z-20 mt-auto px-3 pb-0 space-y-1 w-full max-w-[85%] mx-0">
         {/* REPLACES OLD SELLER TAG - Now INTEGRATED IN CAPTION OR REMOVED FROM HERE since avatar is on right now? 
             Wait, user said "Where we are displaying this the seller's name on the caption... on the left side of this we have the profile image".
             The previous design had the avatar in the caption area.
@@ -353,17 +353,17 @@ const FeedItem: React.FC<FeedItemProps> = ({
         </div>
       </div>
 
-      <div className="mt-0 animate-in slide-in-from-bottom duration-500 delay-300 relative group/commerce flex flex-col items-stretch gap-0 w-full pl-0.5 pr-0.5 drop-shadow-2xl">
+      <div className="mt-0 animate-in slide-in-from-bottom duration-500 delay-300 relative group/commerce flex flex-col items-stretch gap-0 w-full max-w-[85%] px-3 pb-[calc(env(safe-area-inset-bottom)+5px)] drop-shadow-2xl">
         <div className="w-full z-30 mb-0 pb-0 relative">
 
           {/* CENTERED HINT TEXT with START Button */}
           {!isEditMode && !isFormFilled && (
-            <div className="bg-[#FFC107] border border-yellow-500 border-b-0 rounded-t-xl py-0.5 px-2 shadow-lg animate-in slide-in-from-bottom fade-in duration-300 relative z-10 w-full mb-0 pb-1 cursor-pointer" onClick={() => setIsEditMode(true)}>
+            <div className="bg-transparent backdrop-blur-xl border border-white/20 border-b-0 rounded-t-xl py-0.5 px-2 shadow-lg animate-in slide-in-from-bottom fade-in duration-300 relative z-10 w-full mb-0 pb-1 cursor-pointer" onClick={() => setIsEditMode(true)}>
               <div className="flex items-center justify-center relative w-full h-full">
-                <span className="text-[10px] font-black text-black tracking-wide uppercase">
+                <span className="text-[9px] font-bold text-white">
                   Tap to fill delivery info
                 </span>
-                <div className="absolute right-0 bg-black text-yellow-400 text-[8px] font-black px-2 py-0.5 rounded-full uppercase animate-pulse">
+                <div className="absolute right-0 bg-[#FFC107] text-black text-[8px] font-black px-2 py-0.5 rounded-full uppercase animate-pulse">
                   Start
                 </div>
               </div>
@@ -371,13 +371,13 @@ const FeedItem: React.FC<FeedItemProps> = ({
           )}
 
           {!isEditMode && isFormFilled && (
-            <div className="bg-[#FFC107] border-yellow-500 rounded-t-xl rounded-b-none py-1 px-3 shadow-lg animate-in slide-in-from-bottom fade-in duration-300 relative z-10 w-full mb-0 border-b-0 pb-1 cursor-pointer" onClick={() => setIsEditMode(true)}>
+            <div className="bg-transparent backdrop-blur-xl border border-white/20 rounded-t-xl rounded-b-none py-1 px-3 shadow-lg animate-in slide-in-from-bottom fade-in duration-300 relative z-10 w-full mb-0 border-b-0 pb-1 cursor-pointer" onClick={() => setIsEditMode(true)}>
               <div className="flex items-center justify-center gap-2 text-center w-full relative">
-                <span className="text-[10px] font-bold text-black truncate max-w-[80%] flex items-center justify-center gap-1">
-                  Pay via <span className="font-extrabold">{phone}</span> <span className="mx-1 font-black text-[10px] text-black">•</span> To <span className="font-extrabold truncate">{location}</span>
+                <span className="text-[10px] font-bold text-white truncate max-w-[80%] flex items-center justify-center gap-1">
+                  Pay via <span className="font-extrabold text-[#FFC107]">{phone}</span> <span className="mx-1 font-black text-[10px] text-white">•</span> To <span className="font-extrabold truncate text-[#FFC107]">{location}</span>
                 </span>
                 <button
-                  className="absolute right-0 text-[10px] font-black text-black/70 border-b border-black/70 uppercase hover:text-black whitespace-nowrap"
+                  className="absolute right-0 text-[10px] font-black text-white/70 border-b border-white/70 uppercase hover:text-white whitespace-nowrap"
                 >
                   Edit
                 </button>
@@ -386,9 +386,9 @@ const FeedItem: React.FC<FeedItemProps> = ({
           )}
 
           {isEditMode && (
-            <div className="bg-black/80 backdrop-blur-xl border border-b-0 border-white/20 rounded-t-xl p-0 pb-0 mb-0 shadow-2xl animate-in slide-in-from-bottom fade-in duration-300 relative z-10 w-full mb-0 !rounded-b-none">
+            <div className="bg-black/30 backdrop-blur-xl border border-b-0 border-white/20 rounded-t-xl p-0 pb-0 mb-0 shadow-2xl animate-in slide-in-from-bottom fade-in duration-300 relative z-10 w-full mb-0 !rounded-b-none">
               {/* Header Row */}
-              <div className="relative flex items-center justify-center h-6 bg-yellow-400/10 rounded-t-xl overflow-hidden w-full border-b border-white/10">
+              <div className="relative flex items-center justify-center h-6 bg-white/10 rounded-t-xl overflow-hidden w-full border-b border-white/10">
                 <span className="text-[10px] font-black text-white tracking-widest shadow-sm text-center uppercase">
                   SokoSnap secure checkout
                 </span>
@@ -405,7 +405,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
               <div className="space-y-0.5 p-0.5">
                 <div className="flex gap-0.5">
                   {/* Phone Input */}
-                  <div className="flex-[1.4] bg-white/5 border border-white/10 rounded-md flex items-center px-1 focus-within:bg-emerald-500/10 focus-within:border-emerald-500/50 transition-colors group relative overflow-hidden h-7">
+                  <div className="flex-[1.4] bg-neutral-900/60 border border-white/20 rounded-md flex items-center px-1 focus-within:bg-emerald-500/20 focus-within:border-emerald-500/50 transition-colors group relative overflow-hidden h-7">
                     <div className="w-5 h-full flex items-center justify-center text-emerald-500 group-focus-within:scale-110 transition-transform">
                       <Smartphone size={12} />
                     </div>
@@ -414,7 +414,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleDone()}
-                      className="flex-1 bg-transparent font-bold text-[10px] text-white outline-none placeholder:text-white/20 h-full min-w-0"
+                      className="flex-1 bg-transparent font-bold text-[10px] text-white outline-none placeholder:text-white/70 h-full min-w-0"
                       placeholder="M-Pesa No."
                     />
                   </div>
@@ -423,7 +423,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
                   <div className="relative flex-1 group/courier">
                     <button
                       onClick={() => setIsCourierOpen(!isCourierOpen)}
-                      className="w-full h-7 bg-white/5 border border-white/10 rounded-md flex items-center justify-between px-1 hover:bg-white/10 transition-colors">
+                      className="w-full h-7 bg-neutral-900/60 border border-white/20 rounded-md flex items-center justify-between px-1 hover:bg-white/10 transition-colors">
                       <div className="flex flex-col items-start leading-none overflow-hidden flex-1 mr-1">
                         <span className="text-[8px] font-bold text-white w-full text-left truncate">{courier?.name || 'Select'}</span>
                         <span className="text-[6px] text-emerald-400 font-mono">{formatCurrency(courier?.price || 0)}</span>
@@ -432,7 +432,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
                     </button>
 
                     {isCourierOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-black/95 border border-white/10 rounded-md overflow-hidden z-50 backdrop-blur-xl shadow-2xl">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-neutral-900/95 border border-white/20 rounded-md overflow-hidden z-50 backdrop-blur-xl shadow-2xl">
                         {COURIERS.map(c => (
                           <button
                             key={c.id}
@@ -451,7 +451,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
                 </div>
 
                 {/* Location Input with Icons */}
-                <div className="bg-white/5 border border-white/10 rounded-md flex items-center px-1 focus-within:bg-white/10 focus-within:border-blue-500/50 transition-colors group h-7 relative">
+                <div className="bg-neutral-900/60 border border-white/20 rounded-md flex items-center px-1 focus-within:bg-white/10 focus-within:border-blue-500/50 transition-colors group h-7 relative">
                   <div className="w-5 h-full flex items-center justify-center text-blue-400 group-focus-within:scale-110 transition-transform">
                     <MapPin size={12} />
                   </div>
@@ -460,7 +460,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleDone()}
-                    className="flex-1 bg-transparent font-bold text-[10px] text-white outline-none placeholder:text-white/20 h-full min-w-0 pr-12"
+                    className="flex-1 bg-transparent font-bold text-[10px] text-white outline-none placeholder:text-white/70 h-full min-w-0 pr-12"
                     placeholder="Delivery Location"
                   />
 
@@ -634,17 +634,47 @@ export const CheckoutFeed: React.FC<CheckoutFeedProps> = ({ user }) => {
         }
         // Scenario B: Global Feed
         else {
-          const q = query(productsRef, where('status', '==', 'active'), limit(20));
-          const snapshot = await getDocs(q);
-          feed = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              ...data,
-              mediaUrl: data.mediaUrl || data.img || '',
-              sellerAvatar: data.sellerAvatar || data.sellerImg || '',
-            } as DisplayProduct;
-          });
+          try {
+            // Attempt 1: Chronological Feed (Requires 'status' + 'createdAt' Index)
+            const q = query(productsRef, where('status', '==', 'active'), orderBy('createdAt', 'desc'), limit(20));
+            const snapshot = await getDocs(q);
+
+            // If we found products with the index, use them.
+            // If empty, it's possible no products have 'createdAt' yet, so we fall through to catch/fallback manually if needed, 
+            // but normally empty is a valid state. 
+            // However, to be safe for legacy data without createdAt, let's check:
+            if (!snapshot.empty) {
+              feed = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                  id: doc.id,
+                  ...data,
+                  mediaUrl: data.mediaUrl || data.img || '',
+                  sellerAvatar: data.sellerAvatar || data.sellerImg || '',
+                } as DisplayProduct;
+              });
+            } else {
+              // If empty, it might be that no products have 'createdAt'. 
+              // Let's try fetching without sort to see if we have ANY active products.
+              throw new Error("Try fallback");
+            }
+
+          } catch (err) {
+            // Fallback: Fetch without sorting (No Index needed / Legacy data support)
+            // This runs if Index is missing OR if the try-block threw manually
+            // console.warn("Falling back to unordered feed", err);
+            const qFallback = query(productsRef, where('status', '==', 'active'), limit(20));
+            const snapshot = await getDocs(qFallback);
+            feed = snapshot.docs.map(doc => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                ...data,
+                mediaUrl: data.mediaUrl || data.img || '',
+                sellerAvatar: data.sellerAvatar || data.sellerImg || '',
+              } as DisplayProduct;
+            });
+          }
         }
 
         // Scenario C: Deep Linked Product (Ensure it is in the list)
